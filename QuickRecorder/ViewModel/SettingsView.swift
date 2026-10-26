@@ -171,7 +171,6 @@ struct OutputView: View {
     @AppStorage("videoFormat")      private var videoFormat: VideoFormat = .mp4
     @AppStorage("audioFormat")      private var audioFormat: AudioFormat = .aac
     @AppStorage("audioQuality")     private var audioQuality: AudioQuality = .high
-    @AppStorage("pixelFormat")      private var pixelFormat: PixFormat = .delault
     @AppStorage("background")       private var background: BackgroundType = .wallpaper
     @AppStorage("remuxAudio")       private var remuxAudio: Bool = true
     @AppStorage("enableAEC")        private var enableAEC: Bool = false
