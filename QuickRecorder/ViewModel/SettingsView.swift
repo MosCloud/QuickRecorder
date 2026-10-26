@@ -144,14 +144,14 @@ struct RecorderView: View {
             }
             .onChange(of: controlsMenuBar) { updateStatusBar() }
             .onChange(of: controlsCapsule) { updateStatusBar() }
-            SGroupBox {
+            SGroupBox(label: "Recording Behavior") {
                 SToggle("Prevent Mac from sleeping while recording", isOn: $preventSleep)
                 SDivider()
                 SToggle("Show floating preview after recording", isOn: $showPreview)
                 SDivider()
                 SToggle("Open video trimmer after recording", isOn: $trimAfterRecord)
             }
-            SGroupBox {
+            SGroupBox(label: "Captured Content") {
                 SToggle("Exclude QuickRecorder itself", isOn: $hideSelf)
                 SDivider()
                 SToggle("Include Menu Bar in Recording", isOn: $includeMenuBar)
