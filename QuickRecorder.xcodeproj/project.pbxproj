@@ -64,6 +64,7 @@
 		CC3300000000000000000802 /* AudioMix.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000000801 /* AudioMix.swift */; };
 		CC3300000000000000000803 /* AudioMix.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000000801 /* AudioMix.swift */; };
 		CC3300000000000000000903 /* AudioMixTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000000901 /* AudioMixTests.swift */; };
+		CC3300000000000000001002 /* ColorGridPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001001 /* ColorGridPicker.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -124,6 +125,7 @@
 		CC3300000000000000000701 /* NotchCapsule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchCapsule.swift; sourceTree = "<group>"; };
 		CC3300000000000000000801 /* AudioMix.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioMix.swift; sourceTree = "<group>"; };
 		CC3300000000000000000901 /* AudioMixTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioMixTests.swift; sourceTree = "<group>"; };
+		CC3300000000000000001001 /* ColorGridPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorGridPicker.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -162,6 +164,7 @@
 				18A551F32D0749C3008FC5F6 /* WindowAccessor.swift */,
 				18A551F42D0749C3008FC5F6 /* WindowHighlighter.swift */,
 				AA1100000000000000000001 /* MagnifierCapture.swift */,
+				CC3300000000000000001001 /* ColorGridPicker.swift */,
 			);
 			path = Supports;
 			sourceTree = "<group>";
@@ -413,6 +416,7 @@
 				CC3300000000000000000602 /* RecordingControls.swift in Sources */,
 				CC3300000000000000000702 /* NotchCapsule.swift in Sources */,
 				CC3300000000000000000802 /* AudioMix.swift in Sources */,
+				CC3300000000000000001002 /* ColorGridPicker.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
