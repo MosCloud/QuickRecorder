@@ -30,7 +30,7 @@ struct SettingsView: View {
 
     @ViewBuilder private var detail: some View {
         switch selectedItem {
-        case "Recorder": RecorderView()
+        case "Recorder": ScrollView { RecorderView() } // Taller than the window since the recording controls group
         case "Output": OutputView()
         case "Hotkey": HotkeyView()
         case "Blocklist": BlocklistView()
