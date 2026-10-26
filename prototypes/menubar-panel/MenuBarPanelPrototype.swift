@@ -6,7 +6,8 @@
 //  110×80 tiles in a 2×4 grid (≈470×190) and orders them differently from the main panel.
 //  A: a native NSMenu, like the recording menu, with the hotkeys beside each item.
 //  B: a compact, Control Center–style panel about 300 wide.
-//  Both follow the main panel's order: system audio (with the microphone), screen, area, app, window, device, settings, quit.
+//  B2: B in the main panel's own style: its tiles at two-thirds size, and one footer line (microphone, settings and quit as icons).
+//  All follow the main panel's order: system audio (with the microphone), screen, area, app, window, device, settings, quit.
 //  Nothing here records; every action is only logged in the info window.
 //
 
@@ -171,18 +172,18 @@ final class PanelVariant: NSObject {
     let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     let popover = NSPopover()
 
-    override init() {
+    init(title: String, content: (@escaping () -> Void) -> AnyView) {
         super.init()
         if let button = item.button {
             button.image = NSImage(systemSymbolName: "dot.circle.and.hand.point.up.left.fill", accessibilityDescription: nil)?
                 .withSymbolConfiguration(.init(pointSize: 14, weight: .medium))
-            button.title = "B"
+            button.title = title
             button.imagePosition = .imageLeading
             button.target = self
             button.action = #selector(toggle)
         }
         popover.behavior = .transient
-        let host = NSHostingController(rootView: CompactPanel { [weak self] in self?.popover.performClose(nil) }.environmentObject(Model.shared))
+        let host = NSHostingController(rootView: content { [weak self] in self?.popover.performClose(nil) }.environmentObject(Model.shared))
         host.sizingOptions = [.preferredContentSize]
         popover.contentViewController = host
     }
@@ -310,17 +311,174 @@ struct Tile: View {
     }
 }
 
+// MARK: - B2: the main panel's own tiles, scaled down, with a one-line footer
+
+/// The main panel's quit colour (`dark_my_red`)
+let quitRed = Color(nsColor: NSColor(name: nil) { appearance in
+    appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        ? NSColor(srgbRed: 0xEC / 255, green: 0x6A / 255, blue: 0x5D / 255, alpha: 1)
+        : NSColor(srgbRed: 0xAA / 255, green: 0x1B / 255, blue: 0x0C / 255, alpha: 1)
+})
+
+struct ClassicPanel: View {
+    @EnvironmentObject var model: Model
+    var close: () -> Void
+    @State private var showDevices = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            VStack(spacing: 4) {
+                HStack(spacing: 4) {
+                    tile(recordActions[0]); separator; tile(recordActions[1]); separator; tile(recordActions[2])
+                }
+                HStack(spacing: 9) {
+                    ForEach(0..<3, id: \.self) { _ in Divider().frame(width: 76).frame(width: 92) }
+                }
+                HStack(spacing: 4) {
+                    tile(recordActions[3]); separator; tile(recordActions[4]); separator
+                    ClassicTile(title: "录制移动设备", symbol: "apps.ipad", hotkey: nil) { showDevices = true }
+                        .popover(isPresented: $showDevices, arrowEdge: .bottom) {
+                            DevicePopover { showDevices = false; close() }
+                        }
+                }
+            }
+            .padding(8)
+            Divider()
+            HStack(spacing: 6) {
+                Toggle(isOn: $model.recordMic) { EmptyView() }
+                    .toggleStyle(.checkbox)
+                    .labelsHidden()
+                Image(systemName: "mic.fill")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(model.recordMic ? .primary : .secondary)
+                Picker("", selection: $model.micDevice) {
+                    Text("系统默认").tag("default")
+                    ForEach(model.micList, id: \.self) { Text($0).tag($0) }
+                }
+                .labelsHidden()
+                .fixedSize()
+                .controlSize(.small)
+                .disabled(!model.recordMic)
+                .help("录制麦克风")
+                Spacer()
+                IconButton(symbol: "gearshape", help: "偏好设置") { model.did("偏好设置", in: "B2"); close() }
+                IconButton(symbol: "xmark.circle", help: "退出程序", hoverTint: quitRed) { NSApp.terminate(nil) }
+            }
+            .padding(.leading, 12)
+            .padding(.trailing, 8)
+            .padding(.vertical, 6)
+        }
+        .fixedSize()
+        .onChange(of: model.recordMic) { model.did("麦克风 \(model.micSummary)", in: "B2") }
+        .onChange(of: model.micDevice) { model.did("麦克风 \(model.micSummary)", in: "B2") }
+    }
+
+    private var separator: some View { Divider().frame(height: 46) }
+
+    private func tile(_ action: RecordAction) -> some View {
+        // The main panel draws the app as a rounded square with "App" in it
+        let isApp = action.title == "录制应用程序"
+        return ClassicTile(title: action.title, symbol: isApp ? "app" : action.symbol, overlay: isApp ? "App" : "", hotkey: action.hotkey) {
+            model.did(action.title, in: "B2")
+            close()
+        }
+    }
+}
+
+/// The main panel's `SelectorView` at about two-thirds size: title above, icon below, a highlight on hover.
+struct ClassicTile: View {
+    let title: String
+    let symbol: String
+    var overlay = ""
+    let hotkey: String?
+    let action: () -> Void
+    @State private var hovering = false
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 5) {
+                Text(title).font(.system(size: 11))
+                ZStack {
+                    Image(systemName: symbol).font(.system(size: 24))
+                    Text(overlay).font(.system(size: 7.5, weight: .bold))
+                }
+                .frame(height: 28)
+            }
+            .opacity(0.95)
+            .frame(width: 92, height: 60)
+            .background(.primary.opacity(hovering ? 0.2 : 0.0001), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+        .help(hotkey.map { "⌃⌥⌘\($0.uppercased())" } ?? "")
+    }
+}
+
+struct IconButton: View {
+    let symbol: String
+    let help: String
+    var hoverTint: Color = .primary
+    let action: () -> Void
+    @State private var hovering = false
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 15))
+                .foregroundStyle(hovering ? AnyShapeStyle(hoverTint) : AnyShapeStyle(.secondary))
+                .frame(width: 26, height: 26)
+                .background(.primary.opacity(hovering ? 0.12 : 0.0001), in: Circle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+        .help(help)
+    }
+}
+
+/// Stands in for the main panel's `iDevicePopoverView`.
+struct DevicePopover: View {
+    @EnvironmentObject var model: Model
+    var done: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            ForEach(model.devices, id: \.self) { device in
+                Button {
+                    model.did("录制 \(device)（静音：\(model.mute ? "开" : "关")，\(model.preset)）", in: "B2")
+                    done()
+                } label: {
+                    Label(device, systemImage: "apple.logo").frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(.borderless)
+            }
+            Divider()
+            HStack {
+                Toggle("静音", isOn: $model.mute).toggleStyle(.checkbox)
+                Spacer()
+                Picker("预设", selection: $model.preset) {
+                    ForEach(model.presets, id: \.self) { Text($0).tag($0) }
+                }
+                .fixedSize()
+            }
+            .controlSize(.small)
+            Text("如需通话时录屏请启用\"静音\"").font(.system(size: 10)).foregroundStyle(.secondary)
+        }
+        .font(.system(size: 12))
+        .padding(10)
+        .frame(width: 220)
+    }
+}
+
 // MARK: - Info window
 
 struct InfoView: View {
     @EnvironmentObject var model: Model
-    let openA: () -> Void
-    let openB: () -> Void
+    let open: (String) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("菜单栏弹窗原型（#46）").font(.headline)
-            Text("菜单栏里多了两个图标：「◉ A」是原生菜单，「◉ B」是紧凑面板，都按主面板的顺序排列。如果图标被刘海或菜单栏管理工具挡住，就用下面的按钮在这里打开。这个原型不会真的录制，只记录你点了什么。")
+            Text("菜单栏里有三个图标，都按主面板的顺序排列：\n「◉ A」原生菜单；\n「◉ B」控制中心式的紧凑面板；\n「◉ B2」B 的改进版：沿用主面板的图块风格，底部一条工具栏（麦克风 + ⚙ ⊗）。\n图标被刘海或菜单栏管理工具挡住时，用下面的按钮在这里打开。这个原型不会真的录制，只记录你点了什么。")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -331,14 +489,15 @@ struct InfoView: View {
             }
             .font(.callout)
             HStack {
-                Button("在这里打开 A", action: openA)
-                Button("在这里打开 B", action: openB)
+                Button("打开 A") { open("A") }
+                Button("打开 B") { open("B") }
+                Button("打开 B2") { open("B2") }
                 Spacer()
                 Button("退出原型") { NSApp.terminate(nil) }
             }
         }
         .padding(16)
-        .frame(width: 420)
+        .frame(width: 440)
     }
 }
 
@@ -346,13 +505,14 @@ struct InfoView: View {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     var menuVariant: MenuVariant!
     var panelVariant: PanelVariant!
+    var classicVariant: PanelVariant!
     var window: NSWindow!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         menuVariant = MenuVariant()
-        panelVariant = PanelVariant()
-        let info = InfoView(openA: { [unowned self] in openA() }, openB: { [unowned self] in openB() })
-            .environmentObject(Model.shared)
+        panelVariant = PanelVariant(title: "B") { AnyView(CompactPanel(close: $0)) }
+        classicVariant = PanelVariant(title: "B2") { AnyView(ClassicPanel(close: $0)) }
+        let info = InfoView { [unowned self] in open($0) }.environmentObject(Model.shared)
         window = NSWindow(contentRect: .zero, styleMask: [.titled, .closable], backing: .buffered, defer: false)
         window.title = "菜单栏弹窗原型"
         window.contentViewController = NSHostingController(rootView: info)
@@ -362,15 +522,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate()
     }
 
-
-    private func openA() {
+    private func open(_ variant: String) {
         guard let view = window.contentView else { return }
-        menuVariant.menu.popUp(positioning: nil, at: NSPoint(x: 16, y: view.isFlipped ? view.bounds.height - 8 : 8), in: view)
-    }
-
-    private func openB() {
-        guard let view = window.contentView else { return }
-        panelVariant.show(relativeTo: NSRect(x: view.bounds.midX, y: 0, width: 1, height: view.bounds.height), of: view, edge: .maxX)
+        let side = NSRect(x: view.bounds.midX, y: 0, width: 1, height: view.bounds.height)
+        switch variant {
+        case "A": menuVariant.menu.popUp(positioning: nil, at: NSPoint(x: 16, y: view.isFlipped ? view.bounds.height - 8 : 8), in: view)
+        case "B": panelVariant.show(relativeTo: side, of: view, edge: .maxX)
+        default: classicVariant.show(relativeTo: side, of: view, edge: .maxX)
+        }
     }
 }
 
