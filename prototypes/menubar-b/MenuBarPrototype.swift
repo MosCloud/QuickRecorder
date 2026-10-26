@@ -5,10 +5,11 @@
 //   第 2 轮：两者做成独立开关、至少保留一个；原生菜单项和胶囊按钮在 macOS 27 上点击都生效。
 //   第 2 轮后：胶囊先固定在刘海下方，不支持拖动（以后的版本再细化）。
 //   第 3 轮：「从刘海弹出 / 收回刘海」动效满意，参数用系统 .bouncy（0.5s / 0.3），收回用 .smooth。
-// 第 4 轮要回答的问题：
-//   1. 胶囊的圆角参考刘海：胶囊 / 刘海圆角（圆角矩形，半径可调）/ 刘海延伸（顶部贴住刘海，带内凹过渡）
-//   2. 去掉黑色描边：那圈深色边是系统 Liquid Glass 自带的边缘效果，没有参数能关，只能换材质比较：
-//      Liquid Glass / 毛玻璃（无描边）/ 纯黑（和刘海同色，无描边）
+//   第 4 轮：形状选「刘海圆角」（圆角 10）；材质三种都保留成设置项：Liquid Glass（默认）/ 毛玻璃 / 纯黑。
+//           （那圈深色边是系统 Liquid Glass 自带的，没有参数能关。）
+// 第 5 轮要回答的问题：鼠标不在胶囊上时把它调淡，减少对屏幕内容的干扰。不透明度取多少、等多久再变淡？
+//   规则：鼠标移入立即恢复（0.15s）；移出后等一会儿再淡出（0.4s）；弹出后 2 秒内、倒计时中、暂停中保持完全显示；
+//   系统开了「降低透明度」时不变淡。用整个窗口的 alphaValue + 系统动画实现，三种材质都适用。
 // 录制是假的：计时器在走，所有动作只记录到配置条和终端里。
 //
 // 运行：prototypes/menubar-b/run.sh [shape=pill|notchRounded|notchExtended] [material=glass|blur|black]
@@ -54,6 +55,8 @@ final class DemoSettings: ObservableObject {
     @Published var shape = CapsuleShapeStyle.notchRounded
     @Published var material = CapsuleMaterial.glass
     @Published var cornerRadius = 10.0
+    @Published var idleOpacity = 0.5
+    @Published var idleDelay = 1.5
 
     var configText: String {
         switch (showMenuBarItem, showCapsule) {
@@ -81,6 +84,11 @@ final class FakeRecording: ObservableObject {
     @Published private(set) var isMagnifierOn = false
     @Published private(set) var lastEvent = "还没有收到点击"
     @Published private(set) var tickCount = 0 // 只用来驱动界面刷新
+    @Published private(set) var capsuleStatus = "未显示"
+
+    func setCapsuleStatus(_ text: String) {
+        if text != capsuleStatus { capsuleStatus = text }
+    }
 
     private var startedAt = Date()
     private var pausedAt: Date?
@@ -448,6 +456,12 @@ final class CapsuleController {
     private var state = CapsuleState()
     private var panel: NSPanel?
     private var generation = 0
+    private var geo: CapsuleGeometry?
+    private var hoverTimer: Timer?
+    private var isHovering = false
+    private var isDimmed = false
+    private var targetAlpha: CGFloat = 1 // 动画进行中 alphaValue 是中间值，所以单独记目标值
+    private var activeUntil = Date.distantPast // 在这之前保持完全显示
 
     var isShown: Bool { panel != nil }
     var anchorView: NSView? { panel?.contentView }
@@ -483,8 +497,15 @@ final class CapsuleController {
         panel.level = NSWindow.Level(rawValue: NSWindow.Level.statusBar.rawValue + 1) // 要能画到菜单栏区域
         panel.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary, .ignoresCycle]
         panel.setFrame(geo.windowFrame, display: false)
+        panel.alphaValue = 1
         panel.orderFrontRegardless()
         self.panel = panel
+        self.geo = geo
+        isHovering = false
+        isDimmed = false
+        targetAlpha = 1
+        activeUntil = Date().addingTimeInterval(settings.emergeDuration + 2) // 弹出后 2 秒内保持完全显示
+        startHoverPolling()
         print("▶ 弹出：\(settings.lookText)；\(settings.motionText)\(settings.simulateNoNotch ? "，模拟无刘海" : "")\(withCountdown ? "，带倒计时" : "")")
 
         // 下一轮 runloop 再开始动画，确保起始状态（藏在刘海里）先被画出来
@@ -506,11 +527,22 @@ final class CapsuleController {
     func retract() {
         guard let panel else { return }
         generation += 1
+        stopHoverPolling()
+        if targetAlpha < 1 { // 变淡状态下停止：先恢复完全显示，让「结束」看得清楚
+            targetAlpha = 1
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.15
+                panel.animator().alphaValue = 1
+            }
+        }
         let state = self.state
         let finish = { [weak self] in
             MainActor.assumeIsolated {
                 panel.orderOut(nil)
-                if self?.panel === panel { self?.panel = nil }
+                if self?.panel === panel {
+                    self?.panel = nil
+                    self?.rec.setCapsuleStatus("未显示")
+                }
             }
         }
         if settings.reduceMotion {
@@ -518,6 +550,70 @@ final class CapsuleController {
         } else {
             withAnimation(.smooth(duration: 0.12)) { state.contentVisible = false }
             withAnimation(.smooth(duration: 0.35).delay(0.08)) { state.expanded = false } completion: { finish() }
+        }
+    }
+
+    // MARK: 鼠标移开后变淡（第 5 轮）
+
+    /// 有操作（继续录制、倒计时结束等）后，重新等一段时间再变淡
+    func markActive() {
+        activeUntil = max(activeUntil, Date().addingTimeInterval(settings.idleDelay))
+    }
+
+    // 胶囊窗口不是 key window 时悬停事件不可靠，直接每 0.1 秒看一次鼠标位置
+    private func startHoverPolling() {
+        guard hoverTimer == nil else { return }
+        let timer = Timer(timeInterval: 0.1, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.pollHover() }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        hoverTimer = timer
+    }
+
+    private func stopHoverPolling() {
+        hoverTimer?.invalidate()
+        hoverTimer = nil
+    }
+
+    private func pollHover() {
+        guard let geo else { return }
+        let window = geo.windowFrame
+        let capsuleOnScreen = NSRect(x: window.minX + geo.final.minX, y: window.maxY - geo.final.maxY,
+                                     width: geo.final.width, height: geo.final.height).insetBy(dx: -6, dy: -6)
+        let inside = capsuleOnScreen.contains(NSEvent.mouseLocation)
+        if inside != isHovering {
+            isHovering = inside
+            if !inside { activeUntil = Date().addingTimeInterval(settings.idleDelay) }
+        }
+        evaluateIdle()
+    }
+
+    private func evaluateIdle() {
+        guard let panel, state.expanded else { return }
+        let now = Date()
+        let keepFullReason: String? =
+            if settings.idleOpacity >= 0.99 { "不透明度设为 100%" }
+            else if NSWorkspace.shared.accessibilityDisplayShouldReduceTransparency { "系统开启了降低透明度" }
+            else if state.countdown != nil { "倒计时中" }
+            else if rec.isPaused { "暂停中" }
+            else if isHovering { "鼠标在胶囊上" }
+            else if now < activeUntil { String(format: "%.1f 秒后变淡", activeUntil.timeIntervalSince(now)) }
+            else { nil }
+        let target = keepFullReason == nil ? CGFloat(settings.idleOpacity) : 1
+        rec.setCapsuleStatus(keepFullReason.map { "完全显示（\($0)）" } ?? "已变淡到 \(Int((settings.idleOpacity * 100).rounded()))%")
+
+        let dimNow = keepFullReason == nil
+        if dimNow != isDimmed {
+            isDimmed = dimNow
+            print(dimNow ? "◐ 胶囊变淡到 \(Int((settings.idleOpacity * 100).rounded()))%" : "● 胶囊恢复完全显示（\(keepFullReason ?? "")）")
+        }
+        guard abs(targetAlpha - target) > 0.001 else { return }
+        let fadingIn = target > targetAlpha
+        targetAlpha = target
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = fadingIn ? 0.15 : 0.4
+            context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            panel.animator().alphaValue = target
         }
     }
 
@@ -576,26 +672,18 @@ struct PrototypeConfigBar: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 12) {
-                Text("PROTOTYPE · 第 4 轮").font(.headline)
-                Picker("形状", selection: $settings.shape) {
-                    ForEach(CapsuleShapeStyle.allCases, id: \.self) { Text($0.title).tag($0) }
-                }
-                .pickerStyle(.segmented)
-                .frame(width: 250)
-                Picker("材质", selection: $settings.material) {
+                Text("PROTOTYPE · 第 5 轮").font(.headline)
+                Picker("胶囊材质", selection: $settings.material) {
                     ForEach(CapsuleMaterial.allCases, id: \.self) { Text($0.title).tag($0) }
                 }
                 .pickerStyle(.segmented)
-                .frame(width: 250)
+                .frame(width: 300)
             }
             HStack(spacing: 10) {
-                Text("圆角 \(settings.cornerRadius, specifier: "%.0f")").monospacedDigit()
-                Slider(value: $settings.cornerRadius, in: 4...20, step: 1).frame(width: 140)
-                    .disabled(settings.shape == .pill)
-                Text("弹出时长 \(settings.emergeDuration, specifier: "%.2f")s").monospacedDigit()
-                Slider(value: $settings.emergeDuration, in: 0.3...1.2).frame(width: 110)
-                Text("回弹 \(settings.bounce, specifier: "%.2f")").monospacedDigit()
-                Slider(value: $settings.bounce, in: 0...0.5).frame(width: 110)
+                Text("鼠标移开后不透明度 \(Int((settings.idleOpacity * 100).rounded()))%").monospacedDigit()
+                Slider(value: $settings.idleOpacity, in: 0.1...1.0, step: 0.05).frame(width: 180)
+                Text("变淡前等待 \(settings.idleDelay, specifier: "%.1f")s").monospacedDigit()
+                Slider(value: $settings.idleDelay, in: 0.5...5, step: 0.5).frame(width: 150)
             }
             HStack(spacing: 16) {
                 Toggle("菜单栏计时 + 菜单", isOn: $settings.showMenuBarItem)
@@ -609,6 +697,7 @@ struct PrototypeConfigBar: View {
             Divider().overlay(.white.opacity(0.3))
             HStack(spacing: 10) {
                 Text("状态：\(rec.stateText) \(rec.elapsedText)").monospacedDigit()
+                Text("胶囊：\(rec.capsuleStatus)").monospacedDigit()
                 Text("最近收到：\(rec.lastEvent)").lineLimit(1).truncationMode(.tail)
                 Spacer(minLength: 0)
                 if !rec.isRecording { Button("开始录制", action: onStart) }
@@ -681,7 +770,7 @@ final class PrototypeApp: NSObject, NSApplicationDelegate {
         }
         RunLoop.main.add(clock, forMode: .common) // .common：菜单打开时计时也继续走
         self.clock = clock
-        print("菜单栏 demo 第 4 轮已启动。点配置条上的「退出 Demo」或在终端按 Ctrl+C 结束。")
+        print("菜单栏 demo 第 5 轮已启动。点配置条上的「退出 Demo」或在终端按 Ctrl+C 结束。")
         startFlow()
     }
 
@@ -696,6 +785,7 @@ final class PrototypeApp: NSObject, NSApplicationDelegate {
     private func beginRecording() {
         rec.start()
         menuBar.sync()
+        capsule.markActive() // 倒计时刚结束时，也先完全显示一会儿
         print("● 开始录制（模拟）")
     }
 
@@ -715,6 +805,7 @@ final class PrototypeApp: NSObject, NSApplicationDelegate {
         rec.togglePause()
         rec.log(rec.isPaused ? "暂停" : "继续", from: source)
         menuBar.refresh()
+        if !rec.isPaused { capsule.markActive() }
     }
 
     private func camera(from source: String) {
