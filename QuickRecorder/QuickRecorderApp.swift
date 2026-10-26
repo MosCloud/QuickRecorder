@@ -105,7 +105,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
     @AppStorage("withAlpha")        var withAlpha: Bool = false
     @AppStorage("saveDirectory")    var saveDirectory: String?
     @AppStorage("countdown")        var countdown: Int = 0
-    @AppStorage("poSafeDelay")      var poSafeDelay: Int = 1
     @AppStorage("highlightMouse")   var highlightMouse: Bool = false
     @AppStorage("includeMenuBar")   var includeMenuBar: Bool = true
     @AppStorage("hideDesktopFiles") var hideDesktopFiles: Bool = false
@@ -204,7 +203,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
                 "countdown": 0,
                 "videoFormat": VideoFormat.mp4.rawValue,
                 "encoder": Encoder.h264.rawValue,
-                "poSafeDelay": 1,
                 "saveDirectory": userDesktop as NSString,
                 "showMouse": true,
                 "recordMic": false,
