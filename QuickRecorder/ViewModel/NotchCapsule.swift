@@ -53,7 +53,8 @@ struct NotchCapsuleView: View {
     @ViewBuilder
     private func withMaterial<V: View, S: Shape>(_ view: V, shape: S) -> some View {
         switch material {
-        case .glass: view.glassEffect(.regular, in: shape)
+        // Glass only behind the controls: inside it, its vibrancy would wash out the red stop button
+        case .glass: view.background { Color.clear.glassEffect(.regular, in: shape) }
         case .blur: view.background(.regularMaterial, in: shape)
         case .black: view.background(Color.black, in: shape)
         }
@@ -77,14 +78,7 @@ struct NotchCapsuleView: View {
             }
         } else {
             HStack(spacing: 10) {
-                Button { RecordingControls.shared.stop() } label: {
-                    Image(systemName: "stop.fill")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundStyle(.white)
-                        .frame(width: 28, height: 28)
-                        .background(Circle().fill(.red))
-                }
-                .help("Stop Recording")
+                StopButton()
                 if model.kind != .device {
                     controlButton(model.isPaused ? "play.fill" : "pause.fill", help: model.isPaused ? "Resume Recording" : "Pause Recording") {
                         RecordingControls.shared.togglePause()
@@ -117,6 +111,27 @@ struct NotchCapsuleView: View {
                 .contentShape(Circle())
         }
         .help(help)
+    }
+}
+
+/// A red rounded square in a ring, like the stop button of QuickTime's and iPhone's screen recording.
+private struct StopButton: View {
+    @State private var hovering = false
+
+    var body: some View {
+        Button { RecordingControls.shared.stop() } label: {
+            ZStack {
+                Circle().strokeBorder(.primary.opacity(hovering ? 0.9 : 0.55), lineWidth: 2)
+                RoundedRectangle(cornerRadius: 3.5, style: .continuous)
+                    .fill(Color(nsColor: .systemRed))
+                    .frame(width: hovering ? 13 : 12, height: hovering ? 13 : 12)
+            }
+            .frame(width: 28, height: 28)
+            .contentShape(Circle())
+            .animation(.smooth(duration: 0.15), value: hovering)
+        }
+        .onHover { hovering = $0 }
+        .help("Stop Recording")
     }
 }
 
