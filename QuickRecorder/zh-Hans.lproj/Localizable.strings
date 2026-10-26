@@ -245,3 +245,5 @@
 "Forest Green" = "森林绿";
 "Wine" = "酒红";
 "Midnight" = "午夜";
+"This shortcut is already used by “%@”." = "这个快捷键已被「%@」使用。";
+"⌘ (or ⇧⌘) with a letter or number is a shortcut other apps use, such as ⌘S to save. As a global shortcut it would stop working in every app while QuickRecorder runs. Add ⌃ or ⌥ to it." = "只用 ⌘（或 ⇧⌘）加字母或数字的组合，大多是其他 app 的常用快捷键，比如 ⌘S 保存。设成全局快捷键后，只要 QuickRecorder 在运行，它在所有 app 里都会失灵。请再加上 ⌃ 或 ⌥。";

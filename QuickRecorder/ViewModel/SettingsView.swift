@@ -8,6 +8,7 @@
 import SwiftUI
 import ServiceManagement
 import KeyboardShortcuts
+import Carbon.HIToolbox
 
 struct SettingsView: View {
     @State private var selectedItem: String? = "General"
@@ -240,24 +241,24 @@ struct HotkeyView: View {
     var body: some View {
         SForm(spacing: 10) {
             SGroupBox(label: "Hotkey") {
-                SItem(label: "Open Main Panel") { KeyboardShortcuts.Recorder("", name: .showPanel) }
+                SItem(label: "Open Main Panel") { HotkeyRecorder(name: .showPanel) }
             }
             SGroupBox {
-                SItem(label: "Stop Recording") { KeyboardShortcuts.Recorder("", name: .stop) }
+                SItem(label: "Stop Recording") { HotkeyRecorder(name: .stop) }
                 SDivider()
-                SItem(label: "Pause / Resume") { KeyboardShortcuts.Recorder("", name: .pauseResume) }
+                SItem(label: "Pause / Resume") { HotkeyRecorder(name: .pauseResume) }
             }
             SGroupBox {
-                SItem(label: "Record System Audio") { KeyboardShortcuts.Recorder("", name: .startWithAudio) }
+                SItem(label: "Record System Audio") { HotkeyRecorder(name: .startWithAudio) }
                 SDivider()
-                SItem(label: "Record Current Screen") { KeyboardShortcuts.Recorder("", name: .startWithScreen) }
+                SItem(label: "Record Current Screen") { HotkeyRecorder(name: .startWithScreen) }
                 SDivider()
-                SItem(label: "Record Topmost Window") { KeyboardShortcuts.Recorder("", name: .startWithWindow) }
+                SItem(label: "Record Topmost Window") { HotkeyRecorder(name: .startWithWindow) }
                 SDivider()
-                SItem(label: "Select Area to Record") { KeyboardShortcuts.Recorder("", name: .startWithArea) }
+                SItem(label: "Select Area to Record") { HotkeyRecorder(name: .startWithArea) }
             }
             SGroupBox {
-                SItem(label: "Save Current Frame") { KeyboardShortcuts.Recorder("", name: .saveFrame) }
+                SItem(label: "Save Current Frame") { HotkeyRecorder(name: .saveFrame) }
             }
         }
     }
@@ -318,6 +319,56 @@ extension KeyboardShortcuts.Name {
     static let pauseResume = Self("pauseResume")
     static let stop = Self("stop")
     static let showPanel = Self("showPanel")
+}
+
+extension KeyboardShortcuts.Name {
+    /// Every global hotkey, with the label the settings show for it.
+    static let labelled: [(name: Self, label: String)] = [
+        (.showPanel, "Open Main Panel"), (.stop, "Stop Recording"), (.pauseResume, "Pause / Resume"),
+        (.startWithAudio, "Record System Audio"), (.startWithScreen, "Record Current Screen"),
+        (.startWithWindow, "Record Topmost Window"), (.startWithArea, "Select Area to Record"), (.saveFrame, "Save Current Frame"),
+    ]
+}
+
+/// A hotkey recorder that refuses a shortcut another action already has, or one other apps rely on.
+private struct HotkeyRecorder: View {
+    let name: KeyboardShortcuts.Name
+
+    var body: some View {
+        KeyboardShortcuts.Recorder("", name: name)
+            .shortcutValidation { shortcut in
+                let others = KeyboardShortcuts.Name.labelled.compactMap { other in
+                    other.name == name ? nil : other.name.shortcut.map { (action: other.label.local, hotkey: $0.hotkey) }
+                }
+                switch HotkeyCheck.verdict(for: shortcut.hotkey, others: others) {
+                case .allowed:
+                    return .allow
+                case .usedBy(let action):
+                    return .disallow(reason: String(format: "This shortcut is already used by “%@”.".local, action))
+                case .commonInApps:
+                    return .disallow(reason: "⌘ (or ⇧⌘) with a letter or number is a shortcut other apps use, such as ⌘S to save. As a global shortcut it would stop working in every app while QuickRecorder runs. Add ⌃ or ⌥ to it.".local)
+                }
+            }
+    }
+}
+
+private extension KeyboardShortcuts.Shortcut {
+    /// Letter and digit keys of the US layout, by Carbon key code
+    static let characterKeys: Set<Int> = [
+        kVK_ANSI_A, kVK_ANSI_B, kVK_ANSI_C, kVK_ANSI_D, kVK_ANSI_E, kVK_ANSI_F, kVK_ANSI_G, kVK_ANSI_H, kVK_ANSI_I,
+        kVK_ANSI_J, kVK_ANSI_K, kVK_ANSI_L, kVK_ANSI_M, kVK_ANSI_N, kVK_ANSI_O, kVK_ANSI_P, kVK_ANSI_Q, kVK_ANSI_R,
+        kVK_ANSI_S, kVK_ANSI_T, kVK_ANSI_U, kVK_ANSI_V, kVK_ANSI_W, kVK_ANSI_X, kVK_ANSI_Y, kVK_ANSI_Z,
+        kVK_ANSI_0, kVK_ANSI_1, kVK_ANSI_2, kVK_ANSI_3, kVK_ANSI_4, kVK_ANSI_5, kVK_ANSI_6, kVK_ANSI_7, kVK_ANSI_8, kVK_ANSI_9,
+    ]
+
+    var hotkey: Hotkey {
+        var mods = HotkeyModifiers()
+        if modifiers.contains(.command) { mods.insert(.command) }
+        if modifiers.contains(.option) { mods.insert(.option) }
+        if modifiers.contains(.control) { mods.insert(.control) }
+        if modifiers.contains(.shift) { mods.insert(.shift) }
+        return Hotkey(keyCode: carbonKeyCode, modifiers: mods, isCharacterKey: Self.characterKeys.contains(carbonKeyCode))
+    }
 }
 
 extension AppDelegate {
