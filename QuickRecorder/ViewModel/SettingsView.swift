@@ -221,7 +221,8 @@ struct OutputView: View {
                     Text("H.265").tag(Encoder.h265)
                 }.disabled(withAlpha)
                 SDivider()
-                SToggle("Recording with Alpha Channel", isOn: $withAlpha)
+                SToggle("Recording with Alpha Channel", isOn: $withAlpha,
+                        tips: "Records with HEVC with Alpha, so transparent areas stay transparent in the video.\n\n• Turning it on fixes the encoder to H.265 and the format to MOV.\n• When recording an application, the Background menu then offers \"Transparent\": everything outside the selected apps' windows is transparent.\n• A full screen or screen area recording has no transparent areas, so it makes no difference there.\n• The transparency shows in apps that support transparent video, such as Final Cut Pro, Motion and Keynote. Most players and video sites don't.")
             }
             SGroupBox(label: "Save") {
                 SItem(label: "Output Folder") {
