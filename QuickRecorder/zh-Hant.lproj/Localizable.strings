@@ -245,3 +245,4 @@
 "Midnight" = "午夜";
 "This shortcut is already used by “%@”." = "這個快捷鍵已被「%@」使用。";
 "⌘ (or ⇧⌘) with a letter or number is a shortcut other apps use, such as ⌘S to save. As a global shortcut it would stop working in every app while QuickRecorder runs. Add ⌃ or ⌥ to it." = "只用 ⌘（或 ⇧⌘）加字母或數字的組合，大多是其他 app 的常用快捷鍵，例如 ⌘S 儲存。設為全域快捷鍵後，只要 QuickRecorder 在執行，它在所有 app 裡都會失靈。請再加上 ⌃ 或 ⌥。";
+"Restore Defaults" = "恢復預設";

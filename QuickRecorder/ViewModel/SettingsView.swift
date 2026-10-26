@@ -260,6 +260,10 @@ struct HotkeyView: View {
             SGroupBox {
                 SItem(label: "Save Current Frame") { HotkeyRecorder(name: .saveFrame) }
             }
+            HStack {
+                Spacer()
+                Button("Restore Defaults") { KeyboardShortcuts.reset(KeyboardShortcuts.Name.labelled.map(\.name)) }
+            }
         }
     }
 }
@@ -310,15 +314,26 @@ extension UserDefaults {
     }
 }
 
+// Defaults are ⌃⌥⌘ plus a letter to remember them by; no system shortcut uses these
 extension KeyboardShortcuts.Name {
-    static let startWithAudio = Self("startWithAudio")
-    static let startWithScreen = Self("startWithScreen")
-    static let startWithWindow = Self("startWithWindow")
-    static let startWithArea = Self("startWithArea")
-    static let saveFrame = Self("saveFrame")
-    static let pauseResume = Self("pauseResume")
-    static let stop = Self("stop")
-    static let showPanel = Self("showPanel")
+    static let startWithAudio = Self("startWithAudio", initial: .init(.u, modifiers: [.control, .option, .command]))
+    static let startWithScreen = Self("startWithScreen", initial: .init(.s, modifiers: [.control, .option, .command]))
+    static let startWithWindow = Self("startWithWindow", initial: .init(.w, modifiers: [.control, .option, .command]))
+    static let startWithArea = Self("startWithArea", initial: .init(.a, modifiers: [.control, .option, .command]))
+    static let saveFrame = Self("saveFrame", initial: .init(.f, modifiers: [.control, .option, .command]))
+    static let pauseResume = Self("pauseResume", initial: .init(.p, modifiers: [.control, .option, .command]))
+    static let stop = Self("stop", initial: .init(.x, modifiers: [.control, .option, .command]))
+    static let showPanel = Self("showPanel", initial: .init(.r, modifiers: [.control, .option, .command]))
+
+    /// Once per version of the defaults, replace every hotkey with its default: version 1 brings in the ⌃⌥⌘ set
+    /// and takes back the plain ⌘ ones that stopped other apps' shortcuts working.
+    @MainActor static func applyDefaultsOnce() {
+        let version = 1
+        guard ud.integer(forKey: "hotkeyDefaultsVersion") < version else { return }
+        KeyboardShortcuts.reset(labelled.map(\.name))
+        ud.removeObject(forKey: "KeyboardShortcuts_screenMagnifier") // the magnifier is gone
+        ud.set(version, forKey: "hotkeyDefaultsVersion")
+    }
 }
 
 extension KeyboardShortcuts.Name {

@@ -231,6 +231,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
         previewWindow.isReleasedWhenClosed = false
         previewWindow.backgroundColor = .clear
         
+        KeyboardShortcuts.Name.applyDefaultsOnce()
         KeyboardShortcuts.onKeyDown(for: .showPanel) {
             _ = self.applicationShouldHandleReopen(NSApp, hasVisibleWindows: true)
             if SCContext.stream == nil { NSApp.activate(ignoringOtherApps: true) }
