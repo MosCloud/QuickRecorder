@@ -11,10 +11,6 @@ enum AudioFormat: String { case aac, alac, flac, opus, mp3 }
 
 enum VideoFormat: String { case mov, mp4 }
 
-enum PixFormat: String { case delault, yuv420p8v, yuv420p8f, yuv420p10v, yuv420p10f, bgra32 }
-
-enum ColSpace: String { case delault, srgb, p3, bt709, bt2020 }
-
 enum Encoder: String { case h264, h265 }
 
 enum StreamType: Int { case screen, window, windows, application, screenarea, systemaudio, idevice, camera }

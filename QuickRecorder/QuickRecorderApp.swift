@@ -120,7 +120,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
     @AppStorage("videoFormat")      var videoFormat: VideoFormat = .mp4
     @AppStorage("audioFormat")      var audioFormat: AudioFormat = .aac
     @AppStorage("audioQuality")     var audioQuality: AudioQuality = .high
-    @AppStorage("pixelFormat")      var pixelFormat: PixFormat = .delault
     @AppStorage("hideCCenter")      var hideCCenter: Bool = false
     
     func mousePointerReLocation(event: NSEvent) {
@@ -204,7 +203,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
                 "videoQuality": 1.0,
                 "countdown": 0,
                 "videoFormat": VideoFormat.mp4.rawValue,
-                "pixelFormat": PixFormat.delault.rawValue,
                 "encoder": Encoder.h264.rawValue,
                 "poSafeDelay": 1,
                 "saveDirectory": userDesktop as NSString,
