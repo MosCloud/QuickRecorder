@@ -57,7 +57,6 @@
 ## 6. 叠加效果
 
 - [ ] 高亮鼠标
-- [ ] 屏幕放大镜（快捷键开关）
 - [ ] 摄像头悬浮窗；macOS 的演讲者叠加（Presenter Overlay）
 - [ ] HDR 录制
 - [ ] 带透明通道录制（HEVC with Alpha）

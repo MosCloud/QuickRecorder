@@ -21,9 +21,7 @@ let ud = UserDefaults.standard
 var mouseMonitor: Any?
 var keyMonitor: Any?
 var hideMousePointer = false
-var hideScreenMagnifier = false
 let mousePointer = NSWindow(contentRect: NSRect(x: -70, y: -70, width: 70, height: 70), styleMask: [.borderless], backing: .buffered, defer: false)
-let screenMagnifier = NSWindow(contentRect: NSRect(x: -402, y: -402, width: 402, height: 348), styleMask: [.borderless], backing: .buffered, defer: false)
 let camWindow = NSPanel(contentRect: NSRect(x: 200, y: 200, width: 200, height: 200), styleMask: [.fullSizeContentView, .resizable, .nonactivatingPanel], backing: .buffered, defer: false)
 let deviceWindow = NSWindow(contentRect: NSRect(x: 200, y: 200, width: 200, height: 200), styleMask: [.fullSizeContentView, .resizable], backing: .buffered, defer: false)
 let countdownPanel = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 120, height: 120), styleMask: [.fullSizeContentView], backing: .buffered, defer: false)
@@ -113,26 +111,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
         mousePointer.orderFront(nil)
     }
     
-    func screenMagnifierReLocation(event: NSEvent) {
-        if !SCContext.isMagnifierEnabled || hideScreenMagnifier { screenMagnifier.orderOut(nil); return }
-        let mouseLocation = event.locationInWindow
-        var windowFrame = screenMagnifier.frame
-        windowFrame.origin = NSPoint(x: mouseLocation.x - windowFrame.width / 2, y: mouseLocation.y - windowFrame.height / 2)
-        screenMagnifier.setFrameOrigin(windowFrame.origin)
-        // Global mouse monitors call back on the main thread
-        MainActor.assumeIsolated {
-            MagnifierCapture.shared.capture(around: mouseLocation) { image in
-                if !SCContext.isMagnifierEnabled || hideScreenMagnifier { return }
-                screenMagnifier.contentView = NSHostingView(rootView: ScreenMagnifier(screenShot: image, event: event))
-                screenMagnifier.orderFront(nil)
-            }
-        }
-    }
-    
     func registerGlobalMouseMonitor() {
         mouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.scrollWheel, .mouseMoved, .rightMouseUp, .rightMouseDown, .rightMouseDragged, .leftMouseUp,  .leftMouseDown, .leftMouseDragged, .otherMouseUp, .otherMouseDown, .otherMouseDragged]) { event in
             self.mousePointerReLocation(event: event)
-            self.screenMagnifierReLocation(event: event)
         }
     }
         
@@ -225,12 +206,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
         mousePointer.isReleasedWhenClosed = false
         mousePointer.backgroundColor = NSColor.clear
         
-        screenMagnifier.title = "Screen Magnifier".local
-        screenMagnifier.level = .floating
-        screenMagnifier.ignoresMouseEvents = true
-        screenMagnifier.isReleasedWhenClosed = false
-        screenMagnifier.backgroundColor = NSColor.clear
-        
         camWindow.title = "Camera Overlayer".local
         camWindow.level = .floating
         camWindow.isReleasedWhenClosed = false
@@ -261,7 +236,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
             if SCContext.stream == nil { NSApp.activate(ignoringOtherApps: true) }
         }
         KeyboardShortcuts.onKeyDown(for: .saveFrame) { if SCContext.stream != nil { SCContext.saveFrame = true }}
-        KeyboardShortcuts.onKeyDown(for: .screenMagnifier) { if SCContext.stream != nil { SCContext.isMagnifierEnabled.toggle() }}
         KeyboardShortcuts.onKeyDown(for: .stop) { if SCContext.stream != nil { SCContext.stopRecording() }}
         KeyboardShortcuts.onKeyDown(for: .pauseResume) { if SCContext.stream != nil { SCContext.pauseRecording() }}
         KeyboardShortcuts.onKeyDown(for: .startWithAudio) {[self] in

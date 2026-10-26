@@ -129,7 +129,6 @@ struct SwiftCameraView: View {
         .frame(minWidth: 100, minHeight: 100)
         .onHover { hovering in
             hideMousePointer = hovering
-            hideScreenMagnifier = hovering
         }
     }
 }

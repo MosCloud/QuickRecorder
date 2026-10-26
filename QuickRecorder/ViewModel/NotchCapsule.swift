@@ -360,9 +360,8 @@ final class NotchCapsule {
         guard inside != isHovering else { return }
         isHovering = inside
         dimming.pointer(isInside: inside, at: Self.now)
-        // Keep the cursor highlight and the magnifier out of the way while using the capsule
+        // Keep the cursor highlight out of the way while using the capsule
         hideMousePointer = inside
-        hideScreenMagnifier = inside
     }
 }
 

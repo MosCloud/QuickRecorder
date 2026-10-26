@@ -22,7 +22,6 @@ class SCContext {
     static var previewSession: AVCaptureSession!
     static var frameCache: CMSampleBuffer?
     static var filter: SCContentFilter?
-    static var isMagnifierEnabled = false
     static var saveFrame = false
     static var isPaused = false
     static var isResume = false
@@ -135,7 +134,6 @@ class SCContext {
             guard let title = $0.title else { return false }
             return $0.owningApplication?.bundleIdentifier == Bundle.main.bundleIdentifier
             && title != "Mouse Pointer".local
-            && title != "Screen Magnifier".local
             && title != "Camera Overlayer".local
             && title != "iDevice Overlayer".local
         })
@@ -344,9 +342,7 @@ class SCContext {
         lastPTS = nil
         recordCam = ""
         recordDevice = ""
-        isMagnifierEnabled = false
         mousePointer.orderOut(nil)
-        screenMagnifier.orderOut(nil)
         AppDelegate.shared.stopGlobalMouseMonitor()
 
         if let w = NSApp.windows.first(where:  { $0.title == "Area Overlayer".local }) { w.close() }
