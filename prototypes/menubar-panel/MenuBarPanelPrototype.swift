@@ -6,7 +6,7 @@
 //  110×80 tiles in a 2×4 grid (≈470×190) and orders them differently from the main panel.
 //  A: a native NSMenu, like the recording menu, with the hotkeys beside each item.
 //  B: a compact, Control Center–style panel about 300 wide.
-//  B2: B in the main panel's own style: its tiles at two-thirds size, and one footer line (microphone, settings and quit as icons).
+//  B2: B in the main panel's own style: its tiles at two-thirds size, and one footer line of icon buttons (the microphone is its own switch, then settings and quit).
 //  All follow the main panel's order: system audio (with the microphone), screen, area, app, window, device, settings, quit.
 //  Nothing here records; every action is only logged in the info window.
 //
@@ -345,13 +345,8 @@ struct ClassicPanel: View {
             }
             .padding(8)
             Divider()
-            HStack(spacing: 6) {
-                Toggle(isOn: $model.recordMic) { EmptyView() }
-                    .toggleStyle(.checkbox)
-                    .labelsHidden()
-                Image(systemName: "mic.fill")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(model.recordMic ? .primary : .secondary)
+            HStack(spacing: 4) {
+                MicToggle(isOn: $model.recordMic)
                 Picker("", selection: $model.micDevice) {
                     Text("系统默认").tag("default")
                     ForEach(model.micList, id: \.self) { Text($0).tag($0) }
@@ -365,8 +360,7 @@ struct ClassicPanel: View {
                 IconButton(symbol: "gearshape", help: "偏好设置") { model.did("偏好设置", in: "B2"); close() }
                 IconButton(symbol: "xmark.circle", help: "退出程序", hoverTint: quitRed) { NSApp.terminate(nil) }
             }
-            .padding(.leading, 12)
-            .padding(.trailing, 8)
+            .padding(.horizontal, 8)
             .padding(.vertical, 6)
         }
         .fixedSize()
@@ -433,6 +427,32 @@ struct IconButton: View {
         .buttonStyle(.plain)
         .onHover { hovering = $0 }
         .help(help)
+    }
+}
+
+/// The microphone is its own switch: a green mic while on, a grey slashed mic while off.
+struct MicToggle: View {
+    @Binding var isOn: Bool
+    @State private var hovering = false
+    @State private var bounce = 0
+
+    var body: some View {
+        Button {
+            isOn.toggle()
+            if isOn { bounce += 1 }
+        } label: {
+            Image(systemName: isOn ? "mic.fill" : "mic.slash")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(isOn ? AnyShapeStyle(Color.green) : AnyShapeStyle(.secondary))
+                .contentTransition(.symbolEffect(.replace))
+                .symbolEffect(.bounce, value: bounce)
+                .frame(width: 26, height: 26)
+                .background(.primary.opacity(hovering ? 0.12 : 0.0001), in: Circle())
+                .animation(.smooth(duration: 0.2), value: isOn)
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+        .help(isOn ? "录制麦克风：开" : "录制麦克风：关")
     }
 }
 
