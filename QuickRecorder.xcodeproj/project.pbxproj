@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		1821F2E82CF4B226004A2EC0 /* ContentViewNew.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1821F2E72CF4B226004A2EC0 /* ContentViewNew.swift */; };
-		184506CE2C69213400AFDA45 /* MatrixColorSelector in Frameworks */ = {isa = PBXBuildFile; productRef = 184506CD2C69213400AFDA45 /* MatrixColorSelector */; };
 		184CAEC72BDCCC2300D61D57 /* AVContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 184CAEC62BDCCC2300D61D57 /* AVContext.swift */; };
 		184CAEC92BDDEC6800D61D57 /* AppBlockSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 184CAEC82BDDEC6800D61D57 /* AppBlockSelector.swift */; };
 		1862BF8D2BD5494E003ED522 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 1862BF8F2BD5494E003ED522 /* Credits.rtf */; };
@@ -132,7 +131,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				184506CE2C69213400AFDA45 /* MatrixColorSelector in Frameworks */,
 				18AFF77B2D5F91F800C795A1 /* KeyboardShortcuts in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -284,7 +282,6 @@
 			);
 			name = QuickRecorder;
 			packageProductDependencies = (
-				184506CD2C69213400AFDA45 /* MatrixColorSelector */,
 				18AFF77A2D5F91F800C795A1 /* KeyboardShortcuts */,
 			);
 			productName = QuickRecorder;
@@ -339,7 +336,6 @@
 			);
 			mainGroup = 18D3BDDE2BCE5DC1006CFFC0;
 			packageReferences = (
-				184506CC2C69213400AFDA45 /* XCRemoteSwiftPackageReference "MatrixColorSelector" */,
 				18AFF7792D5F91F800C795A1 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
 			);
 			productRefGroup = 18D3BDE82BCE5DC1006CFFC0 /* Products */;
@@ -736,14 +732,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		184506CC2C69213400AFDA45 /* XCRemoteSwiftPackageReference "MatrixColorSelector" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/lihaoyun6/MatrixColorSelector.git";
-			requirement = {
-				branch = main;
-				kind = branch;
-			};
-		};
 		18AFF7792D5F91F800C795A1 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/sindresorhus/KeyboardShortcuts.git";
@@ -755,11 +743,6 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		184506CD2C69213400AFDA45 /* MatrixColorSelector */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 184506CC2C69213400AFDA45 /* XCRemoteSwiftPackageReference "MatrixColorSelector" */;
-			productName = MatrixColorSelector;
-		};
 		18AFF77A2D5F91F800C795A1 /* KeyboardShortcuts */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 18AFF7792D5F91F800C795A1 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;

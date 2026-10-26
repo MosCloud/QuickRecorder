@@ -9,15 +9,6 @@
         "revision" : "772133d9dbe800fdac0473226822994c5c162c58",
         "version" : "3.1.0"
       }
-    },
-    {
-      "identity" : "matrixcolorselector",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/lihaoyun6/MatrixColorSelector.git",
-      "state" : {
-        "branch" : "main",
-        "revision" : "0853e68c0c9b205ffe6a963f2a56b26e6ceca51a"
-      }
     }
   ],
   "version" : 3
