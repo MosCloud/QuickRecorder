@@ -13,7 +13,7 @@ import AVFAudio
 import VideoToolbox
 
 extension AppDelegate {
-    @objc func prepRecord(type: String, screens: SCDisplay?, windows: [SCWindow]?, applications: [SCRunningApplication]?, fastStart: Bool = false) {
+    @objc func prepRecord(type: String, screens: SCDisplay?, windows: [SCWindow]?, applications: [SCRunningApplication]?) {
         switch type {
         case "window":  SCContext.streamType = .window
         case "windows":  SCContext.streamType = .windows
@@ -136,10 +136,10 @@ extension AppDelegate {
             SCContext.filter = SCContentFilter(display: screen, excludingApplications: [], exceptingWindows: [])
             prepareAudioRecording()
         }
-        Task { await record(filter: SCContext.filter!, fastStart: fastStart) }
+        Task { await record(filter: SCContext.filter!) }
     }
 
-    func record(filter: SCContentFilter, fastStart: Bool = true) async {
+    func record(filter: SCContentFilter) async {
         SCContext.timeOffset = CMTimeMake(value: 0, timescale: 0)
         SCContext.isPaused = false
         SCContext.isResume = false
@@ -157,12 +157,8 @@ extension AppDelegate {
             conf.width = Int(filter.contentRect.width) * (highRes == 2 ? Int(filter.pointPixelScale) : 1)
             conf.height = Int(filter.contentRect.height) * (highRes == 2 ? Int(filter.pointPixelScale) : 1)
 
-            if fastStart{
-                conf.showsCursor = false
-            } else{
-                conf.showsCursor = showMouse
-            }
-                    
+            // Hotkey starts follow the settings too (they used to hide the cursor and force system audio on)
+            conf.showsCursor = showMouse
 
             if background.rawValue != BackgroundType.wallpaper.rawValue { conf.backgroundColor = SCContext.getBackgroundColor() }
             if !recordHDR {
@@ -183,7 +179,7 @@ extension AppDelegate {
             }
         }
         
-        conf.capturesAudio = recordWinSound || fastStart || audioOnly
+        conf.capturesAudio = recordWinSound || audioOnly
         conf.sampleRate = 48000
         conf.channelCount = 2
         
