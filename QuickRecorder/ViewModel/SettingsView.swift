@@ -41,7 +41,6 @@ struct SettingsView: View {
 
 struct GeneralView: View {
     @AppStorage("countdown") private var countdown: Int = 0
-    @AppStorage("poSafeDelay") private var poSafeDelay: Int = 1
     @AppStorage("showOnDock") private var showOnDock: Bool = true
     @AppStorage("showMenubar") private var showMenubar: Bool = false
     
@@ -92,7 +91,6 @@ struct GeneralView: View {
 
 struct RecorderView: View {
     @AppStorage("countdown")        private var countdown: Int = 0
-    @AppStorage("poSafeDelay")      private var poSafeDelay: Int = 1
     @AppStorage("highlightMouse")   private var highlightMouse: Bool = false
     @AppStorage("includeMenuBar")   private var includeMenuBar: Bool = true
     @AppStorage("hideDesktopFiles") private var hideDesktopFiles: Bool = false
@@ -112,8 +110,6 @@ struct RecorderView: View {
         SForm(spacing: 10) {
             SGroupBox(label: "Recorder") {
                 SSteper("Delay Before Recording", value: $countdown, min: 0, max: 99)
-                SDivider()
-                SSteper("Presenter Overlay Delay", value: $poSafeDelay, min: 0, max: 99, tips: "If enabling Presenter Overlay causes recording failure, please increase this value.")
                 SDivider()
                 SItem(label: "Custom Background Color") {
                     MatrixColorSelector("", selection: $userColor)

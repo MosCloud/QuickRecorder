@@ -421,11 +421,14 @@ extension AppDelegate {
         }
     }
     
+    /// Frames are dropped for this long after Presenter Overlay turns on or changes size: writing them can make the recording fail.
+    private var presenterOverlaySettleTime: TimeInterval { 1 }
+
     func outputVideoEffectDidStart(for stream: SCStream) {
         DispatchQueue.main.async { camWindow.close() }
         print("[Presenter Overlay ON]")
         isPresenterON = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + TimeInterval(poSafeDelay)) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + presenterOverlaySettleTime) {
             self.isCameraReady = true
         }
     }
@@ -531,7 +534,7 @@ extension AppDelegate {
                     if type != presenterType {
                         print("Presenter Overlay set to \"\(type)\"!")
                         isCameraReady = false
-                        DispatchQueue.main.asyncAfter(deadline: .now() + TimeInterval(poSafeDelay)) {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + presenterOverlaySettleTime) {
                             self.isCameraReady = true
                         }
                         presenterType = type

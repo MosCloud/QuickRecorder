@@ -116,7 +116,6 @@
 "Record with Camera:" = "录制摄像头:";
 "Presenter Overlay Camera:" = "\"演讲者前置\"摄像头:";
 //"Can only be turned off on macOS 14.2 or later!" = "此选项仅 macOS 14.2 或更高版本系统可中可被关闭!";
-"Presenter Overlay Delay" = "演讲者前置延迟 (秒)";
 "Open video trimmer after recording" = "录制结束后自动打开修剪器";
 "Unable to use camera overlayer when recording a single window!" = "录制单个窗口时无法使用摄像头浮窗!";
 " Please use \"Presenter Overlay\"" = " 请使用\"演讲者前置\"功能";
@@ -178,7 +177,6 @@
 "Blocklist" = "屏蔽列表";
 "Select..." = "选择...";
 "Go Back" = "返回";
-"If enabling Presenter Overlay causes recording failure, please increase this value." = "如果启用演讲者前置功能后无法保存录像, 请尝试增大此值";
 "Open Main Panel" = "打开主面板";
 "Prevent Mac from sleeping while recording" = "录制时防止 Mac 进入睡眠";
 "Click the window you want to record\nor press Esc to cancel." = "请直接点击要录制的窗口\n或者按 Esc 键退出选择";
