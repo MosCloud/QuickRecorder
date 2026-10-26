@@ -111,9 +111,7 @@ struct RecorderView: View {
                 SSteper("Delay Before Recording", value: $countdown, min: 0, max: 99)
                 SDivider()
                 SItem(label: "Custom Background Color") {
-                    // The system color panel: any color, with the eyedropper and saved colors
-                    ColorPicker("", selection: $userColor, supportsOpacity: false)
-                        .labelsHidden()
+                    ColorGridPicker(selection: $userColor)
                         .onChange(of: userColor) { _, userColor in ud.setColor(userColor, forKey: "userColor") }
                 }
             }
