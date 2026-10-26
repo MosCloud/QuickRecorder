@@ -1,5 +1,5 @@
 {
-  "originHash" : "a89f15c8917c69baa61d735aebe94d657281ac2cd56f20025c83a6956b56bdb3",
+  "originHash" : "ee17c4e350dfd666841f5165991c19d16cc86282655b7228abd367675e17f44d",
   "pins" : [
     {
       "identity" : "aecaudiostream",
@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/sindresorhus/KeyboardShortcuts.git",
       "state" : {
-        "revision" : "7ecc38bb6edf7d087d30e737057b8d8a9b7f51eb",
-        "version" : "2.2.4"
+        "revision" : "772133d9dbe800fdac0473226822994c5c162c58",
+        "version" : "3.1.0"
       }
     },
     {

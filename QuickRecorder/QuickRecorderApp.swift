@@ -166,12 +166,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
         let mouseLocation = event.locationInWindow
         var windowFrame = screenMagnifier.frame
         windowFrame.origin = NSPoint(x: mouseLocation.x - windowFrame.width / 2, y: mouseLocation.y - windowFrame.height / 2)
-        guard let image = NSImage.createScreenShot() else { return }
-        let rect = NSRect(x: mouseLocation.x - 67, y: mouseLocation.y - 58, width: 134, height: 116)
-        let croppedImage = image.trim(rect: rect)
-        screenMagnifier.contentView = NSHostingView(rootView: ScreenMagnifier(screenShot: croppedImage, event: event))
         screenMagnifier.setFrameOrigin(windowFrame.origin)
-        screenMagnifier.orderFront(nil)
+        // Global mouse monitors call back on the main thread
+        MainActor.assumeIsolated {
+            MagnifierCapture.shared.capture(around: mouseLocation) { image in
+                if !SCContext.isMagnifierEnabled || hideScreenMagnifier { return }
+                screenMagnifier.contentView = NSHostingView(rootView: ScreenMagnifier(screenShot: image, event: event))
+                screenMagnifier.orderFront(nil)
+            }
+        }
     }
     
     func registerGlobalMouseMonitor() {
@@ -547,36 +550,6 @@ extension NSMenuItem {
 }
 
 extension NSImage {
-    static func createScreenShot() -> NSImage? {
-        let excludedAppBundleIDs = ["com.lihaoyun6.QuickRecorder"]
-        var exclusionPIDs = [Int]()
-        for app in NSWorkspace.shared.runningApplications {
-            if excludedAppBundleIDs.contains(app.bundleIdentifier ?? "") {
-                exclusionPIDs.append(Int(app.processIdentifier))
-            }
-        }
-        
-        let windowDescriptions = CGWindowListCopyWindowInfo(.optionOnScreenOnly, kCGNullWindowID) as? [[String: Any]] ?? []
-        var windowIDs = [CGWindowID]()
-        for windowDict in windowDescriptions {
-            if let windowProcessID = windowDict[kCGWindowOwnerPID as String] as? Int,
-               !exclusionPIDs.contains(windowProcessID),
-               let windowID = windowDict[kCGWindowNumber as String] as? CGWindowID {
-                windowIDs.append(windowID)
-            }
-        }
-        let pointer = UnsafeMutablePointer<UnsafeRawPointer?>.allocate(capacity: windowIDs.count)
-        for (index, window) in windowIDs.enumerated() { pointer[index] = UnsafeRawPointer(bitPattern: UInt(window)) }
-        let cWindowIDArray: CFArray = CFArrayCreate(kCFAllocatorDefault, pointer, windowIDs.count, nil)
-
-        guard let imageRef = CGImage(windowListFromArrayScreenBounds: CGRect.infinite, windowArray: cWindowIDArray, imageOption: []) else {
-            print("No image available")
-            return nil
-        }
-        let factor = SCContext.getScreenWithMouse()?.backingScaleFactor ?? 1.0
-        return NSImage(cgImage: imageRef, size: NSSize(width: CGFloat(imageRef.width)/factor, height: CGFloat(imageRef.height)/factor))
-    }
-    
     func saveToFile(_ url: URL, type: NSBitmapImageRep.FileType = .png) {
         if let tiffData = self.tiffRepresentation,
            let imageRep = NSBitmapImageRep(data: tiffData) {
@@ -587,17 +560,6 @@ extension NSImage {
                 print("Error saving image: \(error.localizedDescription)")
             }
         }
-    }
-    
-    func trim(rect: CGRect) -> NSImage {
-        let result = NSImage(size: rect.size)
-        result.lockFocus()
-
-        let destRect = CGRect(origin: .zero, size: result.size)
-        self.draw(in: destRect, from: rect, operation: .copy, fraction: 1.0)
-
-        result.unlockFocus()
-        return result
     }
 }
 

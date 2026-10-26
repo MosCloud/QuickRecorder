@@ -26,6 +26,7 @@
 		18A551F92D0749C3008FC5F6 /* Sparkle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18A551F22D0749C3008FC5F6 /* Sparkle.swift */; };
 		18A551FA2D0749C3008FC5F6 /* WindowAccessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18A551F32D0749C3008FC5F6 /* WindowAccessor.swift */; };
 		18A551FB2D0749C3008FC5F6 /* WindowHighlighter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18A551F42D0749C3008FC5F6 /* WindowHighlighter.swift */; };
+		AA1100000000000000000002 /* MagnifierCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1100000000000000000001 /* MagnifierCapture.swift */; };
 		18A551FC2D0749C3008FC5F6 /* Scriptable.sdef in Resources */ = {isa = PBXBuildFile; fileRef = 18A551F02D0749C3008FC5F6 /* Scriptable.sdef */; };
 		18AFF77B2D5F91F800C795A1 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = 18AFF77A2D5F91F800C795A1 /* KeyboardShortcuts */; };
 		18CEED922D08312C00FBC4BF /* PreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18CEED912D08312C00FBC4BF /* PreviewView.swift */; };
@@ -67,6 +68,7 @@
 		18A551F22D0749C3008FC5F6 /* Sparkle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sparkle.swift; sourceTree = "<group>"; };
 		18A551F32D0749C3008FC5F6 /* WindowAccessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowAccessor.swift; sourceTree = "<group>"; };
 		18A551F42D0749C3008FC5F6 /* WindowHighlighter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowHighlighter.swift; sourceTree = "<group>"; };
+		AA1100000000000000000001 /* MagnifierCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MagnifierCapture.swift; sourceTree = "<group>"; };
 		18A735972BFBA12F002314AF /* it */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = it; path = it.lproj/Credits.rtf; sourceTree = "<group>"; };
 		18A735982BFBA132002314AF /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/Localizable.strings; sourceTree = "<group>"; };
 		18A735992BFBA138002314AF /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -126,6 +128,7 @@
 				18A551F22D0749C3008FC5F6 /* Sparkle.swift */,
 				18A551F32D0749C3008FC5F6 /* WindowAccessor.swift */,
 				18A551F42D0749C3008FC5F6 /* WindowHighlighter.swift */,
+				AA1100000000000000000001 /* MagnifierCapture.swift */,
 			);
 			path = Supports;
 			sourceTree = "<group>";
@@ -308,6 +311,7 @@
 				18A551F92D0749C3008FC5F6 /* Sparkle.swift in Sources */,
 				18A551FA2D0749C3008FC5F6 /* WindowAccessor.swift in Sources */,
 				18A551FB2D0749C3008FC5F6 /* WindowHighlighter.swift in Sources */,
+				AA1100000000000000000002 /* MagnifierCapture.swift in Sources */,
 				18D3BE042BCEC847006CFFC0 /* SCContext.swift in Sources */,
 				18775C202BE21F38008333EF /* iDeviceSelector.swift in Sources */,
 				18D3BDED2BCE5DC1006CFFC0 /* ContentView.swift in Sources */,
@@ -412,7 +416,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 14.2;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -471,7 +475,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 14.2;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
@@ -505,7 +509,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 12.3;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.6.9;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lihaoyun6.QuickRecorder;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -541,7 +545,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 12.3;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.6.9;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lihaoyun6.QuickRecorder;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -604,7 +608,7 @@
 			repositoryURL = "https://github.com/sindresorhus/KeyboardShortcuts.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 2.2.4;
+				minimumVersion = 3.1.0;
 			};
 		};
 		18F40B472BFB988A00F0AC70 /* XCRemoteSwiftPackageReference "SwiftLAME" */ = {
