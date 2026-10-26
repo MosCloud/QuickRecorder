@@ -40,6 +40,7 @@ final class Model: ObservableObject {
     @Published var mute = false
     @Published var preset = "高画质"
     @Published var showDevices = false
+    @Published var micSpeed = 1.5   // B2's microphone animation speed, chosen in the info window
     let micList = AVCaptureDevice.DiscoverySession(deviceTypes: [.microphone, .external], mediaType: .audio, position: .unspecified)
         .devices.map(\.localizedName)
     let devices = ["iPhone（示例设备）"]
@@ -346,7 +347,7 @@ struct ClassicPanel: View {
             .padding(8)
             Divider()
             HStack(spacing: 4) {
-                MicToggle(isOn: $model.recordMic)
+                MicToggle(isOn: $model.recordMic, speed: model.micSpeed)
                 Picker("", selection: $model.micDevice) {
                     Text("系统默认").tag("default")
                     ForEach(model.micList, id: \.self) { Text($0).tag($0) }
@@ -433,6 +434,7 @@ struct IconButton: View {
 /// The microphone is its own switch: a green mic while on, a grey slashed mic while off.
 struct MicToggle: View {
     @Binding var isOn: Bool
+    var speed = 1.0   // 1 = the system's default speed for symbol effects
     @State private var hovering = false
     @State private var bounce = 0
 
@@ -444,11 +446,11 @@ struct MicToggle: View {
             Image(systemName: isOn ? "mic.fill" : "mic.slash")
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(isOn ? AnyShapeStyle(Color.green) : AnyShapeStyle(.secondary))
-                .contentTransition(.symbolEffect(.replace))
-                .symbolEffect(.bounce, value: bounce)
+                .contentTransition(.symbolEffect(.replace, options: .speed(speed)))
+                .symbolEffect(.bounce, options: .speed(speed), value: bounce)
                 .frame(width: 26, height: 26)
                 .background(.primary.opacity(hovering ? 0.12 : 0.0001), in: Circle())
-                .animation(.smooth(duration: 0.2), value: isOn)
+                .animation(.smooth(duration: 0.2 / speed), value: isOn)
         }
         .buttonStyle(.plain)
         .onHover { hovering = $0 }
@@ -507,6 +509,18 @@ struct InfoView: View {
                 GridRow { Text("上次操作").foregroundStyle(.secondary); Text(model.lastAction) }
                 GridRow { Text("麦克风").foregroundStyle(.secondary); Text(model.micSummary) }
                 GridRow { Text("移动设备").foregroundStyle(.secondary); Text("静音\(model.mute ? "开" : "关")，\(model.preset)") }
+                GridRow {
+                    Text("动效速度").foregroundStyle(.secondary)
+                    Picker("", selection: $model.micSpeed) {
+                        Text("1×（系统默认）").tag(1.0)
+                        Text("1.5×").tag(1.5)
+                        Text("2×").tag(2.0)
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.segmented)
+                    .fixedSize()
+                    .help("B2 底部麦克风开关的动效速度")
+                }
             }
             .font(.callout)
             HStack {
