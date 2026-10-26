@@ -60,6 +60,8 @@
 		CC3300000000000000000203 /* RecordingControlsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000000201 /* RecordingControlsTests.swift */; };
 		CC3300000000000000000302 /* ControlSurfaces.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000000301 /* ControlSurfaces.swift */; };
 		CC3300000000000000000303 /* ControlSurfaces.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000000301 /* ControlSurfaces.swift */; };
+		CC3300000000000000000402 /* CapsuleLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000000401 /* CapsuleLayout.swift */; };
+		CC3300000000000000000403 /* CapsuleLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000000401 /* CapsuleLayout.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -116,6 +118,7 @@
 		CC3300000000000000000101 /* RecordingClock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingClock.swift; sourceTree = "<group>"; };
 		CC3300000000000000000201 /* RecordingControlsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingControlsTests.swift; sourceTree = "<group>"; };
 		CC3300000000000000000301 /* ControlSurfaces.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlSurfaces.swift; sourceTree = "<group>"; };
+		CC3300000000000000000401 /* CapsuleLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapsuleLayout.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -243,6 +246,7 @@
 				BB2200000000000000000005 /* ElapsedTime.swift */,
 				CC3300000000000000000101 /* RecordingClock.swift */,
 				CC3300000000000000000301 /* ControlSurfaces.swift */,
+				CC3300000000000000000401 /* CapsuleLayout.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -407,6 +411,7 @@
 				18FEBDAC2BD01E82003F09BC /* WinSelector.swift in Sources */,
 				CC3300000000000000000102 /* RecordingClock.swift in Sources */,
 				CC3300000000000000000302 /* ControlSurfaces.swift in Sources */,
+				CC3300000000000000000402 /* CapsuleLayout.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -423,6 +428,7 @@
 				CC3300000000000000000103 /* RecordingClock.swift in Sources */,
 				CC3300000000000000000203 /* RecordingControlsTests.swift in Sources */,
 				CC3300000000000000000303 /* ControlSurfaces.swift in Sources */,
+				CC3300000000000000000403 /* CapsuleLayout.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
