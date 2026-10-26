@@ -84,3 +84,47 @@ struct CapsuleLayoutTests {
         #expect(air.hoverArea == CGRect(x: 731, y: 1021, width: 248, height: 52))
     }
 }
+
+@Suite("Capsule dimming")
+struct CapsuleDimmingTests {
+    func opacity(_ dimming: CapsuleDimming, at time: TimeInterval, countingDown: Bool = false, paused: Bool = false,
+                 reduceTransparency: Bool = false) -> Double {
+        dimming.opacity(at: time, idleOpacity: 0.5, countingDown: countingDown, paused: paused, reduceTransparency: reduceTransparency)
+    }
+
+    @Test("Stays fully visible for 2 seconds after emerging, then fades to the chosen opacity")
+    func afterEmerging() {
+        let dimming = CapsuleDimming(emergedAt: 10)
+        #expect(opacity(dimming, at: 11.9) == 1)
+        #expect(opacity(dimming, at: 12.1) == 0.5)
+    }
+
+    @Test("Hovering restores it at once; leaving fades it again a second later")
+    func hover() {
+        var dimming = CapsuleDimming(emergedAt: 0)
+        dimming.pointer(isInside: true, at: 5)
+        #expect(opacity(dimming, at: 5) == 1)
+        #expect(opacity(dimming, at: 8) == 1)
+        dimming.pointer(isInside: false, at: 8)
+        #expect(opacity(dimming, at: 8.9) == 1)
+        #expect(opacity(dimming, at: 9.1) == 0.5)
+    }
+
+    @Test("Never fades during the countdown, while paused, or with Reduce Transparency", arguments: [
+        (countingDown: true, paused: false, reduceTransparency: false),
+        (countingDown: false, paused: true, reduceTransparency: false),
+        (countingDown: false, paused: false, reduceTransparency: true),
+    ])
+    func keepsFull(countingDown: Bool, paused: Bool, reduceTransparency: Bool) {
+        let dimming = CapsuleDimming(emergedAt: 0)
+        #expect(opacity(dimming, at: 60, countingDown: countingDown, paused: paused, reduceTransparency: reduceTransparency) == 1)
+    }
+
+    @Test("After resuming or the countdown ending, it waits another second before fading")
+    func afterActivity() {
+        var dimming = CapsuleDimming(emergedAt: 0)
+        dimming.activity(at: 30)
+        #expect(opacity(dimming, at: 30.9) == 1)
+        #expect(opacity(dimming, at: 31.1) == 0.5)
+    }
+}
