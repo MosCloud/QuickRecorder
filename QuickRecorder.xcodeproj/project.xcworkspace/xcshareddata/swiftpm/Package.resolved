@@ -18,14 +18,6 @@
         "branch" : "main",
         "revision" : "0853e68c0c9b205ffe6a963f2a56b26e6ceca51a"
       }
-    },
-    {
-      "identity" : "swiftlame",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/hidden-spectrum/SwiftLAME.git",
-      "state" : {
-        "revision" : "e8256a8151594f47f103c742f684253c6c44871d"
-      }
     }
   ],
   "version" : 3

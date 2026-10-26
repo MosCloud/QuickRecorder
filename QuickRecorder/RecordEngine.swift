@@ -264,16 +264,9 @@ extension AppDelegate {
     }
 
     func prepareAudioRecording() {
-        var fileEnding = audioFormat.rawValue
-        var fileType = AVFileType.m4a
-        switch fileEnding { // todo: I'd like to store format info differently
-            case AudioFormat.mp3.rawValue: fallthrough
-            case AudioFormat.aac.rawValue: fallthrough
-            case AudioFormat.alac.rawValue: fileEnding = "m4a"
-            case AudioFormat.flac.rawValue: fileEnding = "flac"; fileType = .caf
-            case AudioFormat.opus.rawValue: fileEnding = "ogg"; fileType = .caf
-            default: assertionFailure("loaded unknown audio format: ".local + fileEnding)
-        }
+        // AAC and ALAC both go into .m4a
+        let fileEnding = "m4a"
+        let fileType = AVFileType.m4a
         SCContext.filePath = "\(SCContext.getFilePath()).\(fileEnding)"
         if recordMic && SCContext.streamType == .systemaudio {
             // System audio and the microphone record separately; stopping mixes them into filePath

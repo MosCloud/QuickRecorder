@@ -176,21 +176,18 @@ struct OutputView: View {
         SForm(spacing: 30) {
             SGroupBox(label: "Audio") {
                 SPicker("Quality", selection: $audioQuality) {
-                    if audioFormat == .alac || audioFormat == .flac {
+                    if audioFormat == .alac {
                         Text("Lossless").tag(audioQuality)
                     }
                     Text("Normal - 128Kbps").tag(AudioQuality.normal)
                     Text("Good - 192Kbps").tag(AudioQuality.good)
                     Text("High - 256Kbps").tag(AudioQuality.high)
                     Text("Extreme - 320Kbps").tag(AudioQuality.extreme)
-                }.disabled(audioFormat == .alac || audioFormat == .flac)
+                }.disabled(audioFormat == .alac)
                 SDivider()
                 SPicker("Format", selection: $audioFormat) {
-                    Text("MP3").tag(AudioFormat.mp3)
                     Text("AAC").tag(AudioFormat.aac)
                     Text("ALAC (Lossless)").tag(AudioFormat.alac)
-                    Text("FLAC (Lossless)").tag(AudioFormat.flac)
-                    Text("Opus").tag(AudioFormat.opus)
                 }
                 SDivider()
                 SToggle("Record Microphone to Main Track", isOn: $remuxAudio)

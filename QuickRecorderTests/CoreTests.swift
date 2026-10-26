@@ -43,41 +43,49 @@ struct VideoBitrateTests {
 
 @Suite("Audio settings")
 struct AudioSettingsTests {
-    @Test("AAC and MP3 record as AAC at the chosen bitrate", arguments: ["aac", "mp3"])
-    func aac(format: String) {
-        let settings = AudioSettings.make(format: format, sampleRate: 48000, qualityKbps: 256, videoFormat: "mp4")
+    @Test("AAC records at the chosen bitrate")
+    func aac() {
+        let settings = AudioSettings.make(format: "aac", sampleRate: 48000, qualityKbps: 256)
         #expect(settings[AVFormatIDKey] as? AudioFormatID == kAudioFormatMPEG4AAC)
         #expect(settings[AVEncoderBitRateKey] as? Int == 256_000)
         #expect(settings[AVSampleRateKey] as? Int == 48000)
         #expect(settings[AVNumberOfChannelsKey] as? Int == 2)
     }
 
-    @Test("Below 44.1 kHz the bitrate is halved and capped at 64 kbit/s")
-    func lowSampleRate() {
-        #expect(AudioSettings.make(format: "aac", sampleRate: 22050, qualityKbps: 256, videoFormat: "mp4")[AVEncoderBitRateKey] as? Int == 64_000)
-        #expect(AudioSettings.make(format: "aac", sampleRate: 22050, qualityKbps: 96, videoFormat: "mp4")[AVEncoderBitRateKey] as? Int == 48_000)
+    @Test("Formats no longer offered, and unknown ones, record as AAC", arguments: ["mp3", "opus", "flac", "wav"])
+    func fallsBackToAAC(format: String) {
+        let settings = AudioSettings.make(format: format, sampleRate: 48000, qualityKbps: 256)
+        #expect(settings[AVFormatIDKey] as? AudioFormatID == kAudioFormatMPEG4AAC)
+        #expect(settings[AVEncoderBitRateKey] as? Int == 256_000)
     }
 
-    @Test("Lossless formats carry no bitrate")
+    @Test("Below 44.1 kHz the bitrate is halved and capped at 64 kbit/s")
+    func lowSampleRate() {
+        #expect(AudioSettings.make(format: "aac", sampleRate: 22050, qualityKbps: 256)[AVEncoderBitRateKey] as? Int == 64_000)
+        #expect(AudioSettings.make(format: "aac", sampleRate: 22050, qualityKbps: 96)[AVEncoderBitRateKey] as? Int == 48_000)
+    }
+
+    @Test("ALAC is lossless and carries no bitrate")
     func lossless() {
-        let alac = AudioSettings.make(format: "alac", sampleRate: 48000, qualityKbps: 256, videoFormat: "mov")
+        let alac = AudioSettings.make(format: "alac", sampleRate: 48000, qualityKbps: 256)
         #expect(alac[AVFormatIDKey] as? AudioFormatID == kAudioFormatAppleLossless)
         #expect(alac[AVEncoderBitDepthHintKey] as? Int == 16)
         #expect(alac[AVEncoderBitRateKey] == nil)
-        let flac = AudioSettings.make(format: "flac", sampleRate: 48000, qualityKbps: 256, videoFormat: "mov")
-        #expect(flac[AVFormatIDKey] as? AudioFormatID == kAudioFormatFLAC)
-        #expect(flac[AVEncoderBitRateKey] == nil)
     }
+}
 
-    @Test("Opus falls back to AAC inside .mp4")
-    func opus() {
-        #expect(AudioSettings.make(format: "opus", sampleRate: 48000, qualityKbps: 128, videoFormat: "mov")[AVFormatIDKey] as? AudioFormatID == kAudioFormatOpus)
-        #expect(AudioSettings.make(format: "opus", sampleRate: 48000, qualityKbps: 128, videoFormat: "mp4")[AVFormatIDKey] as? AudioFormatID == kAudioFormatMPEG4AAC)
-    }
-
-    @Test("Unknown formats get no format ID")
-    func unknown() {
-        #expect(AudioSettings.make(format: "wav", sampleRate: 48000, qualityKbps: 128, videoFormat: "mp4")[AVFormatIDKey] == nil)
+@Suite("Audio format setting")
+struct AudioFormatSettingTests {
+    @Test("A stored format that is no longer offered reads as AAC", arguments: [
+        (stored: "aac", format: AudioFormat.aac),
+        (stored: "alac", format: AudioFormat.alac),
+        (stored: "mp3", format: AudioFormat.aac),
+        (stored: "opus", format: AudioFormat.aac),
+        (stored: "flac", format: AudioFormat.aac),
+        (stored: nil, format: AudioFormat.aac),
+    ] as [(stored: String?, format: AudioFormat)])
+    func stored(stored: String?, format: AudioFormat) {
+        #expect(AudioFormat(stored: stored) == format)
     }
 }
 
