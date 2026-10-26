@@ -7,7 +7,8 @@
 //   第 3 轮：「从刘海弹出 / 收回刘海」动效满意，参数用系统 .bouncy（0.5s / 0.3），收回用 .smooth。
 //   第 4 轮：形状选「刘海圆角」（圆角 10）；材质三种都保留成设置项：Liquid Glass（默认）/ 毛玻璃 / 纯黑。
 //           （那圈深色边是系统 Liquid Glass 自带的，没有参数能关。）
-// 第 5 轮要回答的问题：鼠标不在胶囊上时把它调淡，减少对屏幕内容的干扰。不透明度取多少、等多久再变淡？
+//   第 5 轮结论：不透明度做成设置项（默认 50%）；鼠标移开后等待时间固定 1 秒（demo 里仍可拖动，仅供对比）。
+// 第 5 轮的问题：鼠标不在胶囊上时把它调淡，减少对屏幕内容的干扰。不透明度取多少、等多久再变淡？
 //   规则：鼠标移入立即恢复（0.15s）；移出后等一会儿再淡出（0.4s）；弹出后 2 秒内、倒计时中、暂停中保持完全显示；
 //   系统开了「降低透明度」时不变淡。用整个窗口的 alphaValue + 系统动画实现，三种材质都适用。
 // 录制是假的：计时器在走，所有动作只记录到配置条和终端里。
@@ -56,7 +57,7 @@ final class DemoSettings: ObservableObject {
     @Published var material = CapsuleMaterial.glass
     @Published var cornerRadius = 10.0
     @Published var idleOpacity = 0.5
-    @Published var idleDelay = 1.5
+    @Published var idleDelay = 1.0
 
     var configText: String {
         switch (showMenuBarItem, showCapsule) {
