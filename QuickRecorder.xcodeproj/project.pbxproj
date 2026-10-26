@@ -44,6 +44,17 @@
 		18FEBDAC2BD01E82003F09BC /* WinSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18FEBDAB2BD01E82003F09BC /* WinSelector.swift */; };
 		18FEBDAE2BD10ED1003F09BC /* ScreenSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18FEBDAD2BD10ED1003F09BC /* ScreenSelector.swift */; };
 		18FEBDB02BD2C0D1003F09BC /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18FEBDAF2BD2C0D1003F09BC /* SettingsView.swift */; };
+		BB2200000000000000000011 /* SettingValues.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2200000000000000000001 /* SettingValues.swift */; };
+		BB2200000000000000000012 /* VideoBitrate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2200000000000000000002 /* VideoBitrate.swift */; };
+		BB2200000000000000000013 /* AudioSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2200000000000000000003 /* AudioSettings.swift */; };
+		BB2200000000000000000014 /* RecordingName.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2200000000000000000004 /* RecordingName.swift */; };
+		BB2200000000000000000015 /* ElapsedTime.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2200000000000000000005 /* ElapsedTime.swift */; };
+		BB2200000000000000000021 /* SettingValues.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2200000000000000000001 /* SettingValues.swift */; };
+		BB2200000000000000000022 /* VideoBitrate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2200000000000000000002 /* VideoBitrate.swift */; };
+		BB2200000000000000000023 /* AudioSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2200000000000000000003 /* AudioSettings.swift */; };
+		BB2200000000000000000024 /* RecordingName.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2200000000000000000004 /* RecordingName.swift */; };
+		BB2200000000000000000025 /* ElapsedTime.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2200000000000000000005 /* ElapsedTime.swift */; };
+		BB2200000000000000000026 /* CoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2200000000000000000006 /* CoreTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -90,6 +101,13 @@
 		18FEBDAB2BD01E82003F09BC /* WinSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WinSelector.swift; sourceTree = "<group>"; };
 		18FEBDAD2BD10ED1003F09BC /* ScreenSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenSelector.swift; sourceTree = "<group>"; };
 		18FEBDAF2BD2C0D1003F09BC /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		BB2200000000000000000001 /* SettingValues.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingValues.swift; sourceTree = "<group>"; };
+		BB2200000000000000000002 /* VideoBitrate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoBitrate.swift; sourceTree = "<group>"; };
+		BB2200000000000000000003 /* AudioSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioSettings.swift; sourceTree = "<group>"; };
+		BB2200000000000000000004 /* RecordingName.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingName.swift; sourceTree = "<group>"; };
+		BB2200000000000000000005 /* ElapsedTime.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElapsedTime.swift; sourceTree = "<group>"; };
+		BB2200000000000000000006 /* CoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreTests.swift; sourceTree = "<group>"; };
+		BB2200000000000000000007 /* QuickRecorderTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QuickRecorderTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -101,6 +119,13 @@
 				18AFF77B2D5F91F800C795A1 /* KeyboardShortcuts in Frameworks */,
 				18F40B492BFB988A00F0AC70 /* SwiftLAME in Frameworks */,
 				185582A62D1D1CC100F0CF47 /* AECAudioStream in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BB2200000000000000000043 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -132,6 +157,7 @@
 			isa = PBXGroup;
 			children = (
 				18D3BDE92BCE5DC1006CFFC0 /* QuickRecorder */,
+				BB2200000000000000000032 /* QuickRecorderTests */,
 				18D3BDE82BCE5DC1006CFFC0 /* Products */,
 				181724062BE3BF2000F5F539 /* Frameworks */,
 			);
@@ -141,6 +167,7 @@
 			isa = PBXGroup;
 			children = (
 				18D3BDE72BCE5DC1006CFFC0 /* QuickRecorder.app */,
+				BB2200000000000000000007 /* QuickRecorderTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -154,6 +181,7 @@
 				18FEBDA92BCF8200003F09BC /* RecordEngine.swift */,
 				18D3BE032BCEC847006CFFC0 /* SCContext.swift */,
 				184CAEC62BDCCC2300D61D57 /* AVContext.swift */,
+				BB2200000000000000000031 /* Core */,
 				18A551F52D0749C3008FC5F6 /* Supports */,
 				18D3BE022BCEB1D4006CFFC0 /* ViewModel */,
 				18D3BDFD2BCE5DF5006CFFC0 /* Localizable.strings */,
@@ -197,6 +225,26 @@
 			path = ViewModel;
 			sourceTree = "<group>";
 		};
+		BB2200000000000000000031 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				BB2200000000000000000001 /* SettingValues.swift */,
+				BB2200000000000000000002 /* VideoBitrate.swift */,
+				BB2200000000000000000003 /* AudioSettings.swift */,
+				BB2200000000000000000004 /* RecordingName.swift */,
+				BB2200000000000000000005 /* ElapsedTime.swift */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		BB2200000000000000000032 /* QuickRecorderTests */ = {
+			isa = PBXGroup;
+			children = (
+				BB2200000000000000000006 /* CoreTests.swift */,
+			);
+			path = QuickRecorderTests;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -223,6 +271,23 @@
 			productReference = 18D3BDE72BCE5DC1006CFFC0 /* QuickRecorder.app */;
 			productType = "com.apple.product-type.application";
 		};
+		BB2200000000000000000041 /* QuickRecorderTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BB2200000000000000000047 /* Build configuration list for PBXNativeTarget "QuickRecorderTests" */;
+			buildPhases = (
+				BB2200000000000000000042 /* Sources */,
+				BB2200000000000000000043 /* Frameworks */,
+				BB2200000000000000000044 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = QuickRecorderTests;
+			productName = QuickRecorderTests;
+			productReference = BB2200000000000000000007 /* QuickRecorderTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -235,6 +300,9 @@
 				TargetAttributes = {
 					18D3BDE62BCE5DC1006CFFC0 = {
 						CreatedOnToolsVersion = 15.1;
+					};
+					BB2200000000000000000041 = {
+						CreatedOnToolsVersion = 27.1;
 					};
 				};
 			};
@@ -261,6 +329,7 @@
 			projectRoot = "";
 			targets = (
 				18D3BDE62BCE5DC1006CFFC0 /* QuickRecorder */,
+				BB2200000000000000000041 /* QuickRecorderTests */,
 			);
 		};
 /* End PBXProject section */
@@ -276,6 +345,13 @@
 				18D3BDEF2BCE5DC2006CFFC0 /* Assets.xcassets in Resources */,
 				1862BF8D2BD5494E003ED522 /* Credits.rtf in Resources */,
 				189BD5E62BDE34B80056D06C /* InfoPlist.strings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BB2200000000000000000044 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -304,6 +380,11 @@
 				18A551FA2D0749C3008FC5F6 /* WindowAccessor.swift in Sources */,
 				18A551FB2D0749C3008FC5F6 /* WindowHighlighter.swift in Sources */,
 				AA1100000000000000000002 /* MagnifierCapture.swift in Sources */,
+				BB2200000000000000000011 /* SettingValues.swift in Sources */,
+				BB2200000000000000000012 /* VideoBitrate.swift in Sources */,
+				BB2200000000000000000013 /* AudioSettings.swift in Sources */,
+				BB2200000000000000000014 /* RecordingName.swift in Sources */,
+				BB2200000000000000000015 /* ElapsedTime.swift in Sources */,
 				18D3BE042BCEC847006CFFC0 /* SCContext.swift in Sources */,
 				18775C202BE21F38008333EF /* iDeviceSelector.swift in Sources */,
 				18D3BDED2BCE5DC1006CFFC0 /* ContentView.swift in Sources */,
@@ -313,6 +394,19 @@
 				18E6F11A2C2E74DF00249DB1 /* QmaPlayer.swift in Sources */,
 				18D3BDEB2BCE5DC1006CFFC0 /* QuickRecorderApp.swift in Sources */,
 				18FEBDAC2BD01E82003F09BC /* WinSelector.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BB2200000000000000000042 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BB2200000000000000000021 /* SettingValues.swift in Sources */,
+				BB2200000000000000000022 /* VideoBitrate.swift in Sources */,
+				BB2200000000000000000023 /* AudioSettings.swift in Sources */,
+				BB2200000000000000000024 /* RecordingName.swift in Sources */,
+				BB2200000000000000000025 /* ElapsedTime.swift in Sources */,
+				BB2200000000000000000026 /* CoreTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -547,6 +641,38 @@
 			};
 			name = Release;
 		};
+		BB2200000000000000000045 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = B5JGQB9CXF;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lihaoyun6.QuickRecorderTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		BB2200000000000000000046 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = B5JGQB9CXF;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lihaoyun6.QuickRecorderTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -564,6 +690,15 @@
 			buildConfigurations = (
 				18D3BDF72BCE5DC2006CFFC0 /* Debug */,
 				18D3BDF82BCE5DC2006CFFC0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BB2200000000000000000047 /* Build configuration list for PBXNativeTarget "QuickRecorderTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BB2200000000000000000045 /* Debug */,
+				BB2200000000000000000046 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

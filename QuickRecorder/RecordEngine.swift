@@ -337,21 +337,13 @@ extension AppDelegate {
         }
         SCContext.vW = try? AVAssetWriter.init(outputURL: SCContext.filePath.url, fileType: fileType!)
         let encoderIsH265 = (encoder.rawValue == Encoder.h265.rawValue) || recordHDR
-        let fpsMultiplier: Double = Double(frameRate)/8
-        let encoderMultiplier: Double = encoderIsH265 ? 0.5 : 0.9
-        let resolution = Double(max(600, conf.width)) * Double(max(600, conf.height))
-        var qualityMultiplier = 1 - (log10(sqrt(resolution) * fpsMultiplier) / 5)
-        switch videoQuality {
-            case 0.3: qualityMultiplier = max(0.1, qualityMultiplier)
-            case 0.7: qualityMultiplier = max(0.4, min(0.6, qualityMultiplier * 3))
-            default: qualityMultiplier = 1.0
-        }
+        let targetBitrate = VideoBitrate.target(width: conf.width, height: conf.height, frameRate: frameRate,
+                                                isHEVC: encoderIsH265, quality: videoQuality, isHDR: recordHDR)
         let h264Level = AVVideoProfileLevelH264HighAutoLevel
         let h265Level = recordHDR ? kVTProfileLevel_HEVC_Main10_AutoLevel : kVTProfileLevel_HEVC_Main_AutoLevel
 
-        let targetBitrate = resolution * fpsMultiplier * encoderMultiplier * qualityMultiplier * (recordHDR ? 2 : 1)
         print("framerate set in app: \(frameRate)")
-        print("target bitrate: \(targetBitrate/1000000)")
+        print("target bitrate: \(Double(targetBitrate)/1000000)")
 
         var videoSettings: [String: Any] = [
             AVVideoCodecKey: encoderIsH265 ? ((withAlpha && !recordHDR) ? AVVideoCodecType.hevcWithAlpha : AVVideoCodecType.hevc) : AVVideoCodecType.h264,
@@ -360,7 +352,7 @@ extension AppDelegate {
             AVVideoHeightKey: conf.height,
             AVVideoCompressionPropertiesKey: [
                 AVVideoProfileLevelKey: encoderIsH265 ? h265Level : h264Level,
-                AVVideoAverageBitRateKey: max(200000, Int(targetBitrate)),
+                AVVideoAverageBitRateKey: targetBitrate,
                 AVVideoExpectedSourceFrameRateKey: frameRate,
             ] as [String : Any]
         ]

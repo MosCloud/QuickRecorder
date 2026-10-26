@@ -178,29 +178,16 @@ class SCContext {
     }
     
     static func getFilePath(capture: Bool = false) -> String {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "y-MM-dd HH.mm.ss"
-        return ud.string(forKey: "saveDirectory")! + (capture ? "/Capturing at ".local : "/Recording at ".local) + dateFormatter.string(from: Date())
+        return RecordingName.path(directory: ud.string(forKey: "saveDirectory")!,
+                                  prefix: capture ? "/Capturing at ".local : "/Recording at ".local,
+                                  date: Date())
     }
     
     static func updateAudioSettings(format: String = ud.string(forKey: "audioFormat") ?? "", rate: Int = 48000) -> [String : Any] {
-        var audioSettings: [String : Any] = [AVSampleRateKey : rate, AVNumberOfChannelsKey : 2] // reset audioSettings
-        var bitRate = ud.integer(forKey: "audioQuality") * 1000
-        if rate < 44100 { bitRate = min(64000, bitRate / 2) }
-        switch format {
-        case AudioFormat.mp3.rawValue: fallthrough
-        case AudioFormat.aac.rawValue:
-            audioSettings[AVFormatIDKey] = kAudioFormatMPEG4AAC
-            audioSettings[AVEncoderBitRateKey] = bitRate
-        case AudioFormat.alac.rawValue:
-            audioSettings[AVFormatIDKey] = kAudioFormatAppleLossless
-            audioSettings[AVEncoderBitDepthHintKey] = 16
-        case AudioFormat.flac.rawValue:
-            audioSettings[AVFormatIDKey] = kAudioFormatFLAC
-        case AudioFormat.opus.rawValue:
-            audioSettings[AVFormatIDKey] = ud.string(forKey: "videoFormat") != VideoFormat.mp4.rawValue ? kAudioFormatOpus : kAudioFormatMPEG4AAC
-            audioSettings[AVEncoderBitRateKey] =  bitRate
-        default:
+        let audioSettings = AudioSettings.make(format: format, sampleRate: rate,
+                                               qualityKbps: ud.integer(forKey: "audioQuality"),
+                                               videoFormat: ud.string(forKey: "videoFormat"))
+        if audioSettings[AVFormatIDKey] == nil {
             assertionFailure("unknown audio format while setting audio settings: ".local + (ud.string(forKey: "audioFormat") ?? "[no defaults]".local))
         }
         return audioSettings
@@ -300,13 +287,9 @@ class SCContext {
     }
     
     static func getRecordingLength() -> String {
-        let formatter = DateComponentsFormatter()
-        formatter.allowedUnits = [.minute, .second]
-        formatter.zeroFormattingBehavior = .pad
-        formatter.unitsStyle = .positional
-        if isPaused { return formatter.string(from: timePassed) ?? "Unknown".local }
+        if isPaused { return ElapsedTime.text(timePassed) ?? "Unknown".local }
         timePassed = Date.now.timeIntervalSince(startTime ?? Date.now)
-        return formatter.string(from: timePassed) ?? "Unknown".local
+        return ElapsedTime.text(timePassed) ?? "Unknown".local
     }
     
     static func isCameraRunning() -> Bool {

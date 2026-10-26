@@ -26,8 +26,14 @@ Signing is automatic with the owner's Personal Team (`B5JGQB9CXF`). That stable 
 A PR is ready for review when all three hold:
 
 1. Logic that runs without UI or system permissions (timing, file naming, audio settings, content filters) is covered by unit tests, and a bug fix in such code starts from a test that goes red on the bug.
-2. `xcodebuild test` passes (the test target lands with #2).
+2. The unit tests pass:
+   ```sh
+   xcodebuild test -project QuickRecorder.xcodeproj -scheme QuickRecorder -destination 'platform=macOS' \
+       -derivedDataPath "$DD" -allowProvisioningUpdates
+   ```
 3. The sections of `docs/testing/manual-checklist.md` touched by the change were walked on the owner's Mac, with results recorded in the PR.
+
+`QuickRecorderTests` runs hostless: it compiles the files in `QuickRecorder/Core/` itself instead of launching the app, which would ask for screen-recording permission and register global hotkeys. Code in `Core/` therefore works only from Foundation/AVFoundation and its own parameters (no `ud`, `SCContext` or `.local`), and a new `Core/` file joins both targets' Sources. To test more logic, move it into `Core/` as a pure function and call it from the app.
 
 ## Agent skills
 
