@@ -288,6 +288,7 @@ extension AppDelegate {
             let sampleRate = SCContext.getSampleRate() ?? 48000
             let settings = SCContext.updateAudioSettings(rate: sampleRate)
             SCContext.vW = try? AVAssetWriter.init(outputURL: SCContext.filePath2.url, fileType: fileType)
+            SCContext.vW.movieFragmentInterval = CMTime(seconds: 10, preferredTimescale: 600)
             SCContext.micInput = AVAssetWriterInput(mediaType: AVMediaType.audio, outputSettings: settings)
             SCContext.micInput.expectsMediaDataInRealTime = true
             if SCContext.vW.canAdd(SCContext.micInput) { SCContext.vW.add(SCContext.micInput) }
@@ -389,6 +390,7 @@ extension AppDelegate {
             if SCContext.vW.canAdd(SCContext.micInput) { SCContext.vW.add(SCContext.micInput) }
             startMicRecording()
         }
+        SCContext.vW.movieFragmentInterval = CMTime(seconds: 10, preferredTimescale: 600)
         SCContext.vW.startWriting()
     }
     
