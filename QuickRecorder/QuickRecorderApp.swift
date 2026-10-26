@@ -34,23 +34,6 @@ struct QuickRecorderApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {
-        DocumentGroup(newDocument: qmaPackageHandle()) { file in
-            //if SCContext.stream == nil {
-                if let fileURL = file.fileURL {
-                    qmaPlayerView(document: file.$document, fileURL: fileURL)
-                        .frame(minWidth: 400, minHeight: 100, maxHeight: 100)
-                        .focusable(false)
-                }
-            //}
-        }
-        .myWindowIsContentResizable()
-        .commands {
-            SidebarCommands()
-            CommandGroup(replacing: .saveItem) {}
-            CommandGroup(replacing: .newItem) {}
-            CommandGroup(replacing: .textEditing) {}
-        }
-        
         Settings {
             SettingsView()
                 .background(
@@ -71,14 +54,11 @@ struct QuickRecorderApp: App {
         }
         .handlesExternalEvents(matching: [])
         .commands {
+            SidebarCommands()
+            CommandGroup(replacing: .saveItem) {}
             CommandGroup(replacing: .newItem) {}
+            CommandGroup(replacing: .textEditing) {}
         }
-    }
-}
-
-extension Scene {
-    func myWindowIsContentResizable() -> some Scene {
-        windowResizability(.contentSize)
     }
 }
 
@@ -320,9 +300,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
     
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         if SCContext.stream == nil {
-            let w1 = NSApp.windows.filter({ !$0.title.contains("Item-0") && !$0.title.isEmpty && $0.isVisible })
-            let w2 = w1.filter({ !$0.title.contains(".qma") })
-            if (!w1.isEmpty && w2.isEmpty) || w1.isEmpty {
+            let visible = NSApp.windows.filter({ !$0.title.contains("Item-0") && !$0.title.isEmpty && $0.isVisible })
+            if visible.isEmpty {
                 let offset = (!showOnDock && !showMenubar) ? 127 : 0
                 let mainPanel = EscPanel(contentRect: NSRect(x: 0, y: 0, width: 928 + offset, height: 100), styleMask: [.fullSizeContentView, .nonactivatingPanel], backing: .buffered, defer: false)
                 mainPanel.contentView = NSHostingView(rootView: ContentView())
@@ -372,7 +351,6 @@ func closeMainWindow() {
 func closeAllWindow(except: String = "") {
     for w in NSApp.windows.filter({
         $0.title != "Item-0" && $0.title != ""
-        && !$0.title.lowercased().contains(".qma")
         && !$0.title.contains(except) }) { w.close() }
 }
 

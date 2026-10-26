@@ -37,7 +37,6 @@ class SCContext {
     static var filePath1: String!
     static var filePath2: String!
     static var audioFile: AVAudioFile?
-    static var audioFile2: AVAudioFile?
     static var vW: AVAssetWriter!
     static var vwInput, awInput, micInput: AVAssetWriterInput!
     /// When the first frame (or audio sample) was written; nil until then. Gates the capture callbacks.
@@ -427,51 +426,12 @@ class SCContext {
         }
         
         audioFile = nil // close audio file
-        audioFile2 = nil // close audio file2
         if streamType == .systemaudio {
-            if ud.string(forKey: "audioFormat") == AudioFormat.mp3.rawValue && !ud.bool(forKey: "recordMic") {
-                Task {
-                    let outPutUrl = (String(filePath.dropLast(4)) + ".mp3").url
-                    do {
-                        try await m4a2mp3(inputUrl: filePath1.url, outputUrl: outPutUrl)
-                        try? fd.removeItem(atPath: filePath1)
-                        if !ud.bool(forKey: "showPreview") {
-                            let title = "Recording Completed".local
-                            let body = String(format: "File saved to: %@".local, outPutUrl.path.removingPercentEncoding!)
-                            let id = "quickrecorder.completed.\(UUID().uuidString)"
-                            showNotification(title: title, body: body, id: id)
-                        } else {
-                            DispatchQueue.main.async { showPreview(path: outPutUrl.path, image: NSImage(named: "audioIcon")) }
-                        }
-                    } catch {
-                        showNotification(title: "Failed to save file".local, body: "\(error.localizedDescription)", id: "quickrecorder.error.\(UUID().uuidString)")
-                    }
-                }
-            } else {
-                if ud.bool(forKey: "remuxAudio") && ud.bool(forKey: "recordMic") {
-                    let fileURL = filePath.url
-                    let document = try? qmaPackageHandle.load(from: fileURL)
-                    if let document = document {
-                        let audioPlayerManager = AudioPlayerManager()
-                        audioPlayerManager.loadAudioFiles(format: document.info.format, package: fileURL, encoder: document.info.encoder, saveMP3: document.info.exportMP3)
-                        audioPlayerManager.sysVol = document.info.sysVol
-                        audioPlayerManager.micVol = document.info.micVol
-                        let exportMP3 = document.info.exportMP3
-                        let format = exportMP3 ? "mp3" : document.info.format
-                        let saveURL = fileURL.deletingPathExtension().appendingPathExtension(format)
-                        audioPlayerManager.saveFile(saveURL, saveAsMP3: exportMP3)
-                    }
-                } else {
-                    if !ud.bool(forKey: "showPreview") {
-                        let title = "Recording Completed".local
-                        let body = String(format: "File saved to: %@".local, filePath)
-                        let id = "quickrecorder.completed.\(UUID().uuidString)"
-                        showNotification(title: title, body: body, id: id)
-                    } else {
-                        showPreview(path: filePath, image: NSImage(named: "qmaIcon"))
-                    }
-                }
-            }
+            // Recorded in two parts when the microphone was on at the start (filePath1 then differs from filePath)
+            let parts = filePath1 != filePath ? (system: filePath1.url, microphone: filePath2.url) : nil
+            let toMP3 = ud.string(forKey: "audioFormat") == AudioFormat.mp3.rawValue
+            let output = filePath.url
+            Task { await finishAudioRecording(output: output, parts: parts, toMP3: toMP3) }
         }
         
         isPaused = false
@@ -505,6 +465,38 @@ class SCContext {
         firstFrame = nil
     }
     
+    /// Finishes an audio-only recording: mixes the system audio and microphone parts into `output`,
+    /// converts it to MP3 if that's the chosen format, then shows the preview or a notification.
+    private static func finishAudioRecording(output: URL, parts: (system: URL, microphone: URL)?, toMP3: Bool) async {
+        do {
+            if let parts {
+                try AudioMix.mix(parts.system, parts.microphone, into: output, settings: updateAudioSettings())
+                try? fd.removeItem(at: parts.system.deletingLastPathComponent())
+            }
+            var result = output
+            if toMP3 {
+                result = output.deletingPathExtension().appendingPathExtension("mp3")
+                try await m4a2mp3(inputUrl: output, outputUrl: result)
+                try? fd.removeItem(at: output)
+            }
+            if ud.bool(forKey: "showPreview") {
+                DispatchQueue.main.async { showPreview(path: result.path, image: NSImage(named: "audioIcon")) }
+            } else {
+                showNotification(title: "Recording Completed".local, body: String(format: "File saved to: %@".local, result.path), id: "quickrecorder.completed.\(UUID().uuidString)")
+            }
+        } catch {
+            var body = error.localizedDescription
+            if let parts {
+                // Don't lose the recording: keep both parts next to where the mix should have gone
+                let base = output.deletingPathExtension().path
+                try? fd.moveItem(at: parts.system, to: URL(fileURLWithPath: base + " " + "(system audio)".local + "." + output.pathExtension))
+                try? fd.moveItem(at: parts.microphone, to: URL(fileURLWithPath: base + " " + "(microphone)".local + "." + parts.microphone.pathExtension))
+                body = "Mixing failed. The system audio and the microphone were saved as two separate files.".local
+            }
+            showNotification(title: "Failed to save file".local, body: body, id: "quickrecorder.error.\(UUID().uuidString)")
+        }
+    }
+
     static func showPreview(path: String, image: NSImage? = nil) {
         if !ud.bool(forKey: "showPreview") { return }
         var previewImage: NSImage?

@@ -266,7 +266,6 @@ extension AppDelegate {
     func prepareAudioRecording() {
         var fileEnding = audioFormat.rawValue
         var fileType = AVFileType.m4a
-        let encorder = fileEnding == AudioFormat.mp3.rawValue ? "aac" : fileEnding
         switch fileEnding { // todo: I'd like to store format info differently
             case AudioFormat.mp3.rawValue: fallthrough
             case AudioFormat.aac.rawValue: fallthrough
@@ -275,16 +274,13 @@ extension AppDelegate {
             case AudioFormat.opus.rawValue: fileEnding = "ogg"; fileType = .caf
             default: assertionFailure("loaded unknown audio format: ".local + fileEnding)
         }
-        let path = SCContext.getFilePath()
+        SCContext.filePath = "\(SCContext.getFilePath()).\(fileEnding)"
         if recordMic && SCContext.streamType == .systemaudio {
-            SCContext.filePath = "\(path).qma"
-            SCContext.filePath1 = "\(path).qma/sys.\(fileEnding)"
-            SCContext.filePath2 = "\(path).qma/mic.\(fileEnding)"
-            let infoJsonURL = "\(path).qma/info.json".url
-            let jsonString = "{\"format\": \"\(fileEnding)\", \"encoder\": \"\(encorder)\", \"exportMP3\": \(audioFormat.rawValue == AudioFormat.mp3.rawValue), \"sysVol\": 1.0, \"micVol\": 1.0}"
-            try? fd.createDirectory(at: SCContext.filePath.url, withIntermediateDirectories: true, attributes: nil)
-            try? jsonString.write(to: infoJsonURL, atomically: true, encoding: .utf8)
-            
+            // System audio and the microphone record separately; stopping mixes them into filePath
+            let parts = fd.temporaryDirectory.appendingPathComponent("QuickRecorder-\(UUID().uuidString)")
+            try? fd.createDirectory(at: parts, withIntermediateDirectories: true, attributes: nil)
+            SCContext.filePath1 = parts.appendingPathComponent("system.\(fileEnding)").path
+            SCContext.filePath2 = parts.appendingPathComponent("microphone.\(fileEnding)").path
             SCContext.audioFile = try! AVAudioFile(forWriting: SCContext.filePath1.url, settings: SCContext.updateAudioSettings(), commonFormat: .pcmFormatFloat32, interleaved: false)
 
             let sampleRate = SCContext.getSampleRate() ?? 48000
@@ -295,9 +291,7 @@ extension AppDelegate {
             SCContext.micInput.expectsMediaDataInRealTime = true
             if SCContext.vW.canAdd(SCContext.micInput) { SCContext.vW.add(SCContext.micInput) }
             SCContext.vW.startWriting()
-            //SCContext.audioFile2 = try! AVAudioFile(forWriting: SCContext.filePath2.url, settings: settings, commonFormat: .pcmFormatFloat32, interleaved: false)
         } else {
-            SCContext.filePath = "\(path).\(fileEnding)"
             SCContext.filePath1 = SCContext.filePath
             SCContext.audioFile = try! AVAudioFile(forWriting: SCContext.filePath.url, settings: SCContext.updateAudioSettings(), commonFormat: .pcmFormatFloat32, interleaved: false)
         }
