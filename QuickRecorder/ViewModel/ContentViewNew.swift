@@ -113,7 +113,7 @@ struct ContentViewNew: View {
                                     }
                                 }
                                 .buttonStyle(.plain)
-                                .onChange(of: recordMic) { _ in  Task { await SCContext.performMicCheck() }}
+                                .onChange(of: recordMic) { Task { await SCContext.performMicCheck() }}
                                 if micDevice != "default" && enableAEC && recordMic{
                                     Button {
                                         let alert = createAlert(

@@ -524,17 +524,17 @@ class SCContext {
     }
     
     static func getCameras() -> [AVCaptureDevice] {
-        let discoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera, .externalUnknown], mediaType: .video, position: .unspecified)
+        let discoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera, .external], mediaType: .video, position: .unspecified)
         return discoverySession.devices
     }
     
     static func getMicrophone() -> [AVCaptureDevice] {
-        let discoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInMicrophone, .microphone], mediaType: .audio, position: .unspecified)
+        let discoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [.microphone], mediaType: .audio, position: .unspecified)
         return discoverySession.devices.filter({ !$0.localizedName.contains("CADefaultDeviceAggregate") })
     }
     
     static func getiDevice() -> [AVCaptureDevice] {
-        let discoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [.externalUnknown], mediaType: .muxed, position: .unspecified)
+        let discoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [.external], mediaType: .muxed, position: .unspecified)
         return discoverySession.devices
     }
     

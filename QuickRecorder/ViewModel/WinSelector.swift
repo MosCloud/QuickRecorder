@@ -8,7 +8,7 @@
 import SwiftUI
 import Foundation
 import AVFoundation
-import ScreenCaptureKit
+@preconcurrency import ScreenCaptureKit
 
 struct WinSelector: View {
     @Environment(\.colorScheme) var colorScheme
@@ -118,7 +118,7 @@ struct WinSelector: View {
                 }
                 .frame(height: 445)
                 .padding(.horizontal, 10)
-                .onChange(of: selectedTab) { _ in selected.removeAll() }
+                .onChange(of: selectedTab) { selected.removeAll() }
                 .onReceive(viewModel.$isReady) { isReady in
                     if isReady {
                         let allApps = viewModel.windowThumbnails.sorted(by: { $0.key.displayID < $1.key.displayID })
@@ -156,13 +156,13 @@ struct WinSelector: View {
                         VStack(alignment: .leading) {
                             Toggle(isOn: $disableFilter) { Text("Show Windows with No Title") }
                                 .toggleStyle(.checkbox)
-                                .onChange(of: disableFilter) { _ in
+                                .onChange(of: disableFilter) {
                                     self.viewModel.setupStreams(filter: !disableFilter, capture: !donotCapture)
                                     self.selected.removeAll()
                                 }
                             Toggle(isOn: $donotCapture) { Text("Don't Create Thumbnails") }
                                 .toggleStyle(.checkbox)
-                                .onChange(of: donotCapture) { _ in
+                                .onChange(of: donotCapture) {
                                     self.viewModel.setupStreams(filter: !disableFilter, capture: !donotCapture)
                                     self.selected.removeAll()
                                 }
@@ -235,6 +235,7 @@ struct WinSelector: View {
     }
 }
 
+@MainActor
 class WindowSelectorViewModel: NSObject, ObservableObject, SCStreamDelegate, SCStreamOutput {
     @Published var windowThumbnails = [SCDisplay:[WindowThumbnail]]()
     @Published var isReady = false
@@ -248,33 +249,36 @@ class WindowSelectorViewModel: NSObject, ObservableObject, SCStreamDelegate, SCS
         }
     }
     
-    func stream(_ stream: SCStream, didOutputSampleBuffer sampleBuffer: CMSampleBuffer, of type: SCStreamOutputType) {
-        if CMSampleBufferGetImageBuffer(sampleBuffer) == nil { return }
-        let nsImage = sampleBuffer.nsImage ?? NSImage.unknowScreen
-        if let index = self.streams.firstIndex(of: stream), index + 1 <= self.allWindows.count {
-            let currentWindow = self.allWindows[index]
-            let thumbnail = WindowThumbnail(image: nsImage, window: currentWindow)
-            guard let displays = SCContext.availableContent?.displays.filter({ NSIntersectsRect(currentWindow.frame, $0.frame) }) else {
-                self.streams[index].stopCapture()
-                return
-            }
-            for d in displays {
-                DispatchQueue.main.async {
-                    if self.windowThumbnails[d] != nil {
-                        if !self.windowThumbnails[d]!.contains(where: { $0.window == currentWindow }) { self.windowThumbnails[d]!.append(thumbnail) }
-                    } else {
-                        self.windowThumbnails[d] = [thumbnail]
+    // Registered with sampleHandlerQueue: .main, so this always runs on the main thread
+    nonisolated func stream(_ stream: SCStream, didOutputSampleBuffer sampleBuffer: CMSampleBuffer, of type: SCStreamOutputType) {
+        MainActor.assumeIsolated {
+            if CMSampleBufferGetImageBuffer(sampleBuffer) == nil { return }
+            let nsImage = sampleBuffer.nsImage ?? NSImage.unknowScreen
+            if let index = self.streams.firstIndex(of: stream), index + 1 <= self.allWindows.count {
+                let currentWindow = self.allWindows[index]
+                let thumbnail = WindowThumbnail(image: nsImage, window: currentWindow)
+                guard let displays = SCContext.availableContent?.displays.filter({ NSIntersectsRect(currentWindow.frame, $0.frame) }) else {
+                    self.streams[index].stopCapture()
+                    return
+                }
+                for d in displays {
+                    DispatchQueue.main.async {
+                        if self.windowThumbnails[d] != nil {
+                            if !self.windowThumbnails[d]!.contains(where: { $0.window == currentWindow }) { self.windowThumbnails[d]!.append(thumbnail) }
+                        } else {
+                            self.windowThumbnails[d] = [thumbnail]
+                        }
                     }
                 }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { self.streams[index].stopCapture() }
+                if index + 1 == self.streams.count { DispatchQueue.main.async { self.isReady = true }}
             }
-            DispatchQueue.global().asyncAfter(deadline: .now() + 0.1) { self.streams[index].stopCapture() }
-            if index + 1 == self.streams.count { DispatchQueue.main.async { self.isReady = true }}
         }
     }
 
     func setupStreams(filter: Bool = true, capture: Bool = true) {
         SCContext.updateAvailableContent {
-            Task {
+            Task { @MainActor in
                 do {
                     self.streams.removeAll()
                     DispatchQueue.main.async { self.windowThumbnails.removeAll() }

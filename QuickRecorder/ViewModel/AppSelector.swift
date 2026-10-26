@@ -87,7 +87,7 @@ struct AppSelector: View {
                 }
                 .frame(height: 445)
                 .padding(.horizontal, 10)
-                .onChange(of: selectedTab) { _ in selected.removeAll() }
+                .onChange(of: selectedTab) { selected.removeAll() }
                 .onReceive(viewModel.$isReady) { isReady in
                     if isReady {
                         let allApps = viewModel.allApps.sorted(by: { $0.key.displayID < $1.key.displayID })
@@ -316,7 +316,7 @@ struct OptionsView: View {
                         }
                         .fixedSize()
                         .toggleStyle(.checkbox)
-                        .onChange(of: recordMic) { _ in
+                        .onChange(of: recordMic) {
                             Task { await SCContext.performMicCheck() }
                         }
                         .onAppear{ if micList.isEmpty { recordMic = false } }
