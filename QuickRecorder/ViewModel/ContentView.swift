@@ -47,116 +47,97 @@ struct ContentView: View {
                 }.cornerRadius(14)
                 HStack {
                     if !fromStatusBar { Spacer() }
-                    if #available(macOS 13, *) {
-                        ZStack(alignment: Alignment(horizontal: .center, vertical: .bottom)) {
-                            Button(action: {
-                                if let display = SCContext.getSCDisplayWithMouse() {
-                                    closeMainWindow()
-                                    appDelegate.createCountdownPanel(screen: display) {
-                                        AppDelegate.shared.prepRecord(type: "audio", screens: SCContext.getSCDisplayWithMouse(), windows: nil, applications: nil)
+                    ZStack(alignment: Alignment(horizontal: .center, vertical: .bottom)) {
+                        Button(action: {
+                            if let display = SCContext.getSCDisplayWithMouse() {
+                                closeMainWindow()
+                                appDelegate.createCountdownPanel(screen: display) {
+                                    AppDelegate.shared.prepRecord(type: "audio", screens: SCContext.getSCDisplayWithMouse(), windows: nil, applications: nil)
+                                }
+                            }
+                        }, label: {
+                            SelectorView(title: "System Audio".local, symbol: "waveform").cornerRadius(8)
+                        }).buttonStyle(.plain)
+                        Button {} label: {
+                            HStack(spacing: -2) {
+                                Button {
+                                    recordMic.toggle()
+                                } label: {
+                                    ZStack {
+                                        Image(systemName: "square.fill")
+                                            .font(.system(size: 15, weight: .medium))
+                                            .foregroundColor(.primary)
+                                            .colorInvert()
+                                            .opacity(0.2)
+                                        Image(systemName: recordMic ? "checkmark.square" : "square")
+                                            .font(.system(size: 16, weight: .medium))
                                     }
                                 }
-                            }, label: {
-                                SelectorView(title: "System Audio".local, symbol: "waveform").cornerRadius(8)
-                            }).buttonStyle(.plain)
-                            Button {} label: {
-                                HStack(spacing: -2) {
+                                .buttonStyle(.plain)
+                                .onChange(of: recordMic) { _ in  Task { await SCContext.performMicCheck() }}
+                                .onAppear{ if micList.isEmpty { recordMic = false } }
+                                .disabled(micList.isEmpty)
+                                if micDevice != "default" && enableAEC && recordMic{
                                     Button {
-                                        recordMic.toggle()
+                                        let alert = createAlert(
+                                            title: "Compatibility Warning".local,
+                                            message: "The \"Acoustic Echo Cancellation\" is enabled, but it won't work on now.\n\nIf you need to use a specific input with AEC, set it to \"Default\" and select the device you want in System Preferences.\n\nOr you can start recording without AEC.".local,
+                                            button1: "OK".local, button2: "System Preferences".local)
+                                        if alert.runModal() == .alertSecondButtonReturn {
+                                            NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.sound?input")!)
+                                        }
                                     } label: {
                                         ZStack {
-                                            Image(systemName: "square.fill")
-                                                .font(.system(size: 15, weight: .medium))
-                                                .foregroundColor(.primary)
-                                                .colorInvert()
-                                                .opacity(0.2)
-                                            Image(systemName: recordMic ? "checkmark.square" : "square")
-                                                .font(.system(size: 16, weight: .medium))
-                                        }
+                                            Image(systemName: "circle.fill").font(.system(size: 15))
+                                            Image(systemName: "exclamationmark")
+                                                .font(.system(size: 11.5, weight: .black))
+                                                .foregroundColor(.black)
+                                                .blendMode(.destinationOut)
+                                        }.compositingGroup()
                                     }
                                     .buttonStyle(.plain)
-                                    .onChange(of: recordMic) { _ in  Task { await SCContext.performMicCheck() }}
-                                    .onAppear{ if micList.isEmpty { recordMic = false } }
-                                    .disabled(micList.isEmpty)
-                                    if micDevice != "default" && enableAEC && recordMic{
-                                        Button {
-                                            let alert = createAlert(
-                                                title: "Compatibility Warning".local,
-                                                message: "The \"Acoustic Echo Cancellation\" is enabled, but it won't work on now.\n\nIf you need to use a specific input with AEC, set it to \"Default\" and select the device you want in System Preferences.\n\nOr you can start recording without AEC.".local,
-                                                button1: "OK".local, button2: "System Preferences".local)
-                                            if alert.runModal() == .alertSecondButtonReturn {
-                                                NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.sound?input")!)
-                                            }
-                                        } label: {
-                                            ZStack {
-                                                Image(systemName: "circle.fill").font(.system(size: 15))
-                                                Image(systemName: "exclamationmark")
-                                                    .font(.system(size: 11.5, weight: .black))
-                                                    .foregroundColor(.black)
-                                                    .blendMode(.destinationOut)
-                                            }.compositingGroup()
-                                        }
-                                        .buttonStyle(.plain)
-                                        .frame(width: 24).fixedSize()
+                                    .frame(width: 24).fixedSize()
+                                    .padding(.leading, 1)
+                                } else {
+                                    Image(systemName: "mic.fill")
+                                        .font(.system(size: 13, weight: .bold))
+                                        .foregroundColor(recordMic ? .primary : .secondary)
+                                        .frame(width: 24)
                                         .padding(.leading, 1)
-                                    } else {
-                                        Image(systemName: "mic.fill")
-                                            .font(.system(size: 13, weight: .bold))
-                                            .foregroundColor(recordMic ? .primary : .secondary)
-                                            .frame(width: 24)
-                                            .padding(.leading, 1)
+                                }
+                                Picker("", selection: $micDevice) {
+                                    Text("Default".local).tag("default")
+                                    ForEach(micList, id: \.self) { device in
+                                        Text(device.localizedName).tag(device.localizedName)
                                     }
-                                    if #available(macOS 14, *) {
-                                        Picker("", selection: $micDevice) {
-                                            Text("Default".local).tag("default")
-                                            ForEach(micList, id: \.self) { device in
-                                                Text(device.localizedName).tag(device.localizedName)
-                                            }
-                                        }.frame(width: 90)
-                                            .background(
-                                                ZStack {
-                                                    Color.primary
-                                                        .opacity(0.1)
-                                                        .cornerRadius(4)
-                                                        .padding(.vertical, -1)
-                                                        .padding(.horizontal, 3)
-                                                        .padding(.trailing, -16)
-                                                    Image(systemName: "chevron.up.chevron.down")
-                                                        .offset(x: 50)
-                                                }
-                                            )
-                                            .disabled(!recordMic)
-                                            .padding(.leading, -10)
-                                            .frame(width: 99)
-                                            .onAppear{
-                                                let list = micList.map({ $0.localizedName })
-                                                if !list.contains(micDevice) { micDevice = "default" }
-                                            }
-                                    } else {
-                                        Spacer().frame(width: 6)
-                                        Picker("", selection: $micDevice) {
-                                            Text("Default".local).tag("default")
-                                            ForEach(micList, id: \.self) { device in
-                                                Text(device.localizedName).tag(device.localizedName)
-                                            }
+                                }.frame(width: 90)
+                                    .background(
+                                        ZStack {
+                                            Color.primary
+                                                .opacity(0.1)
+                                                .cornerRadius(4)
+                                                .padding(.vertical, -1)
+                                                .padding(.horizontal, 3)
+                                                .padding(.trailing, -16)
+                                            Image(systemName: "chevron.up.chevron.down")
+                                                .offset(x: 50)
                                         }
-                                        .disabled(!recordMic)
-                                        .padding(.leading, -7.5)
-                                        .frame(width: 100)
-                                        .onAppear{
-                                            let list = micList.map({ $0.localizedName })
-                                            if !list.contains(micDevice) { micDevice = "default" }
-                                        }
+                                    )
+                                    .disabled(!recordMic)
+                                    .padding(.leading, -10)
+                                    .frame(width: 99)
+                                    .onAppear{
+                                        let list = micList.map({ $0.localizedName })
+                                        if !list.contains(micDevice) { micDevice = "default" }
                                     }
-                                }.padding(.leading, -5)
-                            }.buttonStyle(.plain)
-                            .scaleEffect(0.69)
-                            .padding(.bottom, 4)
-                            .frame(width: 110)
-                            .background(.primary.opacity(0.00001))
-                        }
-                        Divider().frame(height: 70)
+                            }.padding(.leading, -5)
+                        }.buttonStyle(.plain)
+                        .scaleEffect(0.69)
+                        .padding(.bottom, 4)
+                        .frame(width: 110)
+                        .background(.primary.opacity(0.00001))
                     }
+                    Divider().frame(height: 70)
                     Button(action: {
                         closeMainWindow()
                         appDelegate.createNewWindow(view: ScreenSelector(), title: "Screen Selector".local)
@@ -409,11 +390,7 @@ extension AppDelegate {
 
 extension View {
     func needScale() -> some View {
-        if #available(macOS 14, *) {
-            return self.scaleEffect(0.8).padding(.leading, -4)
-        } else {
-            return self
-        }
+        return self.scaleEffect(0.8).padding(.leading, -4)
     }
 }
 

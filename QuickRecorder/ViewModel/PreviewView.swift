@@ -119,21 +119,19 @@ struct PreviewView: View {
                     closeWindow()
                 }
             }
-            if #available(macOS 13, *) {
-                if ["mp4", "mov"].contains(filePath.pathExtension) {
-                    Button("Make GIF") {
-                        if isAppInstalled(id: "com.sindresorhus.Gifski") {
-                            makeGif()
-                            closeWindow()
-                        } else {
-                            let alert = createAlert(title: "Gifski not found",
-                                                    message: "Please install \"Gifski\" first to make GIF!",
-                                                    button1: "Open App Store", button2: "Cancel").runModal()
-                            if alert == .alertFirstButtonReturn { openURL("https://apps.apple.com/app/id1351639930") }
-                        }
+            if ["mp4", "mov"].contains(filePath.pathExtension) {
+                Button("Make GIF") {
+                    if isAppInstalled(id: "com.sindresorhus.Gifski") {
+                        makeGif()
+                        closeWindow()
+                    } else {
+                        let alert = createAlert(title: "Gifski not found",
+                                                message: "Please install \"Gifski\" first to make GIF!",
+                                                button1: "Open App Store", button2: "Cancel").runModal()
+                        if alert == .alertFirstButtonReturn { openURL("https://apps.apple.com/app/id1351639930") }
                     }
-                    Divider()
                 }
+                Divider()
             }
             Button("Close") { closeWindow() }
         }

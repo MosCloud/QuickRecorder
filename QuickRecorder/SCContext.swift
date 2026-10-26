@@ -353,7 +353,7 @@ class SCContext {
             let dispatchGroup = DispatchGroup()
             dispatchGroup.enter()
             vwInput.markAsFinished()
-            if #available(macOS 13, *) { awInput.markAsFinished() }
+            awInput.markAsFinished()
             vW.finishWriting {
                 if vW.status != .completed {
                     print("Video writing failed with status: \(vW.status), error: \(String(describing: vW.error))")
@@ -519,12 +519,7 @@ class SCContext {
     }
     
     static func getMicrophone() -> [AVCaptureDevice] {
-        var discoverySession: AVCaptureDevice.DiscoverySession
-        if #available(macOS 15.0, *) {
-            discoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInMicrophone, .microphone], mediaType: .audio, position: .unspecified)
-        } else {
-            discoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInMicrophone, .externalUnknown], mediaType: .audio, position: .unspecified)
-        }
+        let discoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInMicrophone, .microphone], mediaType: .audio, position: .unspecified)
         return discoverySession.devices.filter({ !$0.localizedName.contains("CADefaultDeviceAggregate") })
     }
     

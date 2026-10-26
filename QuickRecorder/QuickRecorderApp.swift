@@ -15,9 +15,6 @@ import KeyboardShortcuts
 import ServiceManagement
 import CoreMediaIO
 
-let isMacOS12 = ProcessInfo.processInfo.operatingSystemVersion.majorVersion == 12
-let isMacOS14 = ProcessInfo.processInfo.operatingSystemVersion.majorVersion == 14
-let isMacOS15 = ProcessInfo.processInfo.operatingSystemVersion.majorVersion == 15
 var scPerm = false
 let fd = FileManager.default
 let ud = UserDefaults.standard
@@ -84,12 +81,7 @@ struct QuickRecorderApp: App {
 
 extension Scene {
     func myWindowIsContentResizable() -> some Scene {
-        if #available(macOS 13.0, *) {
-            return self.windowResizability(.contentSize)
-        }
-        else {
-            return self
-        }
+        windowResizability(.contentSize)
     }
 }
 
@@ -222,22 +214,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
                 "saveDirectory": userDesktop as NSString,
                 "showMouse": true,
                 "recordMic": false,
-                "remuxAudio": isMacOS12 ? false : true,
-                "recordWinSound": isMacOS12 ? false : true,
+                "remuxAudio": true,
+                "recordWinSound": true,
                 "trimAfterRecord": false,
                 "showOnDock": true,
                 "showMenubar": false,
                 "enableAEC": false,
                 "recordHDR": false,
                 "preventSleep": true,
-                "showPreview": isMacOS12 ? false : true,
+                "showPreview": true,
                 "savedArea": [String: [String: CGFloat]]()
             ]
         )
         
         if highRes == 0 { highRes = 2 }
         if showOnDock { NSApp.setActivationPolicy(.regular) }
-        if isMacOS12 { showPreview = false; remuxAudio = false }
         
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
             if let error = error { print("Notification authorization denied: \(error.localizedDescription)") }
@@ -351,8 +342,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
             let w2 = w1.filter({ !$0.title.contains(".qma") })
             if (!w1.isEmpty && w2.isEmpty) || w1.isEmpty {
                 let offset = (!showOnDock && !showMenubar) ? 127 : 0
-                let width = isMacOS12 ? 800 : 928
-                let mainPanel = EscPanel(contentRect: NSRect(x: 0, y: 0, width: width + offset, height: 100), styleMask: [.fullSizeContentView, .nonactivatingPanel], backing: .buffered, defer: false)
+                let mainPanel = EscPanel(contentRect: NSRect(x: 0, y: 0, width: 928 + offset, height: 100), styleMask: [.fullSizeContentView, .nonactivatingPanel], backing: .buffered, defer: false)
                 mainPanel.contentView = NSHostingView(rootView: ContentView())
                 mainPanel.title = "QuickRecorder".local
                 mainPanel.isOpaque = false
@@ -369,7 +359,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
                     mainPanel.setFrameOrigin(NSPoint(x: wX, y: wY))
                 }
                 mainPanel.makeKeyAndOrderFront(self)
-                if #unavailable(macOS 13) { NSApp.activate(ignoringOtherApps: true) }
                 PopoverState.shared.isShowing = false
             }
         }
@@ -377,14 +366,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
     }
     
     func openSettingPanel() {
-        NSApp.activate(ignoringOtherApps: true)
-        if #available(macOS 14, *) {
-            NSApp.mainMenu?.items.first?.submenu?.item(at: 3)?.performAction()
-        } else if #available(macOS 13, *) {
-            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-        } else {
-            NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
-        }
+        NSApp.activate()
+        // Find "Settings…" by its ⌘, shortcut; its position in the app menu shifts whenever items are added or removed
+        NSApp.mainMenu?.items.first?.submenu?.items.first(where: { $0.keyEquivalent == "," })?.performAction()
     }
     
     class EscPanel: NSPanel {

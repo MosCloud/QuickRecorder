@@ -90,7 +90,7 @@ extension AppDelegate {
                     if highlightMouse { includ += mouseWindow }
                     if background.rawValue == BackgroundType.wallpaper.rawValue { if dockApp != nil { includ += wallpaper }}
                     SCContext.filter = SCContentFilter(display: screen, including: includ + camLayer)
-                    if #available(macOS 14.2, *) { SCContext.filter?.includeMenuBar = includeMenuBar }
+                    SCContext.filter?.includeMenuBar = includeMenuBar
                 } else {
                     SCContext.streamType = .window
                     SCContext.filter = SCContentFilter(desktopIndependentWindow: includ[0])
@@ -115,7 +115,7 @@ extension AppDelegate {
                 }}
                 if hideDesktopFiles { except += desktopFiles }
                 SCContext.filter = SCContentFilter(display: screen, excludingApplications: excluded, exceptingWindows: except)
-                if #available(macOS 14.2, *) { SCContext.filter?.includeMenuBar = ((SCContext.streamType == .screen || SCContext.streamType == .screenarea) && includeMenuBar) }
+                SCContext.filter?.includeMenuBar = ((SCContext.streamType == .screen || SCContext.streamType == .screenarea) && includeMenuBar)
             }
             if SCContext.streamType == .application {
                 var includ = SCContext.application!
@@ -127,7 +127,7 @@ extension AppDelegate {
                 //if ud.bool(forKey: "highlightMouse") { if let qrSelf = qrSelf { includ.append(qrSelf) }}
                 if background.rawValue == BackgroundType.wallpaper.rawValue { if let dock = dockApp { includ.append(dock); except += dockWindow}}
                 SCContext.filter = SCContentFilter(display: screen, including: includ, exceptingWindows: except)
-                if #available(macOS 14.2, *) { SCContext.filter?.includeMenuBar = includeMenuBar }
+                SCContext.filter?.includeMenuBar = includeMenuBar
             }
         }
         if SCContext.streamType == .systemaudio {
@@ -144,49 +144,17 @@ extension AppDelegate {
         
         let audioOnly = SCContext.streamType == .systemaudio
         
-        let conf: SCStreamConfiguration
-#if compiler(>=6.0)
-        if recordHDR {
-            if #available(macOS 15, *) {
-                // TODO change here. https://developer.apple.com/videos/play/wwdc2024/10088/?time=191
-                // For canonical display, it means you are capturing HDR content that is optimized for sharing with other HDR devices.
-                // hdrLocalDisplay or hdrCanonicalDisplay
-
-
-                conf = SCStreamConfiguration(preset: .captureHDRStreamLocalDisplay)
-            } else { conf = SCStreamConfiguration() }
-        } else { conf = SCStreamConfiguration() }
-#else
-        conf = SCStreamConfiguration()
-#endif
+        // TODO change here. https://developer.apple.com/videos/play/wwdc2024/10088/?time=191
+        // For canonical display, it means you are capturing HDR content that is optimized for sharing with other HDR devices.
+        // hdrLocalDisplay or hdrCanonicalDisplay
+        let conf = recordHDR ? SCStreamConfiguration(preset: .captureHDRStreamLocalDisplay) : SCStreamConfiguration()
         conf.width = 2
         conf.height = 2
         
         if !audioOnly {
-            if #available(macOS 14.0, *) {
-                conf.width = Int(filter.contentRect.width) * (highRes == 2 ? Int(filter.pointPixelScale) : 1)
-                conf.height = Int(filter.contentRect.height) * (highRes == 2 ? Int(filter.pointPixelScale) : 1)
-            } else {
-                guard let pointPixelScaleOld = (SCContext.screen ?? SCContext.getSCDisplayWithMouse()!).nsScreen?.backingScaleFactor else { return }
-                if SCContext.streamType == .application || SCContext.streamType == .windows || SCContext.streamType == .screen {
-                    let frame = (SCContext.screen ?? SCContext.getSCDisplayWithMouse()!).frame
-                    conf.width = Int(frame.width)
-                    conf.height = Int(frame.height)
-                }
-                if SCContext.streamType == .window {
-                    let frame = SCContext.window![0].frame
-                    conf.width = Int(frame.width)
-                    conf.height = Int(frame.height)
-                }
-                if SCContext.streamType == .screenarea {
-                    let frame = SCContext.screenArea!
-                    conf.width = Int(frame.width)
-                    conf.height = Int(frame.height)
-                }
-                conf.width = conf.width * (highRes == 2 ? Int(pointPixelScaleOld) : 1)
-                conf.height = conf.height * (highRes == 2 ? Int(pointPixelScaleOld) : 1)
-            }
-            
+            conf.width = Int(filter.contentRect.width) * (highRes == 2 ? Int(filter.pointPixelScale) : 1)
+            conf.height = Int(filter.contentRect.height) * (highRes == 2 ? Int(filter.pointPixelScale) : 1)
+
             if fastStart{
                 conf.showsCursor = false
             } else{
@@ -213,11 +181,9 @@ extension AppDelegate {
             }
         }
         
-        if #available(macOS 13, *) {
-            conf.capturesAudio = recordWinSound || fastStart || audioOnly
-            conf.sampleRate = 48000
-            conf.channelCount = 2
-        }
+        conf.capturesAudio = recordWinSound || fastStart || audioOnly
+        conf.sampleRate = 48000
+        conf.channelCount = 2
         
 
         //  conf.minimumFrameInterval = CMTime(value: 1, timescale: audioOnly ? CMTimeScale.max : CMTimeScale(frameRate))
@@ -243,14 +209,8 @@ extension AppDelegate {
             if let nsRect = SCContext.screenArea {
                 let newY = SCContext.screen!.frame.height - nsRect.size.height - nsRect.origin.y
                 conf.sourceRect = CGRect(x: nsRect.origin.x, y: newY, width: nsRect.size.width, height: nsRect.size.height)
-                if #available(macOS 14.0, *) {
-                    conf.width = Int(conf.sourceRect.width) * (highRes == 2 ? Int(filter.pointPixelScale) : 1)
-                    conf.height = Int(conf.sourceRect.height) * (highRes == 2 ? Int(filter.pointPixelScale) : 1)
-                } else {
-                    guard let pointPixelScaleOld = (SCContext.screen ?? SCContext.getSCDisplayWithMouse()!).nsScreen?.backingScaleFactor else { return }
-                    conf.width = Int(conf.sourceRect.width) * (highRes == 2 ? Int(pointPixelScaleOld) : 1)
-                    conf.height = Int(conf.sourceRect.height) * (highRes == 2 ? Int(pointPixelScaleOld) : 1)
-                }
+                conf.width = Int(conf.sourceRect.width) * (highRes == 2 ? Int(filter.pointPixelScale) : 1)
+                conf.height = Int(conf.sourceRect.height) * (highRes == 2 ? Int(filter.pointPixelScale) : 1)
             }
         }
         
@@ -285,7 +245,7 @@ extension AppDelegate {
         SCContext.stream = SCStream(filter: filter, configuration: conf, delegate: self)
         do {
             try SCContext.stream.addStreamOutput(self, type: .screen, sampleHandlerQueue: .global())
-            if #available(macOS 13, *) { try SCContext.stream.addStreamOutput(self, type: .audio, sampleHandlerQueue: .global()) }
+            try SCContext.stream.addStreamOutput(self, type: .audio, sampleHandlerQueue: .global())
             if !audioOnly {
                 initVideo(conf: conf)
             } else {
@@ -417,11 +377,9 @@ extension AppDelegate {
         
         if SCContext.vW.canAdd(SCContext.vwInput) { SCContext.vW.add(SCContext.vwInput) }
 
-        if #available(macOS 13, *) {
-            SCContext.awInput = AVAssetWriterInput(mediaType: AVMediaType.audio, outputSettings: SCContext.updateAudioSettings())
-            SCContext.awInput.expectsMediaDataInRealTime = true
-            if SCContext.vW.canAdd(SCContext.awInput) { SCContext.vW.add(SCContext.awInput) }
-        }
+        SCContext.awInput = AVAssetWriterInput(mediaType: AVMediaType.audio, outputSettings: SCContext.updateAudioSettings())
+        SCContext.awInput.expectsMediaDataInRealTime = true
+        if SCContext.vW.canAdd(SCContext.awInput) { SCContext.vW.add(SCContext.awInput) }
 
         if recordMic {
             let sampleRate = SCContext.getSampleRate() ?? 48000
@@ -519,20 +477,11 @@ extension AppDelegate {
                     //                                       colorSpace:colorSpace,
                     //                                       options: [
                     //     kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption: 1.0
-                    if #available(macOS 14.0, *) {
-                        try context.writePNGRepresentation(of:ciImage,
-                                                           to:url,
-                                                           format: .RGB10,
-                                                           colorSpace:colorSpace
-                        )
-                    } else {
-                        // Fallback on earlier versions
-                        print("RGB10 PNG not supported on this macOS version")
-                        try context.writePNGRepresentation(of:ciImage,
-                                                           to:url,
-                                                           format: .RGBA8,
-                                                           colorSpace:colorSpace)
-                    }
+                    try context.writePNGRepresentation(of:ciImage,
+                                                       to:url,
+                                                       format: .RGB10,
+                                                       colorSpace:colorSpace
+                    )
                     //        try context.writePNGRepresentation(of:outImage, to:outURL, format: .RGBA16,colorSpace:colorSpace,options:[:])
                 } catch let error {
                     // Handle the error case
@@ -576,21 +525,19 @@ extension AppDelegate {
             if frameQueue.getArray().contains(where: { $0 >= pts }) { print("Skip this frame"); return } else { frameQueue.append(pts) }
             SCContext.lastPTS = pts
             if SCContext.vwInput.isReadyForMoreMediaData {
-                if #available(macOS 14.2, *) {
-                    if let rect = attachments[.presenterOverlayContentRect] as? [String: Any]{
-                        var type = "np"
-                        let off = (rect["X"] as! CGFloat == .infinity)
-                        let small = (rect["X"] as! CGFloat == 0.0)
-                        let big = (!off && !small)
-                        if off { type = "OFF" } else if small { type = "Small" } else if big { type = "Big" }
-                        if type != presenterType {
-                            print("Presenter Overlay set to \"\(type)\"!")
-                            isCameraReady = false
-                            DispatchQueue.main.asyncAfter(deadline: .now() + TimeInterval(poSafeDelay)) {
-                                self.isCameraReady = true
-                            }
-                            presenterType = type
+                if let rect = attachments[.presenterOverlayContentRect] as? [String: Any]{
+                    var type = "np"
+                    let off = (rect["X"] as! CGFloat == .infinity)
+                    let small = (rect["X"] as! CGFloat == 0.0)
+                    let big = (!off && !small)
+                    if off { type = "OFF" } else if small { type = "Small" } else if big { type = "Big" }
+                    if type != presenterType {
+                        print("Presenter Overlay set to \"\(type)\"!")
+                        isCameraReady = false
+                        DispatchQueue.main.asyncAfter(deadline: .now() + TimeInterval(poSafeDelay)) {
+                            self.isCameraReady = true
                         }
+                        presenterType = type
                     }
                 }
                 if isPresenterON && !isCameraReady { break }
@@ -612,10 +559,8 @@ extension AppDelegate {
                 if SCContext.lastPTS == nil { return }
                 if SCContext.awInput.isReadyForMoreMediaData { SCContext.awInput.append(SampleBuffer) }
             }
-#if compiler(>=6.0)
         case .microphone:
             break
-#endif
         @unknown default:
             assertionFailure("unknown stream type".local)
         }

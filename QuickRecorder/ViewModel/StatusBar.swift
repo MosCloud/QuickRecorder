@@ -201,15 +201,7 @@ struct StatusBarItem: View {
                 })
                 .buttonStyle(.plain)
                 .popover(isPresented: $popoverState.isShowing, arrowEdge: .bottom) {
-                    if #available(macOS 13, *) {
-                        ContentViewNew().onAppear{ closeAllWindow() }
-                    } else {
-                        ContentView(fromStatusBar: true)
-                            .onAppear{
-                                closeAllWindow()
-                                if isMacOS12 { NSApp.activate(ignoringOtherApps: true) }
-                            }
-                    }
+                    ContentViewNew().onAppear{ closeAllWindow() }
                 }
             }
         }
@@ -230,8 +222,8 @@ func updateStatusBar() {
         }
         guard let button = statusBarItem.button else { return }
         //let width = SCContext.streamType == nil ? 36 : ((SCContext.streamType == .idevice || SCContext.streamType == .systemaudio) ? 138 : 158)
-        let iconView = NSHostingView(rootView: StatusBarItem().padding(.top, isMacOS14 ? -2 : -1))
-        iconView.frame = NSRect(x: 0, y: 1, width: getStatusBarWidth(), height: isMacOS14 ? 22 : 21)
+        let iconView = NSHostingView(rootView: StatusBarItem().padding(.top, -1))
+        iconView.frame = NSRect(x: 0, y: 1, width: getStatusBarWidth(), height: 21)
         button.subviews = [iconView]
         button.frame = iconView.frame
         button.setAccessibilityLabel("QuickRecorder")
