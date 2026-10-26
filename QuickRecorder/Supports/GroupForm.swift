@@ -114,7 +114,12 @@ struct SInfoButton: View {
         .onChange(of: isPresented) {}
         .sheet(isPresented: $isPresented) {
             VStack(alignment: .trailing) {
-                GroupBox { Text(tips).padding() }
+                GroupBox {
+                    Text(tips)
+                        .padding()
+                        .frame(maxWidth: 380, alignment: .leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 Button(action: {
                     isPresented = false
                 }, label: {
