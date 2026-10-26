@@ -113,7 +113,7 @@ struct ContentViewNew: View {
                                     }
                                 }
                                 .buttonStyle(.plain)
-                                .onChange(of: recordMic) { _ in  Task { await SCContext.performMicCheck() }}
+                                .onChange(of: recordMic) { Task { await SCContext.performMicCheck() }}
                                 if micDevice != "default" && enableAEC && recordMic{
                                     Button {
                                         let alert = createAlert(
@@ -142,48 +142,31 @@ struct ContentViewNew: View {
                                         .frame(width: 24)
                                         .padding(.leading, 1)
                                 }
-                                if #available(macOS 14, *) {
-                                    Picker("", selection: $micDevice) {
-                                        Text("Default".local).tag("default")
-                                        ForEach(micList, id: \.self) { device in
-                                            Text(device.localizedName).tag(device.localizedName)
-                                        }
-                                    }.frame(width: 90)
-                                        .background(
-                                            ZStack {
-                                                Color.primary
-                                                    .opacity(0.1)
-                                                    .cornerRadius(4)
-                                                    .padding(.vertical, -1)
-                                                    .padding(.horizontal, 3)
-                                                    .padding(.trailing, -16)
-                                                Image(systemName: "chevron.up.chevron.down")
-                                                    .offset(x: 50)
-                                            }
-                                        )
-                                        .disabled(!recordMic)
-                                        .padding(.leading, -10)
-                                        .frame(width: 99)
-                                        .onAppear{
-                                            let list = micList.map({ $0.localizedName })
-                                            if !list.contains(micDevice) { micDevice = "default" }
-                                        }
-                                } else {
-                                    Spacer().frame(width: 6)
-                                    Picker("", selection: $micDevice) {
-                                        Text("Default".local).tag("default")
-                                        ForEach(micList, id: \.self) { device in
-                                            Text(device.localizedName).tag(device.localizedName)
-                                        }
+                                Picker("", selection: $micDevice) {
+                                    Text("Default".local).tag("default")
+                                    ForEach(micList, id: \.self) { device in
+                                        Text(device.localizedName).tag(device.localizedName)
                                     }
+                                }.frame(width: 90)
+                                    .background(
+                                        ZStack {
+                                            Color.primary
+                                                .opacity(0.1)
+                                                .cornerRadius(4)
+                                                .padding(.vertical, -1)
+                                                .padding(.horizontal, 3)
+                                                .padding(.trailing, -16)
+                                            Image(systemName: "chevron.up.chevron.down")
+                                                .offset(x: 50)
+                                        }
+                                    )
                                     .disabled(!recordMic)
-                                    .padding(.leading, -7.5)
-                                    .frame(width: 100)
+                                    .padding(.leading, -10)
+                                    .frame(width: 99)
                                     .onAppear{
                                         let list = micList.map({ $0.localizedName })
                                         if !list.contains(micDevice) { micDevice = "default" }
                                     }
-                                }
                             }.padding(.leading, -5)
                         }
                         .buttonStyle(.plain)

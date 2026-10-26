@@ -1,0 +1,105 @@
+//
+//  CoreTests.swift
+//  QuickRecorderTests
+//
+//  Characterization tests: they pin down what the app does today, so later
+//  fixes change behaviour on purpose rather than by accident.
+//
+
+import AVFoundation
+import Foundation
+import Testing
+
+@Suite("Video bitrate")
+struct VideoBitrateTests {
+    @Test("High quality: pixels × fps/8 × codec factor", arguments: [
+        (isHEVC: true, isHDR: false, expected: 7_776_000),
+        (isHEVC: false, isHDR: false, expected: 13_996_800),
+        (isHEVC: true, isHDR: true, expected: 15_552_000),
+    ])
+    func highQuality(isHEVC: Bool, isHDR: Bool, expected: Int) {
+        #expect(VideoBitrate.target(width: 1920, height: 1080, frameRate: 60, isHEVC: isHEVC, quality: 1.0, isHDR: isHDR) == expected)
+    }
+
+    @Test("Medium and low quality scale down by resolution and frame rate")
+    func lowerQualities() {
+        #expect(VideoBitrate.target(width: 1920, height: 1080, frameRate: 60, isHEVC: true, quality: 0.7, isHDR: false) == 4_509_658)
+        #expect(VideoBitrate.target(width: 1920, height: 1080, frameRate: 60, isHEVC: true, quality: 0.3, isHDR: false) == 1_503_219)
+    }
+
+    @Test("Medium quality factor is clamped to 0.4…0.6, low quality to at least 0.1")
+    func qualityClamps() {
+        #expect(VideoBitrate.target(width: 1280, height: 720, frameRate: 30, isHEVC: true, quality: 0.7, isHDR: false) == 1_036_800)
+        #expect(VideoBitrate.target(width: 3840, height: 2160, frameRate: 60, isHEVC: true, quality: 0.7, isHDR: false) == 12_441_600)
+        #expect(VideoBitrate.target(width: 3840, height: 2160, frameRate: 120, isHEVC: true, quality: 0.3, isHDR: false) == 6_220_800)
+    }
+
+    @Test("Sides shorter than 600 count as 600; never below 200 kbit/s")
+    func floors() {
+        #expect(VideoBitrate.target(width: 100, height: 100, frameRate: 30, isHEVC: false, quality: 1.0, isHDR: false) == 1_215_000)
+        #expect(VideoBitrate.target(width: 600, height: 600, frameRate: 1, isHEVC: true, quality: 0.3, isHDR: false) == 200_000)
+    }
+}
+
+@Suite("Audio settings")
+struct AudioSettingsTests {
+    @Test("AAC and MP3 record as AAC at the chosen bitrate", arguments: ["aac", "mp3"])
+    func aac(format: String) {
+        let settings = AudioSettings.make(format: format, sampleRate: 48000, qualityKbps: 256, videoFormat: "mp4")
+        #expect(settings[AVFormatIDKey] as? AudioFormatID == kAudioFormatMPEG4AAC)
+        #expect(settings[AVEncoderBitRateKey] as? Int == 256_000)
+        #expect(settings[AVSampleRateKey] as? Int == 48000)
+        #expect(settings[AVNumberOfChannelsKey] as? Int == 2)
+    }
+
+    @Test("Below 44.1 kHz the bitrate is halved and capped at 64 kbit/s")
+    func lowSampleRate() {
+        #expect(AudioSettings.make(format: "aac", sampleRate: 22050, qualityKbps: 256, videoFormat: "mp4")[AVEncoderBitRateKey] as? Int == 64_000)
+        #expect(AudioSettings.make(format: "aac", sampleRate: 22050, qualityKbps: 96, videoFormat: "mp4")[AVEncoderBitRateKey] as? Int == 48_000)
+    }
+
+    @Test("Lossless formats carry no bitrate")
+    func lossless() {
+        let alac = AudioSettings.make(format: "alac", sampleRate: 48000, qualityKbps: 256, videoFormat: "mov")
+        #expect(alac[AVFormatIDKey] as? AudioFormatID == kAudioFormatAppleLossless)
+        #expect(alac[AVEncoderBitDepthHintKey] as? Int == 16)
+        #expect(alac[AVEncoderBitRateKey] == nil)
+        let flac = AudioSettings.make(format: "flac", sampleRate: 48000, qualityKbps: 256, videoFormat: "mov")
+        #expect(flac[AVFormatIDKey] as? AudioFormatID == kAudioFormatFLAC)
+        #expect(flac[AVEncoderBitRateKey] == nil)
+    }
+
+    @Test("Opus falls back to AAC inside .mp4")
+    func opus() {
+        #expect(AudioSettings.make(format: "opus", sampleRate: 48000, qualityKbps: 128, videoFormat: "mov")[AVFormatIDKey] as? AudioFormatID == kAudioFormatOpus)
+        #expect(AudioSettings.make(format: "opus", sampleRate: 48000, qualityKbps: 128, videoFormat: "mp4")[AVFormatIDKey] as? AudioFormatID == kAudioFormatMPEG4AAC)
+    }
+
+    @Test("Unknown formats get no format ID")
+    func unknown() {
+        #expect(AudioSettings.make(format: "wav", sampleRate: 48000, qualityKbps: 128, videoFormat: "mp4")[AVFormatIDKey] == nil)
+    }
+}
+
+@Suite("Recording names")
+struct RecordingNameTests {
+    @Test("Directory + prefix + y-MM-dd HH.mm.ss")
+    func path() throws {
+        let utc = try #require(TimeZone(identifier: "UTC"))
+        let date = Date(timeIntervalSince1970: 1_793_027_045) // 2026-10-26 15:04:05 UTC
+        #expect(RecordingName.path(directory: "/Users/me/Desktop", prefix: "/Recording at ", date: date, timeZone: utc)
+                == "/Users/me/Desktop/Recording at 2026-10-26 15.04.05")
+    }
+}
+
+@Suite("Elapsed time")
+struct ElapsedTimeTests {
+    @Test("Minutes and seconds, minutes keep counting past an hour", arguments: [
+        (seconds: 0.0, text: "00:00"),
+        (seconds: 65.0, text: "01:05"),
+        (seconds: 3661.0, text: "61:01"),
+    ])
+    func text(seconds: Double, text: String) {
+        #expect(ElapsedTime.text(seconds) == text)
+    }
+}

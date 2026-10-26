@@ -18,7 +18,7 @@ class RecorderPlayerModel: NSObject, ObservableObject {
     
     func loadVideo(fromUrl: URL, completion: @escaping () -> Void) {
         fileUrl = fromUrl
-        asset = AVAsset(url: fromUrl)
+        asset = AVURLAsset(url: fromUrl)
         guard let asset = asset else { return }
         playerItem = AVPlayerItem(asset: asset)
         playerView.player?.replaceCurrentItem(with: playerItem)
@@ -67,22 +67,25 @@ class RecorderPlayerModel: NSObject, ObservableObject {
                             path = fileUrl.deletingPathExtension().path
                             guard let path = path else { return }
                             let filePath = path.removingPercentEncoding! + " (Cropped in ".local + "\(dateFormatter.string(from: Date())))." + fileEnding
-                            exportSession?.outputURL = filePath.url
-                            exportSession?.outputFileType = fileType
-                            exportSession?.timeRange = timeRange
-                            exportSession?.exportAsynchronously {
-                                if let error = exportSession?.error {
-                                    print("Error: \(error.localizedDescription)")
-                                } else {
-                                    print("Trimmed video exported successfully.")
-                                    let content = UNMutableNotificationContent()
-                                    content.title = "Clip Saved".local
-                                    content.body = String(format: "File saved to: %@".local, filePath)
-                                    content.sound = UNNotificationSound.default
-                                    let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
-                                    let request = UNNotificationRequest(identifier: "quickrecorder.completed.\(UUID().uuidString)", content: content, trigger: trigger)
-                                    UNUserNotificationCenter.current().add(request) { error in
-                                        if let error = error { print("Notification failed to send：\(error.localizedDescription)") }
+                            if let exportSession, let fileType {
+                                exportSession.timeRange = timeRange
+                                Task {
+                                    do {
+                                        try await exportSession.export(to: filePath.url, as: fileType)
+                                        print("Trimmed video exported successfully.")
+                                        let content = UNMutableNotificationContent()
+                                        content.title = "Clip Saved".local
+                                        content.body = String(format: "File saved to: %@".local, filePath)
+                                        content.sound = UNNotificationSound.default
+                                        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+                                        let request = UNNotificationRequest(identifier: "quickrecorder.completed.\(UUID().uuidString)", content: content, trigger: trigger)
+                                        do {
+                                            try await UNUserNotificationCenter.current().add(request)
+                                        } catch {
+                                            print("Notification failed to send：\(error.localizedDescription)")
+                                        }
+                                    } catch {
+                                        print("Error: \(error.localizedDescription)")
                                     }
                                 }
                             }

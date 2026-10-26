@@ -14,11 +14,7 @@ import UserNotifications
 import KeyboardShortcuts
 import ServiceManagement
 import CoreMediaIO
-import Sparkle
 
-let isMacOS12 = ProcessInfo.processInfo.operatingSystemVersion.majorVersion == 12
-let isMacOS14 = ProcessInfo.processInfo.operatingSystemVersion.majorVersion == 14
-let isMacOS15 = ProcessInfo.processInfo.operatingSystemVersion.majorVersion == 15
 var scPerm = false
 let fd = FileManager.default
 let ud = UserDefaults.standard
@@ -35,19 +31,11 @@ let deviceWindow = NSWindow(contentRect: NSRect(x: 200, y: 200, width: 200, heig
 let controlPanel = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 10, height: 10), styleMask: [.fullSizeContentView], backing: .buffered, defer: false)
 let countdownPanel = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 120, height: 120), styleMask: [.fullSizeContentView], backing: .buffered, defer: false)
 let previewWindow = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 266, height: 156), styleMask: [.fullSizeContentView], backing: .buffered, defer: false)
-var updaterController: SPUStandardUpdaterController!
 
 @main
 struct QuickRecorderApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    //private let updaterController: SPUStandardUpdaterController
-        
-    init() {
-        // If you want to start the updater manually, pass false to startingUpdater and call .startUpdater() later
-        // This is where you can also pass an updater delegate if you need one
-        updaterController = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
-    }
-    
+
     var body: some Scene {
         DocumentGroup(newDocument: qmaPackageHandle()) { file in
             //if SCContext.stream == nil {
@@ -87,21 +75,13 @@ struct QuickRecorderApp: App {
         .handlesExternalEvents(matching: [])
         .commands {
             CommandGroup(replacing: .newItem) {}
-            CommandGroup(after: .appInfo) {
-                CheckForUpdatesView(updater: updaterController.updater)
-            }
         }
     }
 }
 
 extension Scene {
     func myWindowIsContentResizable() -> some Scene {
-        if #available(macOS 13.0, *) {
-            return self.windowResizability(.contentSize)
-        }
-        else {
-            return self
-        }
+        windowResizability(.contentSize)
     }
 }
 
@@ -166,12 +146,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
         let mouseLocation = event.locationInWindow
         var windowFrame = screenMagnifier.frame
         windowFrame.origin = NSPoint(x: mouseLocation.x - windowFrame.width / 2, y: mouseLocation.y - windowFrame.height / 2)
-        guard let image = NSImage.createScreenShot() else { return }
-        let rect = NSRect(x: mouseLocation.x - 67, y: mouseLocation.y - 58, width: 134, height: 116)
-        let croppedImage = image.trim(rect: rect)
-        screenMagnifier.contentView = NSHostingView(rootView: ScreenMagnifier(screenShot: croppedImage, event: event))
         screenMagnifier.setFrameOrigin(windowFrame.origin)
-        screenMagnifier.orderFront(nil)
+        // Global mouse monitors call back on the main thread
+        MainActor.assumeIsolated {
+            MagnifierCapture.shared.capture(around: mouseLocation) { image in
+                if !SCContext.isMagnifierEnabled || hideScreenMagnifier { return }
+                screenMagnifier.contentView = NSHostingView(rootView: ScreenMagnifier(screenShot: image, event: event))
+                screenMagnifier.orderFront(nil)
+            }
+        }
     }
     
     func registerGlobalMouseMonitor() {
@@ -231,22 +214,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
                 "saveDirectory": userDesktop as NSString,
                 "showMouse": true,
                 "recordMic": false,
-                "remuxAudio": isMacOS12 ? false : true,
-                "recordWinSound": isMacOS12 ? false : true,
+                "remuxAudio": true,
+                "recordWinSound": true,
                 "trimAfterRecord": false,
                 "showOnDock": true,
                 "showMenubar": false,
                 "enableAEC": false,
                 "recordHDR": false,
                 "preventSleep": true,
-                "showPreview": isMacOS12 ? false : true,
+                "showPreview": true,
                 "savedArea": [String: [String: CGFloat]]()
             ]
         )
         
         if highRes == 0 { highRes = 2 }
         if showOnDock { NSApp.setActivationPolicy(.regular) }
-        if isMacOS12 { showPreview = false; remuxAudio = false }
         
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
             if let error = error { print("Notification authorization denied: \(error.localizedDescription)") }
@@ -360,8 +342,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
             let w2 = w1.filter({ !$0.title.contains(".qma") })
             if (!w1.isEmpty && w2.isEmpty) || w1.isEmpty {
                 let offset = (!showOnDock && !showMenubar) ? 127 : 0
-                let width = isMacOS12 ? 800 : 928
-                let mainPanel = EscPanel(contentRect: NSRect(x: 0, y: 0, width: width + offset, height: 100), styleMask: [.fullSizeContentView, .nonactivatingPanel], backing: .buffered, defer: false)
+                let mainPanel = EscPanel(contentRect: NSRect(x: 0, y: 0, width: 928 + offset, height: 100), styleMask: [.fullSizeContentView, .nonactivatingPanel], backing: .buffered, defer: false)
                 mainPanel.contentView = NSHostingView(rootView: ContentView())
                 mainPanel.title = "QuickRecorder".local
                 mainPanel.isOpaque = false
@@ -378,7 +359,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
                     mainPanel.setFrameOrigin(NSPoint(x: wX, y: wY))
                 }
                 mainPanel.makeKeyAndOrderFront(self)
-                if #unavailable(macOS 13) { NSApp.activate(ignoringOtherApps: true) }
                 PopoverState.shared.isShowing = false
             }
         }
@@ -386,14 +366,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
     }
     
     func openSettingPanel() {
-        NSApp.activate(ignoringOtherApps: true)
-        if #available(macOS 14, *) {
-            NSApp.mainMenu?.items.first?.submenu?.item(at: 3)?.performAction()
-        } else if #available(macOS 13, *) {
-            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-        } else {
-            NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
-        }
+        NSApp.activate()
+        // Find "Settings…" by its ⌘, shortcut; its position in the app menu shifts whenever items are added or removed
+        NSApp.mainMenu?.items.first?.submenu?.items.first(where: { $0.keyEquivalent == "," })?.performAction()
     }
     
     class EscPanel: NSPanel {
@@ -547,36 +522,6 @@ extension NSMenuItem {
 }
 
 extension NSImage {
-    static func createScreenShot() -> NSImage? {
-        let excludedAppBundleIDs = ["com.lihaoyun6.QuickRecorder"]
-        var exclusionPIDs = [Int]()
-        for app in NSWorkspace.shared.runningApplications {
-            if excludedAppBundleIDs.contains(app.bundleIdentifier ?? "") {
-                exclusionPIDs.append(Int(app.processIdentifier))
-            }
-        }
-        
-        let windowDescriptions = CGWindowListCopyWindowInfo(.optionOnScreenOnly, kCGNullWindowID) as? [[String: Any]] ?? []
-        var windowIDs = [CGWindowID]()
-        for windowDict in windowDescriptions {
-            if let windowProcessID = windowDict[kCGWindowOwnerPID as String] as? Int,
-               !exclusionPIDs.contains(windowProcessID),
-               let windowID = windowDict[kCGWindowNumber as String] as? CGWindowID {
-                windowIDs.append(windowID)
-            }
-        }
-        let pointer = UnsafeMutablePointer<UnsafeRawPointer?>.allocate(capacity: windowIDs.count)
-        for (index, window) in windowIDs.enumerated() { pointer[index] = UnsafeRawPointer(bitPattern: UInt(window)) }
-        let cWindowIDArray: CFArray = CFArrayCreate(kCFAllocatorDefault, pointer, windowIDs.count, nil)
-
-        guard let imageRef = CGImage(windowListFromArrayScreenBounds: CGRect.infinite, windowArray: cWindowIDArray, imageOption: []) else {
-            print("No image available")
-            return nil
-        }
-        let factor = SCContext.getScreenWithMouse()?.backingScaleFactor ?? 1.0
-        return NSImage(cgImage: imageRef, size: NSSize(width: CGFloat(imageRef.width)/factor, height: CGFloat(imageRef.height)/factor))
-    }
-    
     func saveToFile(_ url: URL, type: NSBitmapImageRep.FileType = .png) {
         if let tiffData = self.tiffRepresentation,
            let imageRep = NSBitmapImageRep(data: tiffData) {
@@ -587,17 +532,6 @@ extension NSImage {
                 print("Error saving image: \(error.localizedDescription)")
             }
         }
-    }
-    
-    func trim(rect: CGRect) -> NSImage {
-        let result = NSImage(size: rect.size)
-        result.lockFocus()
-
-        let destRect = CGRect(origin: .zero, size: result.size)
-        self.draw(in: destRect, from: rect, operation: .copy, fraction: 1.0)
-
-        result.unlockFocus()
-        return result
     }
 }
 
@@ -641,19 +575,3 @@ extension utsname {
         sMachine == "arm64"
     }
 }
-
-enum AudioQuality: Int { case normal = 128, good = 192, high = 256, extreme = 320 }
-
-enum AudioFormat: String { case aac, alac, flac, opus, mp3 }
-
-enum VideoFormat: String { case mov, mp4 }
-
-enum PixFormat: String { case delault, yuv420p8v, yuv420p8f, yuv420p10v, yuv420p10f, bgra32 }
-
-enum ColSpace: String { case delault, srgb, p3, bt709, bt2020 }
-
-enum Encoder: String { case h264, h265 }
-
-enum StreamType: Int { case screen, window, windows, application, screenarea, systemaudio, idevice, camera }
-
-enum BackgroundType: String { case wallpaper, clear, black, white, red, green, yellow, orange, gray, blue, custom }

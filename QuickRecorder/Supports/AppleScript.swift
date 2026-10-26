@@ -224,9 +224,7 @@ class setPreferences: NSScriptCommand {
             }
         }
         if let hdr = self.evaluatedArguments!["hdr"] as? Bool {
-            if #available(macOS 15.0, *) {
-                UserDefaults.standard.set(hdr, forKey: "recordHDR")
-            }
+            UserDefaults.standard.set(hdr, forKey: "recordHDR")
         }
         return nil
     }

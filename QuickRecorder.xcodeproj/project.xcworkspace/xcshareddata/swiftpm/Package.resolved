@@ -1,5 +1,5 @@
 {
-  "originHash" : "a89f15c8917c69baa61d735aebe94d657281ac2cd56f20025c83a6956b56bdb3",
+  "originHash" : "5fd4e3457156b09b1b2de49d205dd7ba5e9d9783dffd94bb915ae751a3b82639",
   "pins" : [
     {
       "identity" : "aecaudiostream",
@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/sindresorhus/KeyboardShortcuts.git",
       "state" : {
-        "revision" : "7ecc38bb6edf7d087d30e737057b8d8a9b7f51eb",
-        "version" : "2.2.4"
+        "revision" : "772133d9dbe800fdac0473226822994c5c162c58",
+        "version" : "3.1.0"
       }
     },
     {
@@ -26,15 +26,6 @@
       "state" : {
         "branch" : "main",
         "revision" : "0853e68c0c9b205ffe6a963f2a56b26e6ceca51a"
-      }
-    },
-    {
-      "identity" : "sparkle",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/sparkle-project/Sparkle",
-      "state" : {
-        "revision" : "0a4caaf7a81eea2cece651ef4b17331fa0634dff",
-        "version" : "2.6.0"
       }
     },
     {

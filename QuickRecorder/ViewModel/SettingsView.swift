@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import Sparkle
 import ServiceManagement
 import KeyboardShortcuts
 import MatrixColorSelector
@@ -17,25 +16,26 @@ struct SettingsView: View {
     var body: some View {
         NavigationView {
             List(selection: $selectedItem) {
-                NavigationLink(destination: GeneralView(), tag: "General", selection: $selectedItem) {
-                    Label("General", image: "gear")
-                }
-                NavigationLink(destination: RecorderView(), tag: "Recorder", selection: $selectedItem) {
-                    Label("Recorder", image: "record")
-                }
-                NavigationLink(destination: OutputView(), tag: "Output", selection: $selectedItem) {
-                    Label("Output", image: "film")
-                }
-                NavigationLink(destination: HotkeyView(), tag: "Hotkey", selection: $selectedItem) {
-                    Label("Hotkey", image: "hotkey")
-                }
-                NavigationLink(destination: BlocklistView(), tag: "Blaoklist", selection: $selectedItem) {
-                    Label("Blocklist", image: "blacklist")
-                }
+                Label("General", image: "gear").tag("General")
+                Label("Recorder", image: "record").tag("Recorder")
+                Label("Output", image: "film").tag("Output")
+                Label("Hotkey", image: "hotkey").tag("Hotkey")
+                Label("Blocklist", image: "blacklist").tag("Blocklist")
             }
             .listStyle(.sidebar)
             .padding(.top, 9)
+            detail
         }.frame(width: 600, height: 512)
+    }
+
+    @ViewBuilder private var detail: some View {
+        switch selectedItem {
+        case "Recorder": RecorderView()
+        case "Output": OutputView()
+        case "Hotkey": HotkeyView()
+        case "Blocklist": BlocklistView()
+        default: GeneralView()
+        }
     }
 }
 
@@ -50,30 +50,26 @@ struct GeneralView: View {
     var body: some View {
         SForm {
             SGroupBox(label: "Startup") {
-                if #available(macOS 13, *) {
-                    SToggle("Launch at Login", isOn: $launchAtLogin)
-                        .onChange(of: launchAtLogin) { newValue in
-                            do {
-                                if newValue {
-                                    try SMAppService.mainApp.register()
-                                } else {
-                                    try SMAppService.mainApp.unregister()
-                                }
-                            }catch{
-                                print("Failed to \(newValue ? "enable" : "disable") launch at login: \(error.localizedDescription)")
+                SToggle("Launch at Login", isOn: $launchAtLogin)
+                    .onChange(of: launchAtLogin) { _, newValue in
+                        do {
+                            if newValue {
+                                try SMAppService.mainApp.register()
+                            } else {
+                                try SMAppService.mainApp.unregister()
                             }
+                        }catch{
+                            print("Failed to \(newValue ? "enable" : "disable") launch at login: \(error.localizedDescription)")
                         }
-                    SDivider()
-                }
+                    }
+                SDivider()
                 SToggle("Show QuickRecorder on Dock", isOn: $showOnDock)
                     //.disabled(!showMenubar)
                 SDivider()
                 SToggle("Show QuickRecorder on Menu Bar", isOn: $showMenubar)
                     //.disabled(!showOnDock)
             }
-            SGroupBox(label: "Update") { UpdaterSettingsView(updater: updaterController.updater) }
             VStack(spacing: 8) {
-                CheckForUpdatesView(updater: updaterController.updater)
                 if let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
                     Text("QuickRecorder v\(appVersion)")
                         .font(.subheadline)
@@ -81,9 +77,9 @@ struct GeneralView: View {
                 }
             }
         }
-        .onAppear{ if #available(macOS 13, *) { launchAtLogin = (SMAppService.mainApp.status == .enabled) }}
-        .onChange(of: showMenubar) { _ in updateStatusBar() }
-        .onChange(of: showOnDock) { newValue in
+        .onAppear{ launchAtLogin = (SMAppService.mainApp.status == .enabled) }
+        .onChange(of: showMenubar) { updateStatusBar() }
+        .onChange(of: showOnDock) { _, newValue in
             if !newValue {
                 NSApp.setActivationPolicy(.accessory)
                 NSApp.activate(ignoringOtherApps: true)
@@ -114,17 +110,11 @@ struct RecorderView: View {
             SGroupBox(label: "Recorder") {
                 SSteper("Delay Before Recording", value: $countdown, min: 0, max: 99)
                 SDivider()
-                if #available(macOS 14, *) {
-                    SSteper("Presenter Overlay Delay", value: $poSafeDelay, min: 0, max: 99, tips: "If enabling Presenter Overlay causes recording failure, please increase this value.")
-                    SDivider()
-                }
+                SSteper("Presenter Overlay Delay", value: $poSafeDelay, min: 0, max: 99, tips: "If enabling Presenter Overlay causes recording failure, please increase this value.")
+                SDivider()
                 SItem(label: "Custom Background Color") {
-                    if #unavailable(macOS 13) {
-                        ColorPicker("", selection: $userColor)
-                    } else {
-                        MatrixColorSelector("", selection: $userColor)
-                            .onChange(of: userColor) { userColor in ud.setColor(userColor, forKey: "userColor") }
-                    }
+                    MatrixColorSelector("", selection: $userColor)
+                        .onChange(of: userColor) { _, userColor in ud.setColor(userColor, forKey: "userColor") }
                 }
             }
             SGroupBox {
@@ -132,19 +122,15 @@ struct RecorderView: View {
                 SDivider()
                 SToggle("Prevent Mac from sleeping while recording", isOn: $preventSleep)
                 SDivider()
-                if #available(macOS 13, *) {
-                    SToggle("Show floating preview after recording", isOn: $showPreview)
-                    SDivider()
-                }
+                SToggle("Show floating preview after recording", isOn: $showPreview)
+                SDivider()
                 SToggle("Open video trimmer after recording", isOn: $trimAfterRecord)
             }
             SGroupBox {
                 SToggle("Exclude QuickRecorder itself", isOn: $hideSelf)
                 SDivider()
-                if #available (macOS 13, *) {
-                    SToggle("Include Menu Bar in Recording", isOn: $includeMenuBar)
-                    SDivider()
-                }
+                SToggle("Include Menu Bar in Recording", isOn: $includeMenuBar)
+                SDivider()
                 SToggle("Hide Control Center Icons", isOn: $hideCCenter, tips: "Hide the clock, Wi-Fi, bluetooth, volume and other system icons in the menu bar.")
                 SDivider()
                 SToggle("Highlight the Mouse Cursor", isOn: $highlightMouse, tips: "Not available for \"Single Window Capture\"")
@@ -189,19 +175,15 @@ struct OutputView: View {
                     Text("Opus").tag(AudioFormat.opus)
                 }
                 SDivider()
-                if #available(macOS 13, *) {
-                    SToggle("Record Microphone to Main Track", isOn: $remuxAudio)
-                    SDivider()
-                }
+                SToggle("Record Microphone to Main Track", isOn: $remuxAudio)
+                SDivider()
                 SToggle("Enable Acoustic Echo Cancellation", isOn: $enableAEC)
-                if #available(macOS 14, *) {
-                    SDivider()
-                    SPicker("Audio Ducking Level", selection: $AECLevel) {
-                        Text("Min").tag("min")
-                        Text("Mid").tag("mid")
-                        Text("Max").tag("max")
-                    }.disabled(!enableAEC)
-                }
+                SDivider()
+                SPicker("Audio Ducking Level", selection: $AECLevel) {
+                    Text("Min").tag("min")
+                    Text("Mid").tag("mid")
+                    Text("Max").tag("max")
+                }.disabled(!enableAEC)
             }
             SGroupBox(label: "Video") {
                 SPicker("Format", selection: $videoFormat) {
@@ -226,7 +208,7 @@ struct OutputView: View {
                     Button("Select...", action: { updateOutputDirectory() })
                 }
             }
-        }.onChange(of: withAlpha) {alpha in
+        }.onChange(of: withAlpha) { _, alpha in
             if alpha {
                 encoder = Encoder.h265; videoFormat = VideoFormat.mov
             } else {
@@ -335,7 +317,6 @@ extension KeyboardShortcuts.Name {
 }
 
 extension AppDelegate {
-    @available(macOS 13.0, *)
     @objc func setLoginItem(_ sender: NSMenuItem) {
         sender.state = sender.state == .on ? .off : .on
         do {

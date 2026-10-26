@@ -21,11 +21,7 @@ struct AppSelector: View {
     var body: some View {
         ZStack {
             VStack(spacing: 15) {
-                if #available(macOS 15, *) {
-                    Text("Please select the App(s) to record").offset(y: 12)
-                } else {
-                    Text("Please select the App(s) to record")
-                }
+                Text("Please select the App(s) to record").offset(y: 12)
                 TabView(selection: $selectedTab) {
                     let allApps = viewModel.allApps.sorted(by: { $0.key.displayID < $1.key.displayID })
                     ForEach(allApps, id: \.key) { element in
@@ -91,7 +87,7 @@ struct AppSelector: View {
                 }
                 .frame(height: 445)
                 .padding(.horizontal, 10)
-                .onChange(of: selectedTab) { _ in selected.removeAll() }
+                .onChange(of: selectedTab) { selected.removeAll() }
                 .onReceive(viewModel.$isReady) { isReady in
                     if isReady {
                         let allApps = viewModel.allApps.sorted(by: { $0.key.displayID < $1.key.displayID })
@@ -230,7 +226,7 @@ struct OptionsView: View {
                         //Text("Low (0.5x)").tag(0)
                     }
                     .buttonStyle(.borderless)
-                    .frame(minWidth: isMacOS12 ? 100 : 10)
+                    .frame(minWidth: 10)
                     Picker("", selection: $frameRate) {
                         if ![240, 144, 120, 90, 60, 30, 24, 15 ,10].contains(frameRate) {
                             Text("\(frameRate) FPS").tag(frameRate)
@@ -246,13 +242,13 @@ struct OptionsView: View {
                         Text("10 FPS").tag(10)
                     }
                     .buttonStyle(.borderless)
-                    .frame(minWidth: isMacOS12 ? 100 : 10)
+                    .frame(minWidth: 10)
                 }.scaledToFit()
                 Divider().frame(height: 50)
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Quality")
                     Text("Background")
-                }.padding(.leading, isMacOS12 ? 0 : 8)
+                }.padding(.leading, 8)
                 VStack(alignment: .leading, spacing: 10) {
                     Picker("", selection: $videoQuality) {
                         Text("High").tag(1.0)
@@ -260,7 +256,7 @@ struct OptionsView: View {
                         Text("Low").tag(0.3)
                     }
                     .buttonStyle(.borderless)
-                    .frame(minWidth: isMacOS12 ? 100 : 10)
+                    .frame(minWidth: 10)
                     Picker("", selection: $background) {
                         Text("Wallpaper").tag(BackgroundType.wallpaper)
                         if ud.bool(forKey: "withAlpha") { Text("Transparent").tag(BackgroundType.clear) }
@@ -275,56 +271,52 @@ struct OptionsView: View {
                         Text("Custom").tag(BackgroundType.custom)
                     }
                     .buttonStyle(.borderless)
-                    .frame(minWidth: isMacOS12 ? 100 : 10)
+                    .frame(minWidth: 10)
                 }.scaledToFit()
                 Divider().frame(height: 50)
-                VStack(alignment: .leading, spacing: isMacOS12 ? 10 : 2) {
-                    if #available(macOS 15, *) {
-                        Toggle(isOn: $recordHDR) {
-                            HStack(spacing:0){
-                                Image(systemName: "sparkles.square.filled.on.square")
-                                    .font(.subheadline)
-                                    .frame(width: isMacOS12 ? 20 : 16)
-                                Text("Record HDR")
-                                    .font(.subheadline)
-                            }
-                        }
-                        .fixedSize()
-                        .toggleStyle(.checkbox)
-                    }
-                    Toggle(isOn: $showMouse) {
-                        HStack(spacing: 0){
-                            Image(systemName: "cursorarrow")
-                                .font(isMacOS12 ? .body : .subheadline)
-                                .frame(width: isMacOS12 ? 20 : 16)
-                            Text("Record Cursor")
-                                .font(isMacOS12 ? .body : .subheadline)
+                VStack(alignment: .leading, spacing: 2) {
+                    Toggle(isOn: $recordHDR) {
+                        HStack(spacing:0){
+                            Image(systemName: "sparkles.square.filled.on.square")
+                                .font(.subheadline)
+                                .frame(width: 16)
+                            Text("Record HDR")
+                                .font(.subheadline)
                         }
                     }
                     .fixedSize()
                     .toggleStyle(.checkbox)
-                    if #available(macOS 13, *) {
-                        Toggle(isOn: $recordWinSound) {
-                            HStack(spacing: 0){
-                                Image(systemName: "speaker.wave.1.fill")
-                                    .font(isMacOS12 ? .body : .subheadline)
-                                    .frame(width: isMacOS12 ? 20 : 16)
-                                Text("App's Audio")
-                                    .font(.subheadline)
-                            }
+                    Toggle(isOn: $showMouse) {
+                        HStack(spacing: 0){
+                            Image(systemName: "cursorarrow")
+                                .font(.subheadline)
+                                .frame(width: 16)
+                            Text("Record Cursor")
+                                .font(.subheadline)
                         }
-                        .fixedSize()
-                        .toggleStyle(.checkbox)
                     }
+                    .fixedSize()
+                    .toggleStyle(.checkbox)
+                    Toggle(isOn: $recordWinSound) {
+                        HStack(spacing: 0){
+                            Image(systemName: "speaker.wave.1.fill")
+                                .font(.subheadline)
+                                .frame(width: 16)
+                            Text("App's Audio")
+                                .font(.subheadline)
+                        }
+                    }
+                    .fixedSize()
+                    .toggleStyle(.checkbox)
                     HStack(spacing: 0) {
                         Toggle(isOn: $recordMic) {
                             Image(systemName: "mic.fill")
-                                .font(isMacOS12 ? .body : .subheadline)
-                                .frame(width: isMacOS12 ? 20 : 16)
+                                .font(.subheadline)
+                                .frame(width: 16)
                         }
                         .fixedSize()
                         .toggleStyle(.checkbox)
-                        .onChange(of: recordMic) { _ in
+                        .onChange(of: recordMic) {
                             Task { await SCContext.performMicCheck() }
                         }
                         .onAppear{ if micList.isEmpty { recordMic = false } }
@@ -336,9 +328,9 @@ struct OptionsView: View {
                             }
                         }
                         .disabled(!recordMic)
-                        .scaleEffect(isMacOS12 ? 1 : 0.8)
-                        .padding(.leading, isMacOS12 ? -7 : -16)
-                        .frame(width: 90, height: isMacOS12 ? 20 :12)
+                        .scaleEffect(0.8)
+                        .padding(.leading, -16)
+                        .frame(width: 90, height: 12)
                         .onAppear{
                             let list = micList.map({ $0.localizedName })
                             if !list.contains(micDevice) { micDevice = "default" }
@@ -356,7 +348,7 @@ struct OptionsView: View {
                             }).buttonStyle(.plain).fixedSize()
                         }
                     }
-                }.padding(.trailing, isMacOS12 ? 0 : -17)
+                }.padding(.trailing, -17)
             }
         }
     }
