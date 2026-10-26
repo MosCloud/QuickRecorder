@@ -10,7 +10,6 @@ import AVFoundation
 import Foundation
 import ScreenCaptureKit
 import UserNotifications
-import SwiftLAME
 import SwiftUI
 
 class SCContext {
@@ -206,13 +205,7 @@ class SCContext {
     }
     
     static func updateAudioSettings(format: String = ud.string(forKey: "audioFormat") ?? "", rate: Int = 48000) -> [String : Any] {
-        let audioSettings = AudioSettings.make(format: format, sampleRate: rate,
-                                               qualityKbps: ud.integer(forKey: "audioQuality"),
-                                               videoFormat: ud.string(forKey: "videoFormat"))
-        if audioSettings[AVFormatIDKey] == nil {
-            assertionFailure("unknown audio format while setting audio settings: ".local + (ud.string(forKey: "audioFormat") ?? "[no defaults]".local))
-        }
-        return audioSettings
+        AudioSettings.make(format: format, sampleRate: rate, qualityKbps: ud.integer(forKey: "audioQuality"))
     }
     
     static func getBackgroundColor() -> CGColor {
@@ -429,9 +422,8 @@ class SCContext {
         if streamType == .systemaudio {
             // Recorded in two parts when the microphone was on at the start (filePath1 then differs from filePath)
             let parts = filePath1 != filePath ? (system: filePath1.url, microphone: filePath2.url) : nil
-            let toMP3 = ud.string(forKey: "audioFormat") == AudioFormat.mp3.rawValue
             let output = filePath.url
-            Task { await finishAudioRecording(output: output, parts: parts, toMP3: toMP3) }
+            Task { await finishAudioRecording(output: output, parts: parts) }
         }
         
         isPaused = false
@@ -466,23 +458,17 @@ class SCContext {
     }
     
     /// Finishes an audio-only recording: mixes the system audio and microphone parts into `output`,
-    /// converts it to MP3 if that's the chosen format, then shows the preview or a notification.
-    private static func finishAudioRecording(output: URL, parts: (system: URL, microphone: URL)?, toMP3: Bool) async {
+    /// then shows the preview or a notification.
+    private static func finishAudioRecording(output: URL, parts: (system: URL, microphone: URL)?) async {
         do {
             if let parts {
                 try AudioMix.mix(parts.system, parts.microphone, into: output, settings: updateAudioSettings())
                 try? fd.removeItem(at: parts.system.deletingLastPathComponent())
             }
-            var result = output
-            if toMP3 {
-                result = output.deletingPathExtension().appendingPathExtension("mp3")
-                try await m4a2mp3(inputUrl: output, outputUrl: result)
-                try? fd.removeItem(at: output)
-            }
             if ud.bool(forKey: "showPreview") {
-                DispatchQueue.main.async { showPreview(path: result.path, image: NSImage(named: "audioIcon")) }
+                DispatchQueue.main.async { showPreview(path: output.path, image: NSImage(named: "audioIcon")) }
             } else {
-                showNotification(title: "Recording Completed".local, body: String(format: "File saved to: %@".local, result.path), id: "quickrecorder.completed.\(UUID().uuidString)")
+                showNotification(title: "Recording Completed".local, body: String(format: "File saved to: %@".local, output.path), id: "quickrecorder.completed.\(UUID().uuidString)")
             }
         } catch {
             var body = error.localizedDescription
@@ -512,20 +498,6 @@ class SCContext {
         }
     }
     
-    static func m4a2mp3(inputUrl: URL, outputUrl: URL) async throws {
-        let progress = Progress()
-        let lameEncoder = try SwiftLameEncoder(
-            sourceUrl: inputUrl,
-            configuration: .init(
-                sampleRate: .custom(48000),
-                bitrateMode: .constant(Int32(ud.integer(forKey: "audioQuality"))),
-                quality: .nearBest
-            ),
-            destinationUrl: outputUrl,
-            progress: progress // optional
-        )
-        try await lameEncoder.encode(priority: .userInitiated)
-    }
     
     static func trimVideo() {
         if ud.bool(forKey: "trimAfterRecord") {

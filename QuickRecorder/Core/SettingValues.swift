@@ -7,7 +7,12 @@
 
 enum AudioQuality: Int { case normal = 128, good = 192, high = 256, extreme = 320 }
 
-enum AudioFormat: String { case aac, alac, flac, opus, mp3 }
+enum AudioFormat: String {
+    case aac, alac
+
+    /// The stored "audioFormat" setting; formats that are no longer offered (mp3, opus, flac) read as AAC.
+    init(stored: String?) { self = AudioFormat(rawValue: stored ?? "") ?? .aac }
+}
 
 enum VideoFormat: String { case mov, mp4 }
 

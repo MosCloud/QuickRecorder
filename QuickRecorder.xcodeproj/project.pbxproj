@@ -35,7 +35,6 @@
 		18D3BE012BCEB1BF006CFFC0 /* AppSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18D3BE002BCEB1BF006CFFC0 /* AppSelector.swift */; };
 		18D3BE042BCEC847006CFFC0 /* SCContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18D3BE032BCEC847006CFFC0 /* SCContext.swift */; };
 		18F1A0E22BD3E4C000DB102C /* AreaSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18F1A0E12BD3E4C000DB102C /* AreaSelector.swift */; };
-		18F40B492BFB988A00F0AC70 /* SwiftLAME in Frameworks */ = {isa = PBXBuildFile; productRef = 18F40B482BFB988A00F0AC70 /* SwiftLAME */; };
 		18FDFC8E2BDA435F0020E685 /* ScreenMagnifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18FDFC8D2BDA435F0020E685 /* ScreenMagnifier.swift */; };
 		18FEBDAA2BCF8200003F09BC /* RecordEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18FEBDA92BCF8200003F09BC /* RecordEngine.swift */; };
 		18FEBDAC2BD01E82003F09BC /* WinSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18FEBDAB2BD01E82003F09BC /* WinSelector.swift */; };
@@ -135,7 +134,6 @@
 			files = (
 				184506CE2C69213400AFDA45 /* MatrixColorSelector in Frameworks */,
 				18AFF77B2D5F91F800C795A1 /* KeyboardShortcuts in Frameworks */,
-				18F40B492BFB988A00F0AC70 /* SwiftLAME in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -286,7 +284,6 @@
 			);
 			name = QuickRecorder;
 			packageProductDependencies = (
-				18F40B482BFB988A00F0AC70 /* SwiftLAME */,
 				184506CD2C69213400AFDA45 /* MatrixColorSelector */,
 				18AFF77A2D5F91F800C795A1 /* KeyboardShortcuts */,
 			);
@@ -342,7 +339,6 @@
 			);
 			mainGroup = 18D3BDDE2BCE5DC1006CFFC0;
 			packageReferences = (
-				18F40B472BFB988A00F0AC70 /* XCRemoteSwiftPackageReference "SwiftLAME" */,
 				184506CC2C69213400AFDA45 /* XCRemoteSwiftPackageReference "MatrixColorSelector" */,
 				18AFF7792D5F91F800C795A1 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
 			);
@@ -756,14 +752,6 @@
 				minimumVersion = 3.1.0;
 			};
 		};
-		18F40B472BFB988A00F0AC70 /* XCRemoteSwiftPackageReference "SwiftLAME" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/hidden-spectrum/SwiftLAME.git";
-			requirement = {
-				kind = revision;
-				revision = e8256a8151594f47f103c742f684253c6c44871d;
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -776,11 +764,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 18AFF7792D5F91F800C795A1 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;
 			productName = KeyboardShortcuts;
-		};
-		18F40B482BFB988A00F0AC70 /* SwiftLAME */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 18F40B472BFB988A00F0AC70 /* XCRemoteSwiftPackageReference "SwiftLAME" */;
-			productName = SwiftLAME;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

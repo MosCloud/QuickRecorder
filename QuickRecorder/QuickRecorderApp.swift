@@ -201,6 +201,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
         )
         
         if highRes == 0 { highRes = 2 }
+        // MP3, Opus and FLAC were dropped: fall back to AAC instead of carrying a value nothing understands
+        let storedFormat = ud.string(forKey: "audioFormat")
+        if AudioFormat(rawValue: storedFormat ?? "") == nil { ud.set(AudioFormat(stored: storedFormat).rawValue, forKey: "audioFormat") }
         if showOnDock { NSApp.setActivationPolicy(.regular) }
         
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
