@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1821F2E82CF4B226004A2EC0 /* ContentViewNew.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1821F2E72CF4B226004A2EC0 /* ContentViewNew.swift */; };
+		1821F2E82CF4B226004A2EC0 /* MenuBarPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1821F2E72CF4B226004A2EC0 /* MenuBarPanel.swift */; };
 		184CAEC72BDCCC2300D61D57 /* AVContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 184CAEC62BDCCC2300D61D57 /* AVContext.swift */; };
 		184CAEC92BDDEC6800D61D57 /* AppBlockSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 184CAEC82BDDEC6800D61D57 /* AppBlockSelector.swift */; };
 		1862BF8D2BD5494E003ED522 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 1862BF8F2BD5494E003ED522 /* Credits.rtf */; };
@@ -68,7 +68,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		1821F2E72CF4B226004A2EC0 /* ContentViewNew.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentViewNew.swift; sourceTree = "<group>"; };
+		1821F2E72CF4B226004A2EC0 /* MenuBarPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarPanel.swift; sourceTree = "<group>"; };
 		184CAEC62BDCCC2300D61D57 /* AVContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVContext.swift; sourceTree = "<group>"; };
 		184CAEC82BDDEC6800D61D57 /* AppBlockSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBlockSelector.swift; sourceTree = "<group>"; };
 		1862BF902BD5494F003ED522 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = "zh-Hans"; path = "zh-Hans.lproj/Credits.rtf"; sourceTree = "<group>"; };
@@ -221,7 +221,7 @@
 				18D3BDFE2BCE5E4B006CFFC0 /* StatusBar.swift */,
 				18FEBDAF2BD2C0D1003F09BC /* SettingsView.swift */,
 				18D3BDEC2BCE5DC1006CFFC0 /* ContentView.swift */,
-				1821F2E72CF4B226004A2EC0 /* ContentViewNew.swift */,
+				1821F2E72CF4B226004A2EC0 /* MenuBarPanel.swift */,
 				18D3BE002BCEB1BF006CFFC0 /* AppSelector.swift */,
 				18FEBDAB2BD01E82003F09BC /* WinSelector.swift */,
 				18F1A0E12BD3E4C000DB102C /* AreaSelector.swift */,
@@ -385,7 +385,7 @@
 				184CAEC92BDDEC6800D61D57 /* AppBlockSelector.swift in Sources */,
 				184CAEC72BDCCC2300D61D57 /* AVContext.swift in Sources */,
 				18D3BDFF2BCE5E4B006CFFC0 /* StatusBar.swift in Sources */,
-				1821F2E82CF4B226004A2EC0 /* ContentViewNew.swift in Sources */,
+				1821F2E82CF4B226004A2EC0 /* MenuBarPanel.swift in Sources */,
 				18A551F62D0749C3008FC5F6 /* AppleScript.swift in Sources */,
 				18A551F72D0749C3008FC5F6 /* GroupForm.swift in Sources */,
 				18A551F82D0749C3008FC5F6 /* SleepPreventer.swift in Sources */,

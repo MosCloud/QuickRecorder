@@ -39,12 +39,7 @@ struct ContentView: View {
                     if !fromStatusBar { Spacer() }
                     ZStack(alignment: Alignment(horizontal: .center, vertical: .bottom)) {
                         Button(action: {
-                            if let display = SCContext.getSCDisplayWithMouse() {
-                                closeMainWindow()
-                                appDelegate.createCountdownPanel(screen: display) {
-                                    AppDelegate.shared.prepRecord(type: "audio", screens: SCContext.getSCDisplayWithMouse(), windows: nil, applications: nil)
-                                }
-                            }
+                            appDelegate.recordSystemAudio()
                         }, label: {
                             SelectorView(title: "System Audio".local, symbol: "waveform").cornerRadius(8)
                         }).buttonStyle(.plain)
@@ -106,43 +101,26 @@ struct ContentView: View {
                     }
                     Divider().frame(height: 70)
                     Button(action: {
-                        closeMainWindow()
-                        appDelegate.createNewWindow(view: ScreenSelector(), title: "Screen Selector".local)
+                        appDelegate.chooseScreen()
                     }, label: {
                         SelectorView(title: "Screen".local, symbol: "tv.inset.filled").cornerRadius(8)
                     }).buttonStyle(.plain)
                     Divider().frame(height: 70)
                     Button(action: {
-                        closeMainWindow()
-                        SCContext.updateAvailableContent {
-                            DispatchQueue.main.async {
-                                appDelegate.showAreaSelector(size: NSSize(width: 600, height: 450))
-                                var currentDisplay = SCContext.getSCDisplayWithMouse()
-                                mouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved, .rightMouseDown, .leftMouseDown, .otherMouseDown]) { event in
-                                    let display = SCContext.getSCDisplayWithMouse()
-                                    if display != currentDisplay {
-                                        currentDisplay = display
-                                        closeAllWindow()
-                                        appDelegate.showAreaSelector(size: NSSize(width: 600, height: 450))
-                                    }
-                                }
-                            }
-                        }
+                        appDelegate.chooseArea()
                     }, label: {
                         SelectorView(title: "Screen Area".local, symbol: "viewfinder").cornerRadius(8)
                     }).buttonStyle(.plain)
                     Divider().frame(height: 70)
                     Button(action: {
-                        closeMainWindow()
-                        appDelegate.createNewWindow(view: AppSelector(), title: "App Selector".local)
+                        appDelegate.chooseApps()
                     }, label: {
                         SelectorView(title: "Application".local, symbol: "app", symbolSize: 38, overlayer: "App")
                             .cornerRadius(8)
                     }).buttonStyle(.plain)
                     Divider().frame(height: 70)
                     Button(action: {
-                        closeMainWindow()
-                        appDelegate.createNewWindow(view: WinSelector(), title: "Window Selector".local)
+                        appDelegate.chooseWindow()
                     }, label: {
                         SelectorView(title: "Window".local, symbol: "macwindow").cornerRadius(8)
                     }).buttonStyle(.plain)
@@ -208,16 +186,20 @@ struct SelectorView: View {
     var symbol = "app"
     var symbolSize: CGFloat = 36
     var overlayer = ""
+    /// The menu bar panel's tile, about two-thirds the size
+    var compact = false
     @State private var backgroundOpacity = 0.0001
-    
+
     var body: some View {
-        VStack(spacing: 6) {
+        // In the main panel the microphone controls sit at the bottom of the System Audio tile
+        let roomForMic = !compact && title == "System Audio".local
+        VStack(spacing: compact ? 5 : 6) {
             Text(title)
                 .opacity(0.95)
-                .font(.system(size: 12))
-                .offset(y: title == "System Audio".local ? -3.5 : 0)
+                .font(.system(size: compact ? 11 : 12))
+                .offset(y: roomForMic ? -3.5 : 0)
             ZStack {
-                if title == "System Audio".local {
+                if roomForMic {
                     Image(systemName: symbol)
                         .opacity(0.95)
                         .offset(y: -9.5)
@@ -225,16 +207,16 @@ struct SelectorView: View {
                 } else {
                     Image(systemName: symbol)
                         .opacity(0.95)
-                        .font(.system(size: symbolSize))
-                        .frame(height: 40)
+                        .font(.system(size: compact ? 24 : symbolSize))
+                        .frame(height: compact ? 28 : 40)
                 }
                 Text(overlayer)
                     .fontWeight(.bold)
                     .opacity(0.95)
-                    .font(.system(size: 11))
+                    .font(.system(size: compact ? 7.5 : 11))
             }
         }
-        .frame(width: 110, height: 80)
+        .frame(width: compact ? 92 : 110, height: compact ? 60 : 80)
         .onHover{ hovering in
             backgroundOpacity = hovering ? 0.2 : 0.0001
         }
@@ -288,6 +270,49 @@ struct CountdownView: View {
 
 
 extension AppDelegate {
+    // What the tiles do, in the main panel and the menu bar panel alike
+
+    func recordSystemAudio() {
+        guard let display = SCContext.getSCDisplayWithMouse() else { return }
+        closeMainWindow()
+        createCountdownPanel(screen: display) {
+            AppDelegate.shared.prepRecord(type: "audio", screens: SCContext.getSCDisplayWithMouse(), windows: nil, applications: nil)
+        }
+    }
+
+    func chooseScreen() {
+        closeMainWindow()
+        createNewWindow(view: ScreenSelector(), title: "Screen Selector".local)
+    }
+
+    func chooseArea() {
+        closeMainWindow()
+        SCContext.updateAvailableContent {
+            DispatchQueue.main.async {
+                self.showAreaSelector(size: NSSize(width: 600, height: 450))
+                var currentDisplay = SCContext.getSCDisplayWithMouse()
+                mouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved, .rightMouseDown, .leftMouseDown, .otherMouseDown]) { event in
+                    let display = SCContext.getSCDisplayWithMouse()
+                    if display != currentDisplay {
+                        currentDisplay = display
+                        closeAllWindow()
+                        self.showAreaSelector(size: NSSize(width: 600, height: 450))
+                    }
+                }
+            }
+        }
+    }
+
+    func chooseApps() {
+        closeMainWindow()
+        createNewWindow(view: AppSelector(), title: "App Selector".local)
+    }
+
+    func chooseWindow() {
+        closeMainWindow()
+        createNewWindow(view: WinSelector(), title: "Window Selector".local)
+    }
+
     func showAreaSelector(size: NSSize, noPanel: Bool = false) {
         guard let scDisplay = SCContext.getSCDisplayWithMouse() else { return }
         guard let screen = scDisplay.nsScreen else { return }
