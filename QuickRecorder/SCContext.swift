@@ -42,8 +42,12 @@ class SCContext {
     static var audioFile2: AVAudioFile?
     static var vW: AVAssetWriter!
     static var vwInput, awInput, micInput: AVAssetWriterInput!
+    /// When the first frame (or audio sample) was written; nil until then. Gates the capture callbacks.
     static var startTime: Date?
-    static var timePassed: TimeInterval = 0
+    /// The recording length the controls show. Only touched on the main thread.
+    static var clock = RecordingClock()
+    /// The capsule's window, which every recording leaves out.
+    static var controlWindowID: CGWindowID?
     static var stream: SCStream!
     static var screen: SCDisplay?
     static var window: [SCWindow]?
@@ -105,6 +109,27 @@ class SCContext {
         }
     }
     
+    /// The capsule's window, so recordings never show it, whatever "Exclude QuickRecorder itself" says.
+    static func getControlWindows() -> [SCWindow] {
+        guard let id = controlWindowID else { return [] }
+        if let window = availableContent?.windows.first(where: { $0.windowID == id }) { return [window] }
+        // The snapshot can predate the window, or list on-screen windows only (the one taken at launch): fetch a full list
+        let semaphore = DispatchSemaphore(value: 0)
+        var window: SCWindow?
+        fetchAllWindows { windows in
+            window = windows.first(where: { $0.windowID == id })
+            semaphore.signal()
+        }
+        semaphore.wait()
+        return window.map { [$0] } ?? []
+    }
+
+    private static func fetchAllWindows(completion: @escaping ([SCWindow]) -> Void) {
+        SCShareableContent.getExcludingDesktopWindows(false, onScreenWindowsOnly: false) { content, _ in
+            completion(content?.windows ?? [])
+        }
+    }
+
     static func getSelf() -> SCRunningApplication? {
         return SCContext.availableContent!.applications.first(where: { Bundle.main.bundleIdentifier == $0.bundleIdentifier })
     }
@@ -286,10 +311,21 @@ class SCContext {
         return "Unknown".local
     }
     
+    /// Starts the clock at the first frame (or audio sample) written. Called from the capture queues.
+    static func startClock() {
+        let now = ProcessInfo.processInfo.systemUptime
+        DispatchQueue.main.async {
+            clock = RecordingClock()
+            clock.start(at: now)
+        }
+    }
+
+    static func recordingElapsed() -> TimeInterval {
+        clock.elapsed(at: ProcessInfo.processInfo.systemUptime)
+    }
+
     static func getRecordingLength() -> String {
-        if isPaused { return ElapsedTime.text(timePassed) ?? "Unknown".local }
-        timePassed = Date.now.timeIntervalSince(startTime ?? Date.now)
-        return ElapsedTime.text(timePassed) ?? "Unknown".local
+        ElapsedTime.text(recordingElapsed()) ?? "Unknown".local
     }
     
     static func isCameraRunning() -> Bool {
@@ -302,11 +338,14 @@ class SCContext {
     
     static func pauseRecording() {
         isPaused.toggle()
-        PopoverState.shared.isPaused = isPaused
-        if !isPaused {
+        let now = ProcessInfo.processInfo.systemUptime
+        if isPaused {
+            clock.pause(at: now)
+        } else {
             isResume = true
-            startTime = Date.now.addingTimeInterval(-1) - SCContext.timePassed
+            clock.resume(at: now)
         }
+        DispatchQueue.main.async { RecordingControls.shared.pauseChanged() }
     }
     
     static func stopRecording() {
@@ -382,7 +421,6 @@ class SCContext {
         }
         
         DispatchQueue.main.async {
-            controlPanel.close()
             if isCameraRunning() {
                 if camWindow.isVisible { camWindow.close() }
                 if deviceWindow.isVisible { deviceWindow.close() }
@@ -444,6 +482,7 @@ class SCContext {
         window = nil
         screen = nil
         startTime = nil
+        clock = RecordingClock()
         AppDelegate.shared.presenterType = "OFF"
         updateStatusBar()
         

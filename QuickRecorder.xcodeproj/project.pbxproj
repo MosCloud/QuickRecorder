@@ -55,6 +55,17 @@
 		BB2200000000000000000024 /* RecordingName.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2200000000000000000004 /* RecordingName.swift */; };
 		BB2200000000000000000025 /* ElapsedTime.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2200000000000000000005 /* ElapsedTime.swift */; };
 		BB2200000000000000000026 /* CoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2200000000000000000006 /* CoreTests.swift */; };
+		CC3300000000000000000102 /* RecordingClock.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000000101 /* RecordingClock.swift */; };
+		CC3300000000000000000103 /* RecordingClock.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000000101 /* RecordingClock.swift */; };
+		CC3300000000000000000203 /* RecordingControlsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000000201 /* RecordingControlsTests.swift */; };
+		CC3300000000000000000302 /* ControlSurfaces.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000000301 /* ControlSurfaces.swift */; };
+		CC3300000000000000000303 /* ControlSurfaces.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000000301 /* ControlSurfaces.swift */; };
+		CC3300000000000000000402 /* CapsuleLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000000401 /* CapsuleLayout.swift */; };
+		CC3300000000000000000403 /* CapsuleLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000000401 /* CapsuleLayout.swift */; };
+		CC3300000000000000000502 /* CapsuleDimming.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000000501 /* CapsuleDimming.swift */; };
+		CC3300000000000000000503 /* CapsuleDimming.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000000501 /* CapsuleDimming.swift */; };
+		CC3300000000000000000602 /* RecordingControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000000601 /* RecordingControls.swift */; };
+		CC3300000000000000000702 /* NotchCapsule.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000000701 /* NotchCapsule.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -108,6 +119,13 @@
 		BB2200000000000000000005 /* ElapsedTime.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElapsedTime.swift; sourceTree = "<group>"; };
 		BB2200000000000000000006 /* CoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreTests.swift; sourceTree = "<group>"; };
 		BB2200000000000000000007 /* QuickRecorderTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QuickRecorderTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		CC3300000000000000000101 /* RecordingClock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingClock.swift; sourceTree = "<group>"; };
+		CC3300000000000000000201 /* RecordingControlsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingControlsTests.swift; sourceTree = "<group>"; };
+		CC3300000000000000000301 /* ControlSurfaces.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlSurfaces.swift; sourceTree = "<group>"; };
+		CC3300000000000000000401 /* CapsuleLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapsuleLayout.swift; sourceTree = "<group>"; };
+		CC3300000000000000000501 /* CapsuleDimming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapsuleDimming.swift; sourceTree = "<group>"; };
+		CC3300000000000000000601 /* RecordingControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingControls.swift; sourceTree = "<group>"; };
+		CC3300000000000000000701 /* NotchCapsule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchCapsule.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -221,6 +239,8 @@
 				189BD5EC2BDE971B0056D06C /* VideoEditor.swift */,
 				18E6F1192C2E74DF00249DB1 /* QmaPlayer.swift */,
 				18CEED912D08312C00FBC4BF /* PreviewView.swift */,
+				CC3300000000000000000601 /* RecordingControls.swift */,
+				CC3300000000000000000701 /* NotchCapsule.swift */,
 			);
 			path = ViewModel;
 			sourceTree = "<group>";
@@ -233,6 +253,10 @@
 				BB2200000000000000000003 /* AudioSettings.swift */,
 				BB2200000000000000000004 /* RecordingName.swift */,
 				BB2200000000000000000005 /* ElapsedTime.swift */,
+				CC3300000000000000000101 /* RecordingClock.swift */,
+				CC3300000000000000000301 /* ControlSurfaces.swift */,
+				CC3300000000000000000401 /* CapsuleLayout.swift */,
+				CC3300000000000000000501 /* CapsuleDimming.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -241,6 +265,7 @@
 			isa = PBXGroup;
 			children = (
 				BB2200000000000000000006 /* CoreTests.swift */,
+				CC3300000000000000000201 /* RecordingControlsTests.swift */,
 			);
 			path = QuickRecorderTests;
 			sourceTree = "<group>";
@@ -394,6 +419,12 @@
 				18E6F11A2C2E74DF00249DB1 /* QmaPlayer.swift in Sources */,
 				18D3BDEB2BCE5DC1006CFFC0 /* QuickRecorderApp.swift in Sources */,
 				18FEBDAC2BD01E82003F09BC /* WinSelector.swift in Sources */,
+				CC3300000000000000000102 /* RecordingClock.swift in Sources */,
+				CC3300000000000000000302 /* ControlSurfaces.swift in Sources */,
+				CC3300000000000000000402 /* CapsuleLayout.swift in Sources */,
+				CC3300000000000000000502 /* CapsuleDimming.swift in Sources */,
+				CC3300000000000000000602 /* RecordingControls.swift in Sources */,
+				CC3300000000000000000702 /* NotchCapsule.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -407,6 +438,11 @@
 				BB2200000000000000000024 /* RecordingName.swift in Sources */,
 				BB2200000000000000000025 /* ElapsedTime.swift in Sources */,
 				BB2200000000000000000026 /* CoreTests.swift in Sources */,
+				CC3300000000000000000103 /* RecordingClock.swift in Sources */,
+				CC3300000000000000000203 /* RecordingControlsTests.swift in Sources */,
+				CC3300000000000000000303 /* ControlSurfaces.swift in Sources */,
+				CC3300000000000000000403 /* CapsuleLayout.swift in Sources */,
+				CC3300000000000000000503 /* CapsuleDimming.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

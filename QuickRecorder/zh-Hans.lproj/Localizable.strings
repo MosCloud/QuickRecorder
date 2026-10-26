@@ -162,7 +162,6 @@
 "Failed to Record" = "录制失败";
 "Unable to create output folder!" = "无法创建输出文件夹!";
 "The output path is a file instead of a folder!"= "所选的保存位置是一个文件, 应该是文件夹!";
-"Mini size Menu Bar controller" = "使用迷你菜单栏控制器";
 "Error" = "错误";
 "Already recording!" = "正在录制中!";
 "Invalid screen number!" = "无效的屏幕编号!";
@@ -222,3 +221,19 @@
 "audio file writing issue" = "音频文件写入出错";
 "closing stream with error:\n" = "关闭流时发生错误:\n";
 "\nthis might be due to the window closing or the user stopping from the sonoma ui" = "\n这可能是有由于用户关闭了正在录制中的窗口, 或使用窗口上的附加按钮停止了录制.";
+"Recording Controls" = "录制控制";
+"Menu Bar Timer and Menu" = "菜单栏计时 + 菜单";
+"Floating Capsule" = "浮动胶囊";
+"Capsule Material" = "胶囊材质";
+"Liquid Glass" = "Liquid Glass";
+"Frosted Glass" = "毛玻璃";
+"Opacity When Idle" = "鼠标移开后的不透明度";
+"At least one of them stays on. The capsule hangs below the notch and never appears in recordings." = "两者至少保留一个。胶囊固定在刘海下方，任何情况下都不会出现在录像里。";
+"Recording" = "录制中";
+"Paused" = "已暂停";
+"Pause Recording" = "暂停录制";
+"Resume Recording" = "继续录制";
+"Camera…" = "摄像头…";
+"Screen Magnifier" = "屏幕放大镜";
+"Show iDevice Window" = "显示 iPhone / iPad 画面";
+"seconds until recording" = "秒后开始录制";

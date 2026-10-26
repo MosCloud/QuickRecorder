@@ -18,17 +18,14 @@ import CoreMediaIO
 var scPerm = false
 let fd = FileManager.default
 let ud = UserDefaults.standard
-var statusBarItem: NSStatusItem!
 var mouseMonitor: Any?
 var keyMonitor: Any?
 var hideMousePointer = false
 var hideScreenMagnifier = false
-let updateTimer = Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()
 let mousePointer = NSWindow(contentRect: NSRect(x: -70, y: -70, width: 70, height: 70), styleMask: [.borderless], backing: .buffered, defer: false)
 let screenMagnifier = NSWindow(contentRect: NSRect(x: -402, y: -402, width: 402, height: 348), styleMask: [.borderless], backing: .buffered, defer: false)
 let camWindow = NSPanel(contentRect: NSRect(x: 200, y: 200, width: 200, height: 200), styleMask: [.fullSizeContentView, .resizable, .nonactivatingPanel], backing: .buffered, defer: false)
 let deviceWindow = NSWindow(contentRect: NSRect(x: 200, y: 200, width: 200, height: 200), styleMask: [.fullSizeContentView, .resizable], backing: .buffered, defer: false)
-let controlPanel = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 10, height: 10), styleMask: [.fullSizeContentView], backing: .buffered, defer: false)
 let countdownPanel = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 120, height: 120), styleMask: [.fullSizeContentView], backing: .buffered, defer: false)
 let previewWindow = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 266, height: 156), styleMask: [.fullSizeContentView], backing: .buffered, defer: false)
 
@@ -113,7 +110,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
     @AppStorage("includeMenuBar")   var includeMenuBar: Bool = true
     @AppStorage("hideDesktopFiles") var hideDesktopFiles: Bool = false
     @AppStorage("trimAfterRecord")  var trimAfterRecord: Bool = false
-    @AppStorage("miniStatusBar")    var miniStatusBar: Bool = false
     @AppStorage("hideSelf")         var hideSelf: Bool = true
     @AppStorage("preventSleep")     var preventSleep: Bool = true
     @AppStorage("showPreview")      var showPreview: Bool = true
@@ -223,6 +219,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
                 "recordHDR": false,
                 "preventSleep": true,
                 "showPreview": true,
+                "controlsMenuBar": true,
+                "controlsCapsule": true,
+                "capsuleMaterial": CapsuleMaterial.glass.rawValue,
+                "capsuleIdleOpacity": 0.5,
                 "savedArea": [String: [String: CGFloat]]()
             ]
         )
@@ -242,9 +242,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
             mScope: CMIOObjectPropertyScope(kCMIOObjectPropertyScopeGlobal),
             mElement: CMIOObjectPropertyElement(kCMIOObjectPropertyElementMain))
         CMIOObjectSetPropertyData(CMIOObjectID(kCMIOObjectSystemObject), &prop, zero, nil, dataSize, &allow)
-
-        statusBarItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        statusBarItem.button?.image = NSImage()
 
         mousePointer.title = "Mouse Pointer".local
         mousePointer.level = .screenSaver
@@ -276,14 +273,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
         deviceWindow.isReleasedWhenClosed = false
         deviceWindow.isMovableByWindowBackground = true
         deviceWindow.backgroundColor = NSColor.clear
-        
-        controlPanel.title = "Recording Controller".local
-        controlPanel.level = .floating
-        controlPanel.titleVisibility = .hidden
-        controlPanel.backgroundColor = NSColor.clear
-        controlPanel.isReleasedWhenClosed = false
-        controlPanel.titlebarAppearsTransparent = true
-        controlPanel.isMovableByWindowBackground = true
         
         previewWindow.level = .statusBar
         previewWindow.titlebarAppearsTransparent = true
@@ -359,7 +348,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
                     mainPanel.setFrameOrigin(NSPoint(x: wX, y: wY))
                 }
                 mainPanel.makeKeyAndOrderFront(self)
-                PopoverState.shared.isShowing = false
+                RecordingControls.shared.closeMenuBarPanel()
             }
         }
         return false
@@ -404,18 +393,6 @@ func findNSSplitVIew(view: NSView?) -> NSSplitView? {
         for subview in current.subviews { queue.append(subview) }
     }
     return nil
-}
-
-func getStatusBarWidth() -> CGFloat {
-    @AppStorage("miniStatusBar") var miniStatusBar: Bool = false
-    var width = 158.0
-    switch SCContext.streamType {
-    case nil: width = miniStatusBar ? 36.0 : 36.0
-    case .idevice: width = miniStatusBar ? 68.0 : 138.0
-    case .systemaudio: width = miniStatusBar ? 68.0 : 114.0
-    default: width = miniStatusBar ? 78.0 : 158.0
-    }
-    return width
 }
 
 func process(path: String, arguments: [String]) -> String? {

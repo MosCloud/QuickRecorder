@@ -58,6 +58,7 @@ extension AppDelegate {
         let screen = SCContext.screen ?? SCContext.getSCDisplayWithMouse()!
         let qrSelf = SCContext.getSelf()
         let qrWindows = SCContext.getSelfWindows()
+        let controlWindows = SCContext.getControlWindows()
         let dockApp = SCContext.availableContent!.applications.first(where: { $0.bundleIdentifier.description == "com.apple.dock" })
         let wallpaper = SCContext.availableContent!.windows.filter({
             guard let title = $0.title else { return false }
@@ -109,6 +110,7 @@ extension AppDelegate {
                 excluded += excliudedApps
                 if hideCCenter { excluded += controlCenterWindow }
                 if hideSelf { if let qrWindows = qrWindows { except += qrWindows }}
+                except += controlWindows
                 if background.rawValue != BackgroundType.wallpaper.rawValue { if dockApp != nil {
                     except += wallpaper
                     except += desktop
@@ -124,6 +126,7 @@ extension AppDelegate {
                 let withFinder = includ.map{ $0.bundleIdentifier }.contains("com.apple.finder")
                 if withFinder && hideDesktopFiles { except += desktopFiles }
                 if hideSelf { if let qrWindows = qrWindows { except += qrWindows }}
+                except += controlWindows
                 //if ud.bool(forKey: "highlightMouse") { if let qrSelf = qrSelf { includ.append(qrSelf) }}
                 if background.rawValue == BackgroundType.wallpaper.rawValue { if let dock = dockApp { includ.append(dock); except += dockWindow}}
                 SCContext.filter = SCContentFilter(display: screen, including: includ, exceptingWindows: except)
@@ -509,6 +512,7 @@ extension AppDelegate {
             
             if SCContext.vW != nil && SCContext.vW?.status == .writing, SCContext.startTime == nil {
                 SCContext.startTime = Date.now
+                SCContext.startClock()
                 SCContext.vW.startSession(atSourceTime: CMSampleBufferGetPresentationTimeStamp(SampleBuffer))
             }
             if (SCContext.timeOffset.value > 0) { SampleBuffer = SCContext.adjustTime(sample: SampleBuffer, by: SCContext.timeOffset) ?? sampleBuffer }
@@ -544,7 +548,10 @@ extension AppDelegate {
                 if SCContext.vW != nil && SCContext.vW?.status == .writing, SCContext.startTime == nil {
                     SCContext.vW.startSession(atSourceTime: CMSampleBufferGetPresentationTimeStamp(SampleBuffer))
                 }
-                if SCContext.startTime == nil { SCContext.startTime = Date.now }
+                if SCContext.startTime == nil {
+                    SCContext.startTime = Date.now
+                    SCContext.startClock()
+                }
                 guard let samples = SampleBuffer.asPCMBuffer else { return }
                 do { try SCContext.audioFile?.write(from: samples) }
                 catch { assertionFailure("audio file writing issue".local) }
