@@ -11,7 +11,6 @@
 		184506CE2C69213400AFDA45 /* MatrixColorSelector in Frameworks */ = {isa = PBXBuildFile; productRef = 184506CD2C69213400AFDA45 /* MatrixColorSelector */; };
 		184CAEC72BDCCC2300D61D57 /* AVContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 184CAEC62BDCCC2300D61D57 /* AVContext.swift */; };
 		184CAEC92BDDEC6800D61D57 /* AppBlockSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 184CAEC82BDDEC6800D61D57 /* AppBlockSelector.swift */; };
-		185582A62D1D1CC100F0CF47 /* AECAudioStream in Frameworks */ = {isa = PBXBuildFile; productRef = 185582A52D1D1CC100F0CF47 /* AECAudioStream */; };
 		1862BF8D2BD5494E003ED522 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 1862BF8F2BD5494E003ED522 /* Credits.rtf */; };
 		18775C202BE21F38008333EF /* iDeviceSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18775C1F2BE21F38008333EF /* iDeviceSelector.swift */; };
 		187966FA2BD5639D003DB1B2 /* MousePointer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 187966F92BD5639D003DB1B2 /* MousePointer.swift */; };
@@ -134,7 +133,6 @@
 				184506CE2C69213400AFDA45 /* MatrixColorSelector in Frameworks */,
 				18AFF77B2D5F91F800C795A1 /* KeyboardShortcuts in Frameworks */,
 				18F40B492BFB988A00F0AC70 /* SwiftLAME in Frameworks */,
-				185582A62D1D1CC100F0CF47 /* AECAudioStream in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -286,7 +284,6 @@
 			packageProductDependencies = (
 				18F40B482BFB988A00F0AC70 /* SwiftLAME */,
 				184506CD2C69213400AFDA45 /* MatrixColorSelector */,
-				185582A52D1D1CC100F0CF47 /* AECAudioStream */,
 				18AFF77A2D5F91F800C795A1 /* KeyboardShortcuts */,
 			);
 			productName = QuickRecorder;
@@ -343,7 +340,6 @@
 			packageReferences = (
 				18F40B472BFB988A00F0AC70 /* XCRemoteSwiftPackageReference "SwiftLAME" */,
 				184506CC2C69213400AFDA45 /* XCRemoteSwiftPackageReference "MatrixColorSelector" */,
-				185582A42D1D1CC100F0CF47 /* XCRemoteSwiftPackageReference "AECAudioStream" */,
 				18AFF7792D5F91F800C795A1 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
 			);
 			productRefGroup = 18D3BDE82BCE5DC1006CFFC0 /* Products */;
@@ -746,14 +742,6 @@
 				kind = branch;
 			};
 		};
-		185582A42D1D1CC100F0CF47 /* XCRemoteSwiftPackageReference "AECAudioStream" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/lihaoyun6/AECAudioStream.git";
-			requirement = {
-				branch = main;
-				kind = branch;
-			};
-		};
 		18AFF7792D5F91F800C795A1 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/sindresorhus/KeyboardShortcuts.git";
@@ -777,11 +765,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 184506CC2C69213400AFDA45 /* XCRemoteSwiftPackageReference "MatrixColorSelector" */;
 			productName = MatrixColorSelector;
-		};
-		185582A52D1D1CC100F0CF47 /* AECAudioStream */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 185582A42D1D1CC100F0CF47 /* XCRemoteSwiftPackageReference "AECAudioStream" */;
-			productName = AECAudioStream;
 		};
 		18AFF77A2D5F91F800C795A1 /* KeyboardShortcuts */ = {
 			isa = XCSwiftPackageProductDependency;

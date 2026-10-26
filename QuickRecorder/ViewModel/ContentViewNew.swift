@@ -16,7 +16,6 @@ struct ContentViewNew: View {
     @State private var micGlowing = false
     @State private var isPopoverShowing = false
     @State private var micList = SCContext.getMicrophone()
-    @AppStorage("enableAEC") private var enableAEC: Bool = false
     @AppStorage("recordMic") private var recordMic: Bool = false
     @AppStorage("micDevice") private var micDevice: String = "default"
     @AppStorage("showOnDock") private var showOnDock: Bool = true
@@ -105,34 +104,11 @@ struct ContentViewNew: View {
                                 }
                                 .buttonStyle(.plain)
                                 .onChange(of: recordMic) { Task { await SCContext.performMicCheck() }}
-                                if micDevice != "default" && enableAEC && recordMic{
-                                    Button {
-                                        let alert = createAlert(
-                                            title: "Compatibility Warning".local,
-                                            message: "The \"Acoustic Echo Cancellation\" is enabled, but it won't work on now.\n\nIf you need to use a specific input with AEC, set it to \"Default\" and select the device you want in System Preferences.\n\nOr you can start recording without AEC.".local,
-                                            button1: "OK".local, button2: "System Preferences".local)
-                                        if alert.runModal() == .alertSecondButtonReturn {
-                                            NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.sound?input")!)
-                                        }
-                                    } label: {
-                                        ZStack {
-                                            Image(systemName: "circle.fill").font(.system(size: 15))
-                                            Image(systemName: "exclamationmark")
-                                                .font(.system(size: 11.5, weight: .black))
-                                                .foregroundColor(.black)
-                                                .blendMode(.destinationOut)
-                                        }.compositingGroup()
-                                    }
-                                    .buttonStyle(.plain)
-                                    .frame(width: 24).fixedSize()
+                                Image(systemName: "mic.fill")
+                                    .font(.system(size: 13, weight: .bold))
+                                    .foregroundColor(recordMic ? .primary : .secondary)
+                                    .frame(width: 24)
                                     .padding(.leading, 1)
-                                } else {
-                                    Image(systemName: "mic.fill")
-                                        .font(.system(size: 13, weight: .bold))
-                                        .foregroundColor(recordMic ? .primary : .secondary)
-                                        .frame(width: 24)
-                                        .padding(.leading, 1)
-                                }
                                 Picker("", selection: $micDevice) {
                                     Text("Default".local).tag("default")
                                     ForEach(micList, id: \.self) { device in

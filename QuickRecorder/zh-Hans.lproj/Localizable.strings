@@ -18,7 +18,6 @@
 "Display " = "显示器";
 "Select Applications" = "选择应用程序";
 "Permission Required" = "需要授权";
-"Compatibility Warning" = "兼容性警告";
 "You are using macOS 12.7.4\nOutput files will be randomly corrupted on this version of macOS!\n\nPlease upgrade to 12.7.5 to solve it." = "检测到当前系统版本为 macOS 12.7.4\nQuickRecorder 在当前系统版本中会\n随机出现录像文件保存失败的情况!\n\n请升级至 macOS 12.7.5 以解决此问题.";
 "QuickRecorder needs screen recording permissions, even if you only intend on recording audio." = "QuickRecorder 需要获取录屏权限\n(即使只是用来录制音频)";
 "QuickRecorder needs permission to record your microphone." = "QuickRecorder 需要获取麦克风权限来录制所需的声音";
@@ -140,7 +139,6 @@
 "Don't remind me again" = "不再提醒";
 "OK" = "好";
 "Failed to save file" = "保存文件时出错";
-"Enable Acoustic Echo Cancellation" = "消除麦克风回声";
 "QuickRecorder is Running" = "QuickRecorder 已在运行";
 "Please do not run multiple instances!" = "请勿重复运行多个 QuickRecorder 实例!";
 "Show Windows with No Title" = "显示无标题窗口";
@@ -149,8 +147,6 @@
 "Resize" = "编辑选区";
 "Back" = "返回";
 "Unknow Error" = "未知错误";
-"The \"Acoustic Echo Cancellation\" is enabled, but it won't work on now.\n\nIf you need to use a specific input with AEC, set it to \"Default\" and select the device you want in System Preferences.\n\nOr you can start recording without AEC." = "您已启用\"消除麦克风回声\", 但很可惜程序内自定义麦克风不支持此功能!\n\n如需在特定的麦克风上使用回音消除功能, 请将麦克风选项设为\"系统默认\", 并在系统偏好设置中选择您需要使用的输入设备.\n\n或者直接开始录制 (不使用回声消除功能)";
-"System Preferences" = "系统偏好设置";
 "Export Recording" = "导出录音";
 "Play / Pause" = "播放 / 暂停";
 "Save Changes" = "保存修改";
@@ -185,10 +181,6 @@
 "Copy" = "拷贝";
 "Delete" = "删除";
 " Tips" = " 小贴士";
-"Audio Ducking Level" = "音频闪避级别";
-"Min" = "较小";
-"Mid" = "中等";
-"Max" = "最大";
 "Window Area" = "窗口范围";
 "Click on a window to select its area\nor press Esc to cancel." = "点击任意窗口来获取其范围并进行录制\n或者按 Esc 键退出选择";
 "Trim" = "修剪视频";
