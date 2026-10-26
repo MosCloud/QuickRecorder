@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		181724052BE3BEA600F5F539 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 181724042BE3BEA600F5F539 /* Sparkle */; };
 		1821F2E82CF4B226004A2EC0 /* ContentViewNew.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1821F2E72CF4B226004A2EC0 /* ContentViewNew.swift */; };
 		184506CE2C69213400AFDA45 /* MatrixColorSelector in Frameworks */ = {isa = PBXBuildFile; productRef = 184506CD2C69213400AFDA45 /* MatrixColorSelector */; };
 		184CAEC72BDCCC2300D61D57 /* AVContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 184CAEC62BDCCC2300D61D57 /* AVContext.swift */; };
@@ -23,7 +22,6 @@
 		18A551F62D0749C3008FC5F6 /* AppleScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18A551EE2D0749C3008FC5F6 /* AppleScript.swift */; };
 		18A551F72D0749C3008FC5F6 /* GroupForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18A551EF2D0749C3008FC5F6 /* GroupForm.swift */; };
 		18A551F82D0749C3008FC5F6 /* SleepPreventer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18A551F12D0749C3008FC5F6 /* SleepPreventer.swift */; };
-		18A551F92D0749C3008FC5F6 /* Sparkle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18A551F22D0749C3008FC5F6 /* Sparkle.swift */; };
 		18A551FA2D0749C3008FC5F6 /* WindowAccessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18A551F32D0749C3008FC5F6 /* WindowAccessor.swift */; };
 		18A551FB2D0749C3008FC5F6 /* WindowHighlighter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18A551F42D0749C3008FC5F6 /* WindowHighlighter.swift */; };
 		AA1100000000000000000002 /* MagnifierCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1100000000000000000001 /* MagnifierCapture.swift */; };
@@ -65,7 +63,6 @@
 		18A551EF2D0749C3008FC5F6 /* GroupForm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupForm.swift; sourceTree = "<group>"; };
 		18A551F02D0749C3008FC5F6 /* Scriptable.sdef */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Scriptable.sdef; sourceTree = "<group>"; };
 		18A551F12D0749C3008FC5F6 /* SleepPreventer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepPreventer.swift; sourceTree = "<group>"; };
-		18A551F22D0749C3008FC5F6 /* Sparkle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sparkle.swift; sourceTree = "<group>"; };
 		18A551F32D0749C3008FC5F6 /* WindowAccessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowAccessor.swift; sourceTree = "<group>"; };
 		18A551F42D0749C3008FC5F6 /* WindowHighlighter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowHighlighter.swift; sourceTree = "<group>"; };
 		AA1100000000000000000001 /* MagnifierCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MagnifierCapture.swift; sourceTree = "<group>"; };
@@ -101,7 +98,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				184506CE2C69213400AFDA45 /* MatrixColorSelector in Frameworks */,
-				181724052BE3BEA600F5F539 /* Sparkle in Frameworks */,
 				18AFF77B2D5F91F800C795A1 /* KeyboardShortcuts in Frameworks */,
 				18F40B492BFB988A00F0AC70 /* SwiftLAME in Frameworks */,
 				185582A62D1D1CC100F0CF47 /* AECAudioStream in Frameworks */,
@@ -125,7 +121,6 @@
 				18A551EF2D0749C3008FC5F6 /* GroupForm.swift */,
 				18A551F02D0749C3008FC5F6 /* Scriptable.sdef */,
 				18A551F12D0749C3008FC5F6 /* SleepPreventer.swift */,
-				18A551F22D0749C3008FC5F6 /* Sparkle.swift */,
 				18A551F32D0749C3008FC5F6 /* WindowAccessor.swift */,
 				18A551F42D0749C3008FC5F6 /* WindowHighlighter.swift */,
 				AA1100000000000000000001 /* MagnifierCapture.swift */,
@@ -219,7 +214,6 @@
 			);
 			name = QuickRecorder;
 			packageProductDependencies = (
-				181724042BE3BEA600F5F539 /* Sparkle */,
 				18F40B482BFB988A00F0AC70 /* SwiftLAME */,
 				184506CD2C69213400AFDA45 /* MatrixColorSelector */,
 				185582A52D1D1CC100F0CF47 /* AECAudioStream */,
@@ -257,7 +251,6 @@
 			);
 			mainGroup = 18D3BDDE2BCE5DC1006CFFC0;
 			packageReferences = (
-				181724032BE3BEA600F5F539 /* XCRemoteSwiftPackageReference "Sparkle" */,
 				18F40B472BFB988A00F0AC70 /* XCRemoteSwiftPackageReference "SwiftLAME" */,
 				184506CC2C69213400AFDA45 /* XCRemoteSwiftPackageReference "MatrixColorSelector" */,
 				185582A42D1D1CC100F0CF47 /* XCRemoteSwiftPackageReference "AECAudioStream" */,
@@ -308,7 +301,6 @@
 				18A551F72D0749C3008FC5F6 /* GroupForm.swift in Sources */,
 				18A551F82D0749C3008FC5F6 /* SleepPreventer.swift in Sources */,
 				18CEED922D08312C00FBC4BF /* PreviewView.swift in Sources */,
-				18A551F92D0749C3008FC5F6 /* Sparkle.swift in Sources */,
 				18A551FA2D0749C3008FC5F6 /* WindowAccessor.swift in Sources */,
 				18A551FB2D0749C3008FC5F6 /* WindowHighlighter.swift in Sources */,
 				AA1100000000000000000002 /* MagnifierCapture.swift in Sources */,
@@ -579,14 +571,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		181724032BE3BEA600F5F539 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/sparkle-project/Sparkle";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.6.0;
-			};
-		};
 		184506CC2C69213400AFDA45 /* XCRemoteSwiftPackageReference "MatrixColorSelector" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/lihaoyun6/MatrixColorSelector.git";
@@ -622,11 +606,6 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		181724042BE3BEA600F5F539 /* Sparkle */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 181724032BE3BEA600F5F539 /* XCRemoteSwiftPackageReference "Sparkle" */;
-			productName = Sparkle;
-		};
 		184506CD2C69213400AFDA45 /* MatrixColorSelector */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 184506CC2C69213400AFDA45 /* XCRemoteSwiftPackageReference "MatrixColorSelector" */;

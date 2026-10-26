@@ -101,7 +101,6 @@
 "File saved to: %@" = "文件已保存至: %@";
 "File saved to folder: %@" = "文件已保存到: %@ 目录中";
 "Startup" = "启动设置";
-"Update" = "更新设置";
 "Launch at Login" = "登录时启动";
 "Shortcuts Settings" = "快捷键设置";
 "Pause / Resume" = "暂停/继续录制";
@@ -130,10 +129,7 @@
 "Default" = "系统默认";
 "Pixel Format" = "像素格式";
 "Color Space" = "色彩空间";
-"Check for Updates…" = "检查程序更新…";
 "Update Settings" = "更新设置";
-"Automatically check for updates" = "自动检查程序更新";
-"Automatically download updates" = "自动下载程序更新";
 "Connect your device via USB" = "请通过 USB 连接您的设备";
 "Show QuickRecorder on Dock" = "在程序坞中显示 QuickRecorder";
 "Show QuickRecorder on Menu Bar" = "在菜单栏中显示 QuickRecorder";
@@ -167,7 +163,6 @@
 "Unable to create output folder!" = "无法创建输出文件夹!";
 "The output path is a file instead of a folder!"= "所选的保存位置是一个文件, 应该是文件夹!";
 "Mini size Menu Bar controller" = "使用迷你菜单栏控制器";
-"Check for Updates" = "立即检测程序更新";
 "Error" = "错误";
 "Already recording!" = "正在录制中!";
 "Invalid screen number!" = "无效的屏幕编号!";

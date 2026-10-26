@@ -101,7 +101,6 @@
 "File saved to: %@" = "檔案已儲存至: %@";
 "File saved to folder: %@" = "檔案已儲存到: %@ 目錄中";
 "Startup" = "啟動設定";
-"Update" = "更新設定";
 "Launch at Login" = "登入時啟動";
 "Shortcuts Settings" = "快速鍵設定";
 "Pause / Resume" = "暫停/繼續錄製";
@@ -130,10 +129,7 @@
 "Default" = "系統預設";
 "Pixel Format" = "像素格式";
 "Color Space" = "色彩空間";
-"Check for Updates…" = "檢查程式更新…";
 "Update Settings" = "更新設定";
-"Automatically check for updates" = "自動檢查程式更新";
-"Automatically download updates" = "自動下載程式更新";
 "Connect your device via USB" = "請用 USB 傳輸線連接裝置";
 "Show QuickRecorder on Dock" = "在 Dock 中顯示 QuickRecorder";
 "Show QuickRecorder on Menu Bar" = "在選單列中顯示 QuickRecorder";
@@ -167,7 +163,6 @@
 "Unable to create output folder!" = "無法建立輸出資料夾!";
 "The output path is a file instead of a folder!"= "所選的儲存位置是一個檔案, 應該是資料夾!";
 "Mini size Menu Bar controller" = "使用迷你選單列控制器";
-"Check for Updates" = "立即檢測程式更新";
 "Error" = "錯誤";
 "Already recording!" = "正在錄製中!";
 "Invalid screen number!" = "無效的螢幕編號!";
