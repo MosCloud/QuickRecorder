@@ -8,7 +8,6 @@
 import SwiftUI
 import ServiceManagement
 import KeyboardShortcuts
-import MatrixColorSelector
 
 struct SettingsView: View {
     @State private var selectedItem: String? = "General"
@@ -112,7 +111,9 @@ struct RecorderView: View {
                 SSteper("Delay Before Recording", value: $countdown, min: 0, max: 99)
                 SDivider()
                 SItem(label: "Custom Background Color") {
-                    MatrixColorSelector("", selection: $userColor)
+                    // The system color panel: any color, with the eyedropper and saved colors
+                    ColorPicker("", selection: $userColor, supportsOpacity: false)
+                        .labelsHidden()
                         .onChange(of: userColor) { _, userColor in ud.setColor(userColor, forKey: "userColor") }
                 }
             }
