@@ -34,7 +34,6 @@
 		18D3BDFF2BCE5E4B006CFFC0 /* StatusBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18D3BDFE2BCE5E4B006CFFC0 /* StatusBar.swift */; };
 		18D3BE012BCEB1BF006CFFC0 /* AppSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18D3BE002BCEB1BF006CFFC0 /* AppSelector.swift */; };
 		18D3BE042BCEC847006CFFC0 /* SCContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18D3BE032BCEC847006CFFC0 /* SCContext.swift */; };
-		18E6F11A2C2E74DF00249DB1 /* QmaPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18E6F1192C2E74DF00249DB1 /* QmaPlayer.swift */; };
 		18F1A0E22BD3E4C000DB102C /* AreaSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18F1A0E12BD3E4C000DB102C /* AreaSelector.swift */; };
 		18F40B492BFB988A00F0AC70 /* SwiftLAME in Frameworks */ = {isa = PBXBuildFile; productRef = 18F40B482BFB988A00F0AC70 /* SwiftLAME */; };
 		18FDFC8E2BDA435F0020E685 /* ScreenMagnifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18FDFC8D2BDA435F0020E685 /* ScreenMagnifier.swift */; };
@@ -64,6 +63,9 @@
 		CC3300000000000000000503 /* CapsuleDimming.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000000501 /* CapsuleDimming.swift */; };
 		CC3300000000000000000602 /* RecordingControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000000601 /* RecordingControls.swift */; };
 		CC3300000000000000000702 /* NotchCapsule.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000000701 /* NotchCapsule.swift */; };
+		CC3300000000000000000802 /* AudioMix.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000000801 /* AudioMix.swift */; };
+		CC3300000000000000000803 /* AudioMix.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000000801 /* AudioMix.swift */; };
+		CC3300000000000000000903 /* AudioMixTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000000901 /* AudioMixTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -102,7 +104,6 @@
 		18D3BDFE2BCE5E4B006CFFC0 /* StatusBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBar.swift; sourceTree = "<group>"; };
 		18D3BE002BCEB1BF006CFFC0 /* AppSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSelector.swift; sourceTree = "<group>"; };
 		18D3BE032BCEC847006CFFC0 /* SCContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SCContext.swift; sourceTree = "<group>"; };
-		18E6F1192C2E74DF00249DB1 /* QmaPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QmaPlayer.swift; sourceTree = "<group>"; };
 		18F1A0E12BD3E4C000DB102C /* AreaSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AreaSelector.swift; sourceTree = "<group>"; };
 		18FDFC8D2BDA435F0020E685 /* ScreenMagnifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenMagnifier.swift; sourceTree = "<group>"; };
 		18FEBDA92BCF8200003F09BC /* RecordEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordEngine.swift; sourceTree = "<group>"; };
@@ -123,6 +124,8 @@
 		CC3300000000000000000501 /* CapsuleDimming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapsuleDimming.swift; sourceTree = "<group>"; };
 		CC3300000000000000000601 /* RecordingControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingControls.swift; sourceTree = "<group>"; };
 		CC3300000000000000000701 /* NotchCapsule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchCapsule.swift; sourceTree = "<group>"; };
+		CC3300000000000000000801 /* AudioMix.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioMix.swift; sourceTree = "<group>"; };
+		CC3300000000000000000901 /* AudioMixTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioMixTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -232,7 +235,6 @@
 				184CAEC82BDDEC6800D61D57 /* AppBlockSelector.swift */,
 				189BD5F42BDF8A800056D06C /* CameraOverlayer.swift */,
 				189BD5EC2BDE971B0056D06C /* VideoEditor.swift */,
-				18E6F1192C2E74DF00249DB1 /* QmaPlayer.swift */,
 				18CEED912D08312C00FBC4BF /* PreviewView.swift */,
 				CC3300000000000000000601 /* RecordingControls.swift */,
 				CC3300000000000000000701 /* NotchCapsule.swift */,
@@ -252,6 +254,7 @@
 				CC3300000000000000000301 /* ControlSurfaces.swift */,
 				CC3300000000000000000401 /* CapsuleLayout.swift */,
 				CC3300000000000000000501 /* CapsuleDimming.swift */,
+				CC3300000000000000000801 /* AudioMix.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -261,6 +264,7 @@
 			children = (
 				BB2200000000000000000006 /* CoreTests.swift */,
 				CC3300000000000000000201 /* RecordingControlsTests.swift */,
+				CC3300000000000000000901 /* AudioMixTests.swift */,
 			);
 			path = QuickRecorderTests;
 			sourceTree = "<group>";
@@ -408,7 +412,6 @@
 				18D3BE012BCEB1BF006CFFC0 /* AppSelector.swift in Sources */,
 				18FEBDAA2BCF8200003F09BC /* RecordEngine.swift in Sources */,
 				18FEBDB02BD2C0D1003F09BC /* SettingsView.swift in Sources */,
-				18E6F11A2C2E74DF00249DB1 /* QmaPlayer.swift in Sources */,
 				18D3BDEB2BCE5DC1006CFFC0 /* QuickRecorderApp.swift in Sources */,
 				18FEBDAC2BD01E82003F09BC /* WinSelector.swift in Sources */,
 				CC3300000000000000000102 /* RecordingClock.swift in Sources */,
@@ -417,6 +420,7 @@
 				CC3300000000000000000502 /* CapsuleDimming.swift in Sources */,
 				CC3300000000000000000602 /* RecordingControls.swift in Sources */,
 				CC3300000000000000000702 /* NotchCapsule.swift in Sources */,
+				CC3300000000000000000802 /* AudioMix.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -435,6 +439,8 @@
 				CC3300000000000000000303 /* ControlSurfaces.swift in Sources */,
 				CC3300000000000000000403 /* CapsuleLayout.swift in Sources */,
 				CC3300000000000000000503 /* CapsuleDimming.swift in Sources */,
+				CC3300000000000000000803 /* AudioMix.swift in Sources */,
+				CC3300000000000000000903 /* AudioMixTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
