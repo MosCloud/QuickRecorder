@@ -128,3 +128,30 @@ struct CapsuleDimmingTests {
         #expect(opacity(dimming, at: 31.1) == 0.5)
     }
 }
+
+@Suite("Hotkey check")
+struct HotkeyCheckTests {
+    let stop = Hotkey(keyCode: 7, modifiers: [.control, .option, .command], isCharacterKey: true)   // ⌃⌥⌘X
+
+    @Test("A hotkey another action uses is refused, naming that action")
+    func duplicate() {
+        let others = [(action: "Stop Recording", hotkey: stop)]
+        #expect(HotkeyCheck.verdict(for: stop, others: others) == .usedBy("Stop Recording"))
+    }
+
+    @Test("⌘ or ⇧⌘ with a letter or digit is refused: other apps use those, and a global hotkey would take them away",
+          arguments: [HotkeyModifiers.command, [.shift, .command]])
+    func commonInApps(modifiers: HotkeyModifiers) {
+        let save = Hotkey(keyCode: 1, modifiers: modifiers, isCharacterKey: true)   // ⌘S / ⇧⌘S
+        #expect(HotkeyCheck.verdict(for: save, others: []) == .commonInApps)
+    }
+
+    @Test("With ⌃ or ⌥ added, or on a key that types no character, it is allowed", arguments: [
+        Hotkey(keyCode: 1, modifiers: [.control, .option, .command], isCharacterKey: true),   // ⌃⌥⌘S
+        Hotkey(keyCode: 1, modifiers: [.option, .command], isCharacterKey: true),             // ⌥⌘S
+        Hotkey(keyCode: 120, modifiers: .command, isCharacterKey: false),                      // ⌘F2
+    ])
+    func allowed(hotkey: Hotkey) {
+        #expect(HotkeyCheck.verdict(for: hotkey, others: [(action: "Stop Recording", hotkey: stop)]) == .allowed)
+    }
+}

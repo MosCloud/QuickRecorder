@@ -63,6 +63,8 @@
 		CC3300000000000000000803 /* AudioMix.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000000801 /* AudioMix.swift */; };
 		CC3300000000000000000903 /* AudioMixTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000000901 /* AudioMixTests.swift */; };
 		CC3300000000000000001002 /* ColorGridPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001001 /* ColorGridPicker.swift */; };
+		CC3300000000000000001102 /* HotkeyCheck.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001101 /* HotkeyCheck.swift */; };
+		CC3300000000000000001103 /* HotkeyCheck.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001101 /* HotkeyCheck.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -122,6 +124,7 @@
 		CC3300000000000000000801 /* AudioMix.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioMix.swift; sourceTree = "<group>"; };
 		CC3300000000000000000901 /* AudioMixTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioMixTests.swift; sourceTree = "<group>"; };
 		CC3300000000000000001001 /* ColorGridPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorGridPicker.swift; sourceTree = "<group>"; };
+		CC3300000000000000001101 /* HotkeyCheck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyCheck.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -248,6 +251,7 @@
 				CC3300000000000000000401 /* CapsuleLayout.swift */,
 				CC3300000000000000000501 /* CapsuleDimming.swift */,
 				CC3300000000000000000801 /* AudioMix.swift */,
+				CC3300000000000000001101 /* HotkeyCheck.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -409,6 +413,7 @@
 				CC3300000000000000000702 /* NotchCapsule.swift in Sources */,
 				CC3300000000000000000802 /* AudioMix.swift in Sources */,
 				CC3300000000000000001002 /* ColorGridPicker.swift in Sources */,
+				CC3300000000000000001102 /* HotkeyCheck.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -429,6 +434,7 @@
 				CC3300000000000000000503 /* CapsuleDimming.swift in Sources */,
 				CC3300000000000000000803 /* AudioMix.swift in Sources */,
 				CC3300000000000000000903 /* AudioMixTests.swift in Sources */,
+				CC3300000000000000001103 /* HotkeyCheck.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
