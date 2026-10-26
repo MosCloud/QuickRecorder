@@ -258,8 +258,6 @@ struct HotkeyView: View {
             }
             SGroupBox {
                 SItem(label: "Save Current Frame") { KeyboardShortcuts.Recorder("", name: .saveFrame) }
-                SDivider()
-                SItem(label: "Toggle Screen Magnifier") {KeyboardShortcuts.Recorder("", name: .screenMagnifier) }
             }
         }
     }
@@ -316,7 +314,6 @@ extension KeyboardShortcuts.Name {
     static let startWithScreen = Self("startWithScreen")
     static let startWithWindow = Self("startWithWindow")
     static let startWithArea = Self("startWithArea")
-    static let screenMagnifier = Self("screenMagnifier")
     static let saveFrame = Self("saveFrame")
     static let pauseResume = Self("pauseResume")
     static let stop = Self("stop")

@@ -108,7 +108,6 @@
 "Record Current Screen" = "立即录制当前屏幕";
 "Record Topmost Window" = "立即录制当前窗口";
 "Select Area to Record" = "选择屏幕区域以录制";
-"Toggle Screen Magnifier" = "显示/隐藏屏幕放大器";
 "Waiting on update…" = "正在更新, 请稍等…";
 "Include Menu Bar in Recording" = "录制菜单栏画面";
 "Excluded Apps" = "App 排除列表";
@@ -222,7 +221,6 @@
 "Pause Recording" = "暂停录制";
 "Resume Recording" = "继续录制";
 "Camera…" = "摄像头…";
-"Screen Magnifier" = "屏幕放大镜";
 "Show iDevice Window" = "显示 iPhone / iPad 画面";
 "seconds until recording" = "秒后开始录制";
 "Records with HEVC with Alpha, so transparent areas stay transparent in the video.\n\n• Turning it on fixes the encoder to H.265 and the format to MOV.\n• When recording an application, the Background menu then offers \"Transparent\": everything outside the selected apps' windows is transparent.\n• A full screen or screen area recording has no transparent areas, so it makes no difference there.\n• The transparency shows in apps that support transparent video, such as Final Cut Pro, Motion and Keynote. Most players and video sites don't." = "使用 HEVC with Alpha 编码，录像可以保留透明区域。\n\n• 开启后，编码器固定为 H.265，格式固定为 MOV。\n• 「录制应用程序」时，「画面背景」菜单中会多出「透明」：所选应用窗口以外的区域都是透明的。\n• 录制全屏画面或屏幕区域时，画面中没有透明区域，此选项不起作用。\n• 透明效果要在 Final Cut Pro、Motion、Keynote 等支持透明视频的软件中查看，普通播放器和多数视频网站不支持。";

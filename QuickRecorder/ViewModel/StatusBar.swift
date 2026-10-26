@@ -24,7 +24,6 @@ final class MenuBarItem: NSObject, NSMenuDelegate {
     private let menu = NSMenu()
     private let headerItem = NSMenuItem()
     private var pauseItem: NSMenuItem?
-    private var magnifierItem: NSMenuItem?
     private var deviceItem: NSMenuItem?
     private var mode: Mode?
     private var isMenuOpen = false
@@ -107,7 +106,6 @@ final class MenuBarItem: NSObject, NSMenuDelegate {
     private func buildMenu(for kind: RecordingKind) {
         menu.removeAllItems()
         pauseItem = nil
-        magnifierItem = nil
         deviceItem = nil
         menu.addItem(headerItem)
         menu.addItem(.separator())
@@ -121,8 +119,6 @@ final class MenuBarItem: NSObject, NSMenuDelegate {
             menu.addItem(.separator())
             menu.addItem(menuItem("Camera…", "camera", hotkey: nil, #selector(camera)))
             menu.addItem(menuItem("Save Current Frame", "camera.viewfinder", hotkey: .saveFrame, #selector(saveFrame)))
-            magnifierItem = menuItem("Screen Magnifier", "plus.magnifyingglass", hotkey: .screenMagnifier, #selector(toggleMagnifier))
-            menu.addItem(magnifierItem!)
         case .device:
             menu.addItem(.separator())
             deviceItem = menuItem("Show iDevice Window", "apps.ipad", hotkey: nil, #selector(toggleDeviceWindow))
@@ -153,7 +149,6 @@ final class MenuBarItem: NSObject, NSMenuDelegate {
     }
 
     func menuWillOpen(_ menu: NSMenu) {
-        magnifierItem?.state = SCContext.isMagnifierEnabled ? .on : .off
         deviceItem?.state = deviceWindow.isVisible ? .on : .off
         isMenuOpen = true
     }
@@ -166,7 +161,6 @@ final class MenuBarItem: NSObject, NSMenuDelegate {
     @objc private func stop() { RecordingControls.shared.stop() }
     @objc private func togglePause() { RecordingControls.shared.togglePause() }
     @objc private func saveFrame() { SCContext.saveFrame = true }
-    @objc private func toggleMagnifier() { SCContext.isMagnifierEnabled.toggle() }
     @objc private func toggleDeviceWindow() { RecordingControls.shared.toggleDeviceWindow() }
 
     @objc private func camera() {
