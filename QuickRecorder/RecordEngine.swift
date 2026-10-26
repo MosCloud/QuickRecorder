@@ -11,7 +11,6 @@ import ScreenCaptureKit
 import AVFoundation
 import AVFAudio
 import VideoToolbox
-import AECAudioStream
 
 extension AppDelegate {
     @objc func prepRecord(type: String, screens: SCDisplay?, windows: [SCWindow]?, applications: [SCRunningApplication]?, fastStart: Bool = false) {
@@ -391,30 +390,15 @@ extension AppDelegate {
     
     func startMicRecording() {
         if micDevice == "default" {
-            if enableAEC {
-                var level = AUVoiceIOOtherAudioDuckingLevel.mid
-                switch AECLevel {
-                    case "min": level = .min
-                    case "max": level = .max
-                    default: level = .mid
+            let input = SCContext.audioEngine.inputNode
+            let inputFormat = input.inputFormat(forBus: 0)
+            input.installTap(onBus: 0, bufferSize: 1024, format: inputFormat) { buffer, time in
+                if SCContext.isPaused || SCContext.startTime == nil { return }
+                if SCContext.micInput.isReadyForMoreMediaData {
+                    SCContext.micInput.append(buffer.asSampleBuffer!)
                 }
-                try? SCContext.AECEngine.startAudioStream(enableAEC: enableAEC, duckingLevel: level, audioBufferHandler: { pcmBuffer in
-                    if SCContext.isPaused || SCContext.startTime == nil { return }
-                    if SCContext.micInput.isReadyForMoreMediaData {
-                        SCContext.micInput.append(pcmBuffer.asSampleBuffer!)
-                    }
-                })
-            } else {
-                let input = SCContext.audioEngine.inputNode
-                let inputFormat = input.inputFormat(forBus: 0)
-                input.installTap(onBus: 0, bufferSize: 1024, format: inputFormat) { buffer, time in
-                    if SCContext.isPaused || SCContext.startTime == nil { return }
-                    if SCContext.micInput.isReadyForMoreMediaData {
-                        SCContext.micInput.append(buffer.asSampleBuffer!)
-                    }
-                }
-                try! SCContext.audioEngine.start()
             }
+            try! SCContext.audioEngine.start()
         } else {
             AudioRecorder.shared.setupAudioCapture()
             AudioRecorder.shared.start()

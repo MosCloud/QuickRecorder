@@ -12,7 +12,6 @@ import ScreenCaptureKit
 import UserNotifications
 import SwiftLAME
 import SwiftUI
-import AECAudioStream
 
 class SCContext {
     static var trimingList = [URL]()
@@ -33,7 +32,6 @@ class SCContext {
     static var timeOffset = CMTimeMake(value: 0, timescale: 0)
     static var screenArea: NSRect?
     static let audioEngine = AVAudioEngine()
-    static let AECEngine = AECAudioStream(sampleRate: 48000)
     static var backgroundColor: CGColor = CGColor.black
     static var filePath: String!
     static var filePath1: String!
@@ -369,7 +367,6 @@ class SCContext {
             audioEngine.inputNode.removeTap(onBus: 0)
             audioEngine.stop()
             //DispatchQueue.global().async { try? audioEngine.inputNode.setVoiceProcessingEnabled(false) }
-            if ud.bool(forKey: "enableAEC") { try? AECEngine.stopAudioUnit() }
         }
         if streamType != .systemaudio {
             let dispatchGroup = DispatchGroup()

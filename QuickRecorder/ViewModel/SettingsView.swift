@@ -169,8 +169,6 @@ struct OutputView: View {
     @AppStorage("audioQuality")     private var audioQuality: AudioQuality = .high
     @AppStorage("background")       private var background: BackgroundType = .wallpaper
     @AppStorage("remuxAudio")       private var remuxAudio: Bool = true
-    @AppStorage("enableAEC")        private var enableAEC: Bool = false
-    @AppStorage("AECLevel")         private var AECLevel: String = "mid"
     @AppStorage("withAlpha")        private var withAlpha: Bool = false
     @AppStorage("saveDirectory")    private var saveDirectory: String?
 
@@ -196,14 +194,6 @@ struct OutputView: View {
                 }
                 SDivider()
                 SToggle("Record Microphone to Main Track", isOn: $remuxAudio)
-                SDivider()
-                SToggle("Enable Acoustic Echo Cancellation", isOn: $enableAEC)
-                SDivider()
-                SPicker("Audio Ducking Level", selection: $AECLevel) {
-                    Text("Min").tag("min")
-                    Text("Mid").tag("mid")
-                    Text("Max").tag("max")
-                }.disabled(!enableAEC)
             }
             SGroupBox(label: "Video") {
                 SPicker("Format", selection: $videoFormat) {

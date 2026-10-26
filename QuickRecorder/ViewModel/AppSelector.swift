@@ -210,7 +210,6 @@ struct OptionsView: View {
     @AppStorage("highRes")        private var highRes: Int = 2
     @AppStorage("recordHDR")      private var recordHDR: Bool = false
     @AppStorage("micDevice")      private var micDevice: String = "default"
-    @AppStorage("enableAEC")      private var enableAEC: Bool = false
     
     var body: some View {
         VStack(spacing: 6) {
@@ -336,17 +335,6 @@ struct OptionsView: View {
                             if !list.contains(micDevice) { micDevice = "default" }
                         }
                         Spacer().frame(width: 5)
-                        if micDevice != "default" && enableAEC{
-                            Button("⚠️", action: {
-                                let alert = createAlert(
-                                    title: "Compatibility Warning".local,
-                                    message: "The \"Acoustic Echo Cancellation\" is enabled, but it won't work on now.\n\nIf you need to use a specific input with AEC, set it to \"Default\" and select the device you want in System Preferences.\n\nOr you can start recording without AEC.".local,
-                                    button1: "OK".local, button2: "System Preferences".local)
-                                if alert.runModal() == .alertSecondButtonReturn {
-                                    NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.sound?input")!)
-                                }
-                            }).buttonStyle(.plain).fixedSize()
-                        }
                     }
                 }.padding(.trailing, -17)
             }
