@@ -332,7 +332,8 @@ struct ClassicPanel: View {
                     tile(recordActions[0]); separator; tile(recordActions[1]); separator; tile(recordActions[2])
                 }
                 HStack(spacing: 9) {
-                    ForEach(0..<3, id: \.self) { _ in Divider().frame(width: 76).frame(width: 92) }
+                    // A divider is vertical inside an HStack; the VStack around each makes it horizontal, as in the original
+                    ForEach(0..<3, id: \.self) { _ in VStack { Divider() }.frame(width: 76).frame(width: 92) }
                 }
                 HStack(spacing: 4) {
                     tile(recordActions[3]); separator; tile(recordActions[4]); separator
