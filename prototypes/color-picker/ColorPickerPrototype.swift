@@ -1,8 +1,11 @@
 // PROTOTYPE — 一次性代码，不属于 QuickRecorder 的 app target。
 //
-// 问题：设置 → 录制设置 →「用户预设颜色（自定义背景）」用什么样的选色界面？
-// 窗口里仿照设置页的「录制设置」一组，这一行可以换成四个方案（底部 ◀ ▶ 或键盘 ← →）。
-// 下面的「效果预览」把一个模拟的应用窗口放在所选颜色上，看这个颜色适不适合做录像背景。
+// 第 1 轮结论：选色界面用方案 C「弹出色板」（4×4 精选色 + 更多颜色…）。
+// 第 2 轮问题：「效果预览」（一个模拟的应用窗口放在所选颜色上）放在哪里？
+//   C1 弹窗顶部：鼠标移到色块上就预览，点击才选中；设置页不变高
+//   C2 设置页常驻：预览一直显示在这一行下面，弹窗里只有色板
+//   C3 两处都有
+// 窗口仿照设置页的「录制设置」一组；底部 ◀ ▶ 或键盘 ← → 切换方案。
 //
 // 运行：prototypes/color-picker/run.sh
 
@@ -10,19 +13,20 @@ import AppKit
 import SwiftUI
 
 enum Variant: Int, CaseIterable {
-    case current, swatchRow, popoverGrid, minimalWell
+    case popover, inline, both
 
     var title: String {
         switch self {
-        case .current: "A 现状：原生取色器（点开是系统颜色面板）"
-        case .swatchRow: "B 系统设置式色板：一排圆点 + 自定义"
-        case .popoverGrid: "C 弹出色板：4×4 精选色 + 更多颜色…"
-        case .minimalWell: "D 系统精简样式：NSColorWell minimal"
+        case .popover: "C1 弹窗顶部预览（悬停即预览）"
+        case .inline: "C2 设置页常驻预览"
+        case .both: "C3 两处都有"
         }
     }
+    var previewInPopover: Bool { self != .inline }
+    var previewInSettings: Bool { self != .popover }
 }
 
-/// 挑给录像背景用的颜色：前 8 个放在 B 的一排里，16 个全部放在 C 的色板里
+/// 挑给录像背景用的 16 个颜色
 struct Swatch: Identifiable {
     let name: String
     let hex: UInt32
@@ -30,6 +34,10 @@ struct Swatch: Identifiable {
     var color: Color { Color(nsColor: nsColor) }
     var nsColor: NSColor {
         NSColor(srgbRed: CGFloat((hex >> 16) & 0xFF) / 255, green: CGFloat((hex >> 8) & 0xFF) / 255, blue: CGFloat(hex & 0xFF) / 255, alpha: 1)
+    }
+    var isLight: Bool {
+        let c = nsColor
+        return 0.299 * c.redComponent + 0.587 * c.greenComponent + 0.114 * c.blueComponent > 0.6
     }
 
     static let all: [Swatch] = [
@@ -42,18 +50,18 @@ struct Swatch: Identifiable {
 
 @MainActor
 final class Demo: ObservableObject {
-    @Published var variant = Variant.current
-    @Published var color = Swatch.all[3].nsColor
+    @Published var variant = Variant.popover
+    @Published var color = Swatch.all[4].nsColor
 
     var hex: String {
         let c = color.usingColorSpace(.sRGB) ?? color
-        return String(format: "#%02X%02X%02X", Int(c.redComponent * 255), Int(c.greenComponent * 255), Int(c.blueComponent * 255))
+        return String(format: "#%02X%02X%02X", Int((c.redComponent * 255).rounded()), Int((c.greenComponent * 255).rounded()), Int((c.blueComponent * 255).rounded()))
     }
 
     func isSelected(_ swatch: Swatch) -> Bool { hex == String(format: "#%06X", swatch.hex) }
 }
 
-/// 打开系统颜色面板，选的颜色回写到 Demo（C 的「更多颜色…」、B 的「自定义」用）
+/// 打开系统颜色面板，选的颜色回写到 Demo（「更多颜色…」用）
 @MainActor
 final class ColorPanelBridge: NSObject {
     static let shared = ColorPanelBridge()
@@ -72,77 +80,38 @@ final class ColorPanelBridge: NSObject {
     @objc func changed(_ sender: NSColorPanel) { demo?.color = sender.color }
 }
 
-// MARK: - 四个方案（都是「设置」里的一行）
-
-struct VariantRow: View {
-    @ObservedObject var demo: Demo
-
-    var body: some View {
-        switch demo.variant {
-        case .current: CurrentRow(demo: demo)
-        case .swatchRow: SwatchRow(demo: demo)
-        case .popoverGrid: PopoverGridRow(demo: demo)
-        case .minimalWell: MinimalWellRow(demo: demo)
-        }
-    }
-}
-
-struct CurrentRow: View {
-    @ObservedObject var demo: Demo
-    var body: some View {
-        HStack {
-            Text("用户预设颜色 (自定义背景)")
-            Spacer()
-            ColorPicker("", selection: Binding(get: { Color(nsColor: demo.color) }, set: { demo.color = NSColor($0) }), supportsOpacity: false)
-                .labelsHidden()
-        }
-        .frame(height: 16)
-    }
-}
-
-struct SwatchRow: View {
-    @ObservedObject var demo: Demo
-    @State private var hovered: UInt32?
+/// 效果预览：一个模拟的应用窗口放在背景色上
+struct BackgroundPreview: View {
+    let color: NSColor
+    let size: CGSize
 
     var body: some View {
-        HStack(spacing: 6) {
-            Text("用户预设颜色 (自定义背景)")
-            Spacer(minLength: 8)
-            ForEach(Swatch.all.prefix(8)) { swatch in
-                circle(fill: AnyShapeStyle(swatch.color), selected: demo.isSelected(swatch))
-                    .help(swatch.name)
-                    .onTapGesture { demo.color = swatch.nsColor }
-            }
-            let custom = !Swatch.all.prefix(8).contains(where: demo.isSelected)
-            ZStack {
-                circle(fill: AnyShapeStyle(AngularGradient(colors: [.red, .yellow, .green, .cyan, .blue, .purple, .red], center: .center)),
-                       selected: custom)
-                if custom {
-                    Circle().fill(Color(nsColor: demo.color)).frame(width: 9, height: 9)
-                } else {
-                    Image(systemName: "plus").font(.system(size: 8, weight: .bold)).foregroundStyle(.white)
-                }
-            }
-            .help("自定义…")
-            .onTapGesture { ColorPanelBridge.shared.open(for: demo) }
-        }
-        .frame(height: 22)
-    }
-
-    private func circle(fill: AnyShapeStyle, selected: Bool) -> some View {
         ZStack {
-            Circle().fill(fill).frame(width: 16, height: 16)
-                .overlay(Circle().strokeBorder(.primary.opacity(0.15), lineWidth: 0.5))
-            if selected { Circle().strokeBorder(Color.accentColor, lineWidth: 2).frame(width: 22, height: 22) }
+            RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color(nsColor: color))
+                .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(.primary.opacity(0.12), lineWidth: 0.5))
+            VStack(spacing: 0) {
+                HStack(spacing: 4) {
+                    ForEach([Color.red, .yellow, .green], id: \.self) { Circle().fill($0).frame(width: 6, height: 6) }
+                    Spacer()
+                }
+                .padding(5)
+                .background(Color(white: 0.93))
+                Color.white
+            }
+            .frame(width: size.width * 0.55, height: size.height * 0.62)
+            .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+            .shadow(color: .black.opacity(0.3), radius: 6, y: 3)
         }
-        .frame(width: 22, height: 22)
-        .contentShape(Circle())
+        .frame(width: size.width, height: size.height)
+        .animation(.smooth(duration: 0.15), value: color)
     }
 }
 
-struct PopoverGridRow: View {
+/// 方案 C：颜色按钮 + 弹出色板
+struct ColorGridRow: View {
     @ObservedObject var demo: Demo
     @State private var showing = false
+    @State private var hovered: Swatch?
 
     var body: some View {
         HStack {
@@ -158,71 +127,47 @@ struct PopoverGridRow: View {
                 }
             }
             .buttonStyle(.plain)
-            .popover(isPresented: $showing, arrowEdge: .bottom) {
-                VStack(alignment: .leading, spacing: 10) {
-                    LazyVGrid(columns: Array(repeating: GridItem(.fixed(26), spacing: 10), count: 4), spacing: 10) {
-                        ForEach(Swatch.all) { swatch in
-                            ZStack {
-                                Circle().fill(swatch.color).frame(width: 24, height: 24)
-                                    .overlay(Circle().strokeBorder(.primary.opacity(0.15), lineWidth: 0.5))
-                                if demo.isSelected(swatch) {
-                                    Image(systemName: "checkmark").font(.system(size: 10, weight: .bold))
-                                        .foregroundStyle(swatch.hex > 0x999999 ? .black : .white)
-                                }
-                            }
-                            .help(swatch.name)
-                            .onTapGesture { demo.color = swatch.nsColor; showing = false }
-                        }
-                    }
-                    Divider()
-                    Button("更多颜色…") { showing = false; ColorPanelBridge.shared.open(for: demo) }
-                        .buttonStyle(.borderless)
-                }
-                .padding(14)
-            }
+            .popover(isPresented: $showing, arrowEdge: .bottom) { grid }
         }
         .frame(height: 16)
     }
-}
 
-struct MinimalWellRow: View {
-    @ObservedObject var demo: Demo
-    var body: some View {
-        HStack {
-            Text("用户预设颜色 (自定义背景)")
-            Spacer()
-            MinimalWell(demo: demo).frame(width: 44, height: 22)
+    private var grid: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if demo.variant.previewInPopover {
+                BackgroundPreview(color: hovered?.nsColor ?? demo.color, size: CGSize(width: 164, height: 92))
+                Text(hovered?.name ?? "当前颜色").font(.caption).foregroundStyle(.secondary)
+            }
+            LazyVGrid(columns: Array(repeating: GridItem(.fixed(26), spacing: 20), count: 4), spacing: 10) {
+                ForEach(Swatch.all) { swatch in
+                    ZStack {
+                        Circle().fill(swatch.color).frame(width: 24, height: 24)
+                            .overlay(Circle().strokeBorder(.primary.opacity(0.15), lineWidth: 0.5))
+                        if demo.isSelected(swatch) {
+                            Image(systemName: "checkmark").font(.system(size: 10, weight: .bold))
+                                .foregroundStyle(swatch.isLight ? .black : .white)
+                        }
+                    }
+                    .scaleEffect(hovered?.id == swatch.id ? 1.12 : 1)
+                    .animation(.smooth(duration: 0.12), value: hovered?.id)
+                    .help(swatch.name)
+                    .onHover { inside in
+                        if inside { hovered = swatch } else if hovered?.id == swatch.id { hovered = nil }
+                    }
+                    .onTapGesture { demo.color = swatch.nsColor; showing = false }
+                }
+            }
+            Divider()
+            Button("更多颜色…") { showing = false; ColorPanelBridge.shared.open(for: demo) }
+                .buttonStyle(.borderless)
         }
-        .frame(height: 22)
+        .padding(14)
+        .frame(width: 192)
+        .onDisappear { hovered = nil }
     }
 }
 
-struct MinimalWell: NSViewRepresentable {
-    @ObservedObject var demo: Demo
-
-    func makeNSView(context: Context) -> NSColorWell {
-        let well = NSColorWell(style: .minimal)
-        well.supportsAlpha = false
-        well.target = context.coordinator
-        well.action = #selector(Coordinator.changed(_:))
-        return well
-    }
-
-    func updateNSView(_ well: NSColorWell, context: Context) {
-        context.coordinator.demo = demo
-        if well.color != demo.color { well.color = demo.color }
-    }
-
-    func makeCoordinator() -> Coordinator { Coordinator(demo: demo) }
-
-    @MainActor final class Coordinator: NSObject {
-        var demo: Demo
-        init(demo: Demo) { self.demo = demo }
-        @objc func changed(_ sender: NSColorWell) { demo.color = sender.color }
-    }
-}
-
-// MARK: - 窗口：仿设置页的一组 + 效果预览 + 切换栏
+// MARK: - 窗口：仿设置页的一组 + 切换栏
 
 struct PrototypeView: View {
     @ObservedObject var demo: Demo
@@ -234,29 +179,21 @@ struct PrototypeView: View {
                     HStack { Text("开始录制前倒数 (秒)"); Spacer(); Text("0").monospacedDigit().foregroundStyle(.secondary) }
                         .frame(height: 16)
                     Divider().opacity(0.5)
-                    VariantRow(demo: demo)
+                    ColorGridRow(demo: demo)
+                    if demo.variant.previewInSettings {
+                        HStack {
+                            Spacer()
+                            BackgroundPreview(color: demo.color, size: CGSize(width: 220, height: 110))
+                        }
+                    }
                 }
                 .padding(5)
             }
-
-            Text("效果预览：「录制应用程序」时，应用窗口以外的区域就是这个颜色").font(.caption).foregroundStyle(.secondary)
-            ZStack {
-                RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Color(nsColor: demo.color))
-                    .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(.primary.opacity(0.12), lineWidth: 0.5))
-                VStack(spacing: 0) {
-                    HStack(spacing: 6) {
-                        ForEach([Color.red, .yellow, .green], id: \.self) { Circle().fill($0).frame(width: 9, height: 9) }
-                        Spacer()
-                    }
-                    .padding(8)
-                    .background(Color(white: 0.93))
-                    Color.white
-                }
-                .frame(width: 220, height: 120)
-                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                .shadow(color: .black.opacity(0.3), radius: 10, y: 4)
+            GroupBox(label: Text("录制控制").font(.headline)) {
+                HStack { Text("菜单栏计时 + 菜单"); Spacer(); Toggle("", isOn: .constant(true)).toggleStyle(.switch).controlSize(.small) }
+                    .padding(5)
             }
-            .frame(height: 180)
+            .opacity(0.5)
 
             HStack(spacing: 12) {
                 Button { step(-1) } label: { Image(systemName: "chevron.left") }
@@ -269,11 +206,13 @@ struct PrototypeView: View {
             .background(RoundedRectangle(cornerRadius: 10).fill(.black.opacity(0.8)))
             .foregroundStyle(.white)
             .environment(\.colorScheme, .dark)
-            Text("当前颜色：\(demo.hex)    （A / D 点开的是系统面板，C 的「更多颜色…」、B 的彩色圆点也会打开它）")
+            Text("当前颜色：\(demo.hex)。点右边的颜色按钮打开色板；C1、C3 在色板里把鼠标移到色块上就能预览。")
                 .font(.caption).foregroundStyle(.secondary).monospacedDigit()
+                .fixedSize(horizontal: false, vertical: true)
         }
         .padding(20)
         .frame(width: 460)
+        .animation(.smooth(duration: 0.2), value: demo.variant)
     }
 
     private func step(_ by: Int) {
@@ -300,9 +239,10 @@ final class PrototypeApp: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let hosting = NSHostingView(rootView: PrototypeView(demo: demo))
-        let window = NSWindow(contentRect: NSRect(origin: .zero, size: hosting.fittingSize), styleMask: [.titled, .closable],
+        hosting.sizingOptions = [.preferredContentSize]
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 460, height: 420), styleMask: [.titled, .closable],
                               backing: .buffered, defer: false)
-        window.title = "PROTOTYPE · 自定义背景色"
+        window.title = "PROTOTYPE · 自定义背景色（第 2 轮：效果预览放哪里）"
         window.contentView = hosting
         window.center()
         window.makeKeyAndOrderFront(nil)
@@ -316,7 +256,7 @@ final class PrototypeApp: NSObject, NSApplicationDelegate {
             return event
         }
         NSApp.activate()
-        print("取色界面原型已启动：底部 ◀ ▶ 或键盘 ← → 切换方案；关掉窗口退出。")
+        print("第 2 轮原型已启动：底部 ◀ ▶ 或键盘 ← → 切换方案；关掉窗口退出。")
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
