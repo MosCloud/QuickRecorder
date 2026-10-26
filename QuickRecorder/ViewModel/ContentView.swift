@@ -355,6 +355,8 @@ extension AppDelegate {
         let countdown = ud.integer(forKey: "countdown")
         if countdown == 0 {
             action()
+        } else if MainActor.assumeIsolated({ RecordingControls.shared.capsuleEnabled }) {
+            MainActor.assumeIsolated { RecordingControls.shared.capsule.runCountdown(seconds: countdown, then: action) }
         } else {
             let wX = (screen.frame.width - 120) / 2 + screen.frame.minX
             let wY = (screen.frame.height - 120) / 2 + screen.frame.minY

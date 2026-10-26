@@ -20,3 +20,5 @@ enum Encoder: String { case h264, h265 }
 enum StreamType: Int { case screen, window, windows, application, screenarea, systemaudio, idevice, camera }
 
 enum BackgroundType: String { case wallpaper, clear, black, white, red, green, yellow, orange, gray, blue, custom }
+
+enum CapsuleMaterial: String { case glass, blur, black }

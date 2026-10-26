@@ -97,7 +97,10 @@ struct RecorderView: View {
     @AppStorage("includeMenuBar")   private var includeMenuBar: Bool = true
     @AppStorage("hideDesktopFiles") private var hideDesktopFiles: Bool = false
     @AppStorage("trimAfterRecord")  private var trimAfterRecord: Bool = false
-    @AppStorage("miniStatusBar")    private var miniStatusBar: Bool = false
+    @AppStorage("controlsMenuBar")  private var controlsMenuBar: Bool = true
+    @AppStorage("controlsCapsule")  private var controlsCapsule: Bool = true
+    @AppStorage("capsuleMaterial")  private var capsuleMaterial: CapsuleMaterial = .glass
+    @AppStorage("capsuleIdleOpacity") private var capsuleIdleOpacity: Double = 0.5
     @AppStorage("hideSelf")         private var hideSelf: Bool = true
     @AppStorage("preventSleep")     private var preventSleep: Bool = true
     @AppStorage("showPreview")      private var showPreview: Bool = true
@@ -117,9 +120,31 @@ struct RecorderView: View {
                         .onChange(of: userColor) { _, userColor in ud.setColor(userColor, forKey: "userColor") }
                 }
             }
-            SGroupBox {
-                SToggle("Mini size Menu Bar controller", isOn: $miniStatusBar)
+            SGroupBox(label: "Recording Controls") {
+                // At least one stays on: the one left on can't be switched off
+                SToggle("Menu Bar Timer and Menu", isOn: $controlsMenuBar)
+                    .disabled(controlsMenuBar && !controlsCapsule)
                 SDivider()
+                SToggle("Floating Capsule", isOn: $controlsCapsule,
+                        tips: "At least one of them stays on. The capsule hangs below the notch and never appears in recordings.")
+                    .disabled(controlsCapsule && !controlsMenuBar)
+                SDivider()
+                SPicker("Capsule Material", selection: $capsuleMaterial) {
+                    Text("Liquid Glass").tag(CapsuleMaterial.glass)
+                    Text("Frosted Glass").tag(CapsuleMaterial.blur)
+                    Text("Black").tag(CapsuleMaterial.black)
+                }.disabled(!controlsCapsule)
+                SDivider()
+                SItem(label: "Opacity When Idle") {
+                    Slider(value: $capsuleIdleOpacity, in: 0.1...1, step: 0.05).frame(width: 150)
+                    Text("\(Int((capsuleIdleOpacity * 100).rounded()))%")
+                        .monospacedDigit()
+                        .frame(width: 36, alignment: .trailing)
+                }.disabled(!controlsCapsule)
+            }
+            .onChange(of: controlsMenuBar) { updateStatusBar() }
+            .onChange(of: controlsCapsule) { updateStatusBar() }
+            SGroupBox {
                 SToggle("Prevent Mac from sleeping while recording", isOn: $preventSleep)
                 SDivider()
                 SToggle("Show floating preview after recording", isOn: $showPreview)

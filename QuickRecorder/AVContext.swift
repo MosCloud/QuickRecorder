@@ -107,6 +107,7 @@ class AVOutputClass: NSObject, AVCaptureFileOutputRecordingDelegate, AVCaptureVi
             output.startRecording(to: SCContext.filePath.url, recordingDelegate: self)
             SCContext.streamType = StreamType.idevice
             SCContext.startTime = Date.now
+            SCContext.startClock()
         }
         
         SCContext.previewSession.startRunning()
@@ -125,7 +126,7 @@ class AVOutputClass: NSObject, AVCaptureFileOutputRecordingDelegate, AVCaptureVi
             SCContext.streamType = nil
             SCContext.startTime = nil
             DispatchQueue.main.async {
-                controlPanel.close()
+                SCContext.clock = RecordingClock()
                 deviceWindow.close()
                 updateStatusBar()
             }
