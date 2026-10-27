@@ -114,4 +114,18 @@ struct PanelReturnTests {
         #expect(!settingsClosed)
         #expect(!ended)
     }
+
+    @Test("Opening the menu bar panel ends the panel's flow: the windows it closes don't bring the panel back")
+    func menuBarPanel() {
+        var fromSettings = PanelReturn()
+        fromSettings.settingsOpened()
+        fromSettings.menuBarPanelOpened()
+        let settingsClosed = fromSettings.windowClosed(othersOpen: false, recording: false)
+        var fromPicker = PanelReturn()
+        fromPicker.tileChosen()
+        fromPicker.menuBarPanelOpened()
+        let pickerClosed = fromPicker.windowClosed(othersOpen: false, recording: false)
+        #expect(!settingsClosed)
+        #expect(!pickerClosed)
+    }
 }

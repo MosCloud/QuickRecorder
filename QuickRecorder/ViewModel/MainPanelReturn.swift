@@ -33,6 +33,8 @@ final class MainPanelReturn {
 
     func settingsOpened() { state.settingsOpened() }
 
+    func menuBarPanelOpened() { state.menuBarPanelOpened() }
+
     /// Start was pressed in a picker, or the panel started a recording itself.
     func startPressed() { state.startPressed() }
 

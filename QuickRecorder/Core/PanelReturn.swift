@@ -19,6 +19,11 @@ struct PanelReturn {
         phase = .choosing
     }
 
+    /// The menu bar panel opened, closing every window: whatever the main panel was setting up is abandoned.
+    mutating func menuBarPanelOpened() {
+        phase = .idle
+    }
+
     /// Start was pressed: a countdown, then a recording, is on its way.
     mutating func startPressed() {
         if phase == .choosing { phase = .starting }

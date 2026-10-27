@@ -99,6 +99,8 @@ final class MenuBarItem: NSObject, NSMenuDelegate {
     @objc private func togglePanel() {
         guard let button = item.button else { return }
         if panelPopover.isShown { panelPopover.performClose(nil); return }
+        // Before the panel closes the other windows, so the main panel doesn't take that as backing out and close it in turn
+        MainPanelReturn.shared.menuBarPanelOpened()
         let panel = NSHostingController(rootView: MenuBarPanel { [weak self] in self?.closePanel() }.onAppear { closeAllWindow() })
         panel.sizingOptions = [.preferredContentSize]
         panelPopover.contentViewController = panel
