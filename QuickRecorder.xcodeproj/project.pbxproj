@@ -69,6 +69,9 @@
 		CC3300000000000000001203 /* MicConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001201 /* MicConverter.swift */; };
 		CC3300000000000000001303 /* MicConverterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001301 /* MicConverterTests.swift */; };
 		CC3300000000000000001402 /* PanelControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001401 /* PanelControls.swift */; };
+		CC3300000000000000001802 /* TrimExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001801 /* TrimExport.swift */; };
+		CC3300000000000000001803 /* TrimExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001801 /* TrimExport.swift */; };
+		CC3300000000000000001903 /* TrimExportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001901 /* TrimExportTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -132,6 +135,8 @@
 		CC3300000000000000001201 /* MicConverter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicConverter.swift; sourceTree = "<group>"; };
 		CC3300000000000000001301 /* MicConverterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicConverterTests.swift; sourceTree = "<group>"; };
 		CC3300000000000000001401 /* PanelControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelControls.swift; sourceTree = "<group>"; };
+		CC3300000000000000001801 /* TrimExport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrimExport.swift; sourceTree = "<group>"; };
+		CC3300000000000000001901 /* TrimExportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrimExportTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -261,6 +266,7 @@
 				CC3300000000000000000801 /* AudioMix.swift */,
 				CC3300000000000000001101 /* HotkeyCheck.swift */,
 				CC3300000000000000001201 /* MicConverter.swift */,
+				CC3300000000000000001801 /* TrimExport.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -272,6 +278,7 @@
 				CC3300000000000000000201 /* RecordingControlsTests.swift */,
 				CC3300000000000000000901 /* AudioMixTests.swift */,
 				CC3300000000000000001301 /* MicConverterTests.swift */,
+				CC3300000000000000001901 /* TrimExportTests.swift */,
 			);
 			path = QuickRecorderTests;
 			sourceTree = "<group>";
@@ -426,6 +433,7 @@
 				CC3300000000000000001102 /* HotkeyCheck.swift in Sources */,
 				CC3300000000000000001202 /* MicConverter.swift in Sources */,
 				CC3300000000000000001402 /* PanelControls.swift in Sources */,
+				CC3300000000000000001802 /* TrimExport.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -449,6 +457,8 @@
 				CC3300000000000000001103 /* HotkeyCheck.swift in Sources */,
 				CC3300000000000000001203 /* MicConverter.swift in Sources */,
 				CC3300000000000000001303 /* MicConverterTests.swift in Sources */,
+				CC3300000000000000001803 /* TrimExport.swift in Sources */,
+				CC3300000000000000001903 /* TrimExportTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
