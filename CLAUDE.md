@@ -8,15 +8,18 @@ Every change reaches `main` through a PR on `MosCloud/QuickRecorder`, one branch
 
 ## Build and install
 
-`xcode-select` points at the Command Line Tools, so set `DEVELOPER_DIR` for every Xcode command. Keep DerivedData out of iCloud-synced folders: iCloud's Finder xattrs make codesign fail with "resource fork, Finder information, or similar detritus not allowed".
+`xcode-select` points at the Command Line Tools, so set `DEVELOPER_DIR` for every Xcode command. Keep DerivedData out of iCloud-synced folders: iCloud's Finder xattrs make codesign fail with "resource fork, Finder information, or similar detritus not allowed". Its name ends in `.noindex` so Spotlight skips the build products: otherwise searching for QuickRecorder also offers the Release and Debug builds next to the installed app.
 
 ```sh
 export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
-DD=~/Library/Developer/Xcode/DerivedData/QuickRecorder-cli
+DD=~/Library/Developer/Xcode/DerivedData/QuickRecorder-cli.noindex
 xcodebuild build -project QuickRecorder.xcodeproj -scheme QuickRecorder -configuration Release \
     -derivedDataPath "$DD" -allowProvisioningUpdates
 # install (quit QuickRecorder first); replace the bundle so removed files don't linger
 rm -rf /Applications/QuickRecorder.app && ditto "$DD/Build/Products/Release/QuickRecorder.app" /Applications/QuickRecorder.app
+# every build registers its products with Launch Services; leave only the installed copy for AppleScript and `open -a`
+LSREG=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
+for c in Release Debug; do "$LSREG" -u "$DD/Build/Products/$c/QuickRecorder.app" 2>/dev/null; done
 ```
 
 Signing is automatic with the owner's Personal Team (`B5JGQB9CXF`). That stable certificate is what keeps the Screen Recording, Microphone and Camera grants across rebuilds; an ad-hoc signed build loses them every time.
