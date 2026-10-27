@@ -722,7 +722,6 @@ class SCContext {
     /// Mixes the microphone into the main track, keeping the recording with its tracks apart if that fails (#6),
     /// then shows the preview or opens the trimmer.
     private static func finishMixedRecording(unmixed: URL, into output: URL, previewImage: NSImage?) {
-        showNotification(title: "Still Processing".local, body: "Mixing audio track...".local, id: "quickrecorder.processing.\(UUID().uuidString)")
         Task {
             let outcome = await MixedRecording.finish(unmixed: unmixed, into: output, retryAfter: .seconds(1)) { recording, output in
                 try await mixAudioTracks(from: recording, to: output)
