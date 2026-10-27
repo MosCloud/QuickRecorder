@@ -187,6 +187,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
         if AudioFormat(rawValue: storedFormat ?? "") == nil { ud.set(AudioFormat(stored: storedFormat).rawValue, forKey: "audioFormat") }
         if showOnDock { NSApp.setActivationPolicy(.regular) }
         
+        UNUserNotificationCenter.current().delegate = self
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
             if let error = error { print("Notification authorization denied: \(error.localizedDescription)") }
         }
@@ -321,6 +322,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
         override var canBecomeKey: Bool {
             return true
         }
+    }
+}
+
+extension AppDelegate: UNUserNotificationCenterDelegate {
+    /// Asked while QuickRecorder is the active app: unanswered, macOS files the notification away without showing it (#68)
+    nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification,
+                                            withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        completionHandler([.banner, .list, .sound])
     }
 }
 
