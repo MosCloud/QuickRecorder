@@ -99,9 +99,6 @@
 		18A551F12D0749C3008FC5F6 /* SleepPreventer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepPreventer.swift; sourceTree = "<group>"; };
 		18A551F32D0749C3008FC5F6 /* WindowAccessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowAccessor.swift; sourceTree = "<group>"; };
 		18A551F42D0749C3008FC5F6 /* WindowHighlighter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowHighlighter.swift; sourceTree = "<group>"; };
-		18A735972BFBA12F002314AF /* it */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = it; path = it.lproj/Credits.rtf; sourceTree = "<group>"; };
-		18A735982BFBA132002314AF /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/Localizable.strings; sourceTree = "<group>"; };
-		18A735992BFBA138002314AF /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		18CEED912D08312C00FBC4BF /* PreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewView.swift; sourceTree = "<group>"; };
 		18CEEE182D097CBF00FBC4BF /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = "zh-Hant"; path = "zh-Hant.lproj/Credits.rtf"; sourceTree = "<group>"; };
 		18CEEE192D097CC500FBC4BF /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/Localizable.strings"; sourceTree = "<group>"; };
@@ -366,7 +363,6 @@
 				en,
 				Base,
 				"zh-Hans",
-				it,
 				"zh-Hant",
 			);
 			mainGroup = 18D3BDDE2BCE5DC1006CFFC0;
@@ -494,7 +490,6 @@
 			children = (
 				1862BF902BD5494F003ED522 /* zh-Hans */,
 				1862BF912BD5495D003ED522 /* Base */,
-				18A735972BFBA12F002314AF /* it */,
 				18CEEE182D097CBF00FBC4BF /* zh-Hant */,
 			);
 			name = Credits.rtf;
@@ -504,7 +499,6 @@
 			isa = PBXVariantGroup;
 			children = (
 				189BD5E72BDE34B80056D06C /* zh-Hans */,
-				18A735992BFBA138002314AF /* it */,
 				18CEEE1A2D097D6800FBC4BF /* zh-Hant */,
 			);
 			name = InfoPlist.strings;
@@ -514,7 +508,6 @@
 			isa = PBXVariantGroup;
 			children = (
 				18D3BDFC2BCE5DF5006CFFC0 /* zh-Hans */,
-				18A735982BFBA132002314AF /* it */,
 				18CEEE192D097CC500FBC4BF /* zh-Hant */,
 			);
 			name = Localizable.strings;
