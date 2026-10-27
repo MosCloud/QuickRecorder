@@ -48,6 +48,7 @@ final class RecordingControls {
     }
 
     func sync() {
+        MainPanelReturn.shared.recordingChanged()
         guard SCContext.streamType != nil else {
             stopTicking()
             if cameraPopover.isShown { cameraPopover.performClose(nil) }

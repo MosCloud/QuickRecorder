@@ -52,41 +52,28 @@ class RecorderPlayerModel: NSObject, ObservableObject {
                             let startTime = playerItem.reversePlaybackEndTime
                             let endTime = playerItem.forwardPlaybackEndTime
                             let timeRange = CMTimeRangeFromTimeToTime(start: startTime, end: endTime)
-                            guard let asset = self.asset else { return }
-                            let exportSession = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetPassthrough)
                             let dateFormatter = DateFormatter()
                             let fileEnding = fileUrl.pathExtension.lowercased()
-                            var fileType: AVFileType?
-                            switch fileEnding {
-                                case VideoFormat.mov.rawValue: fileType = AVFileType.mov
-                                case VideoFormat.mp4.rawValue: fileType = AVFileType.mp4
-                                default: assertionFailure("loaded unknown video format".local)
-                            }
                             dateFormatter.dateFormat = "y-MM-dd HH.mm.ss"
-                            var path: String?
-                            path = fileUrl.deletingPathExtension().path
-                            guard let path = path else { return }
+                            let path = fileUrl.deletingPathExtension().path
                             let filePath = path.removingPercentEncoding! + " (Cropped in ".local + "\(dateFormatter.string(from: Date())))." + fileEnding
-                            if let exportSession, let fileType {
-                                exportSession.timeRange = timeRange
-                                Task {
+                            Task {
+                                do {
+                                    // Audio-only recordings (.m4a) too: this used to know only .mp4 and .mov, and saved nothing (#56)
+                                    try await TrimExport.export(fileUrl, range: timeRange, to: filePath.url)
+                                    let content = UNMutableNotificationContent()
+                                    content.title = "Clip Saved".local
+                                    content.body = String(format: "File saved to: %@".local, filePath)
+                                    content.sound = UNNotificationSound.default
+                                    let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+                                    let request = UNNotificationRequest(identifier: "quickrecorder.completed.\(UUID().uuidString)", content: content, trigger: trigger)
                                     do {
-                                        try await exportSession.export(to: filePath.url, as: fileType)
-                                        print("Trimmed video exported successfully.")
-                                        let content = UNMutableNotificationContent()
-                                        content.title = "Clip Saved".local
-                                        content.body = String(format: "File saved to: %@".local, filePath)
-                                        content.sound = UNNotificationSound.default
-                                        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
-                                        let request = UNNotificationRequest(identifier: "quickrecorder.completed.\(UUID().uuidString)", content: content, trigger: trigger)
-                                        do {
-                                            try await UNUserNotificationCenter.current().add(request)
-                                        } catch {
-                                            print("Notification failed to send：\(error.localizedDescription)")
-                                        }
+                                        try await UNUserNotificationCenter.current().add(request)
                                     } catch {
-                                        print("Error: \(error.localizedDescription)")
+                                        print("Notification failed to send：\(error.localizedDescription)")
                                     }
+                                } catch {
+                                    SCContext.showNotification(title: "Failed to save file".local, body: error.localizedDescription, id: "quickrecorder.error.\(UUID().uuidString)")
                                 }
                             }
                             self.nsWindow?.close()
