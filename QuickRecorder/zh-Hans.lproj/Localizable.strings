@@ -180,7 +180,7 @@
 " Tips" = " 小贴士";
 "Window Area" = "窗口范围";
 "Click on a window to select its area\nor press Esc to cancel." = "点击任意窗口来获取其范围并进行录制\n或者按 Esc 键退出选择";
-"Trim" = "修剪视频";
+"Trim" = "修剪";
 "Make GIF" = "创建 GIF";
 "Gifski not found" = "未安装 Gifski";
 "Please install \"Gifski\" first to make GIF!" = "需要先安装 Gifski 才能创建 GIF!";
@@ -250,3 +250,7 @@
 "This shortcut is already used by “%@”." = "这个快捷键已被「%@」使用。";
 "⌘ (or ⇧⌘) with a letter or number is a shortcut other apps use, such as ⌘S to save. As a global shortcut it would stop working in every app while QuickRecorder runs. Add ⌃ or ⌥ to it." = "只用 ⌘（或 ⇧⌘）加字母或数字的组合，大多是其他 app 的常用快捷键，比如 ⌘S 保存。设成全局快捷键后，只要 QuickRecorder 在运行，它在所有 app 里都会失灵。请再加上 ⌃ 或 ⌥。";
 "Restore Defaults" = "恢复默认";
+"Open" = "打开";
+"Share…" = "共享…";
+"Move to Trash" = "移到废纸篓";
+"Drag into another app to send the file; double-click to open it." = "拖到其他 app 里就是发送这个文件；双击打开。";

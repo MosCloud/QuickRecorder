@@ -468,7 +468,7 @@ class SCContext {
                 try? fd.removeItem(at: parts.system.deletingLastPathComponent())
             }
             if ud.bool(forKey: "showPreview") {
-                DispatchQueue.main.async { showPreview(path: output.path, image: NSImage(named: "audioIcon")) }
+                showPreview(path: output.path, image: nil)
             } else {
                 showNotification(title: "Recording Completed".local, body: String(format: "File saved to: %@".local, output.path), id: "quickrecorder.completed.\(UUID().uuidString)")
             }
@@ -485,15 +485,10 @@ class SCContext {
         }
     }
 
-    /// Shows the floating preview with `image`: the recording's first frame, or the audio icon.
+    /// Shows the floating preview: `image` is a video's first frame; audio (nil) shows its waveform (#55).
     static func showPreview(path: String, image: NSImage?) {
         if !ud.bool(forKey: "showPreview") { return }
-        if let previewImage = image, let screen = getScreenWithMouse() {
-            let contentView = NSHostingView(rootView: PreviewView(frame: previewImage, filePath: path))
-            previewWindow.contentView = contentView
-            previewWindow.setFrameOrigin(NSPoint(x: screen.frame.maxX - 280, y: screen.frame.minY + 20))
-            previewWindow.orderFront(self)
-        }
+        DispatchQueue.main.async { PreviewController.shared.show(url: path.url, frame: image) }
     }
     
     
