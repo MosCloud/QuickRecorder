@@ -248,3 +248,5 @@
 "Drag into another app to send the file; double-click to open it." = "拖到其他 app 裡就是傳送這個檔案；按兩下打開。";
 " Tips" = " 小貼士";
 "Encoder Warning" = "編碼器警告";
+"Couldn't mix the microphone into the main track" = "沒能把麥克風混入主音軌";
+"The recording was saved with the microphone on a track of its own." = "錄製已儲存，麥克風在單獨的音軌上。";

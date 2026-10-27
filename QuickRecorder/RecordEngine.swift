@@ -241,8 +241,9 @@ extension AppDelegate {
         
         SCContext.stream = SCStream(filter: filter, configuration: conf, delegate: self)
         do {
-            try SCContext.stream.addStreamOutput(self, type: .screen, sampleHandlerQueue: .global())
-            try SCContext.stream.addStreamOutput(self, type: .audio, sampleHandlerQueue: .global())
+            // Serial queues, so that stopping can wait for what's already on its way (#6)
+            try SCContext.stream.addStreamOutput(self, type: .screen, sampleHandlerQueue: SCContext.videoQueue)
+            try SCContext.stream.addStreamOutput(self, type: .audio, sampleHandlerQueue: SCContext.audioQueue)
             if !audioOnly {
                 initVideo(conf: conf)
             } else {
@@ -315,10 +316,14 @@ extension AppDelegate {
             default: assertionFailure("loaded unknown video format".local)
         }
 
+        let output = "\(SCContext.getFilePath(.screenRecording)).\(fileEnding)"
         if remuxAudio && recordMic && recordWinSound {
-            SCContext.filePath = "\(SCContext.getFilePath(.screenRecording)).\(fileEnding).\(fileEnding).\(fileEnding)"
+            // Written with the microphone on a track of its own, under a name that says so, and mixed when it ends (#6)
+            SCContext.mixedOutput = output.url
+            SCContext.filePath = MixedRecording.unmixedURL(for: output.url).path
         } else {
-            SCContext.filePath = "\(SCContext.getFilePath(.screenRecording)).\(fileEnding)"
+            SCContext.mixedOutput = nil
+            SCContext.filePath = output
         }
         SCContext.vW = try? AVAssetWriter.init(outputURL: SCContext.filePath.url, fileType: fileType!)
         let encoderIsH265 = (encoder.rawValue == Encoder.h265.rawValue) || recordHDR
@@ -551,6 +556,7 @@ extension AppDelegate {
 
 class AudioRecorder: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate {
     static let shared = AudioRecorder()
+    private let queue = DispatchQueue(label: "QuickRecorder.microphone")
     private var captureSession: AVCaptureSession!
     private var audioInput: AVCaptureDeviceInput!
     private var audioDataOutput: AVCaptureAudioDataOutput!
@@ -582,8 +588,7 @@ class AudioRecorder: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate {
 
         // Create audio data output
         audioDataOutput = AVCaptureAudioDataOutput()
-        let audioQueue = DispatchQueue(label: "audioQueue")
-        audioDataOutput.setSampleBufferDelegate(self, queue: audioQueue)
+        audioDataOutput.setSampleBufferDelegate(self, queue: queue)
         
         // Add audio data output to capture session
         if captureSession.canAddOutput(audioDataOutput) {
@@ -600,10 +605,12 @@ class AudioRecorder: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate {
         }
     }
     
+    /// Stops the microphone; the buffers it has already delivered are written by the time this returns.
     func stop() {
         if let session = captureSession {
             if session.isRunning { session.stopRunning() }
         }
+        queue.sync {}
     }
 
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {

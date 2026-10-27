@@ -79,6 +79,9 @@
 		CC3300000000000000001503 /* PanelReturn.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001501 /* PanelReturn.swift */; };
 		CC3300000000000000001603 /* PanelReturnTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001601 /* PanelReturnTests.swift */; };
 		CC3300000000000000001702 /* MainPanelReturn.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001701 /* MainPanelReturn.swift */; };
+		CC3300000000000000002202 /* MixedRecording.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000002201 /* MixedRecording.swift */; };
+		CC3300000000000000002203 /* MixedRecording.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000002201 /* MixedRecording.swift */; };
+		CC3300000000000000002303 /* MixedRecordingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000002301 /* MixedRecordingTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -146,6 +149,8 @@
 		CC3300000000000000001501 /* PanelReturn.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelReturn.swift; sourceTree = "<group>"; };
 		CC3300000000000000001601 /* PanelReturnTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelReturnTests.swift; sourceTree = "<group>"; };
 		CC3300000000000000001701 /* MainPanelReturn.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainPanelReturn.swift; sourceTree = "<group>"; };
+		CC3300000000000000002201 /* MixedRecording.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MixedRecording.swift; sourceTree = "<group>"; };
+		CC3300000000000000002301 /* MixedRecordingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MixedRecordingTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -279,6 +284,7 @@
 				CC3300000000000000002001 /* RecordingPreview.swift */,
 				CC3300000000000000001801 /* TrimExport.swift */,
 				CC3300000000000000001501 /* PanelReturn.swift */,
+				CC3300000000000000002201 /* MixedRecording.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -293,6 +299,7 @@
 				CC3300000000000000002101 /* RecordingPreviewTests.swift */,
 				CC3300000000000000001901 /* TrimExportTests.swift */,
 				CC3300000000000000001601 /* PanelReturnTests.swift */,
+				CC3300000000000000002301 /* MixedRecordingTests.swift */,
 			);
 			path = QuickRecorderTests;
 			sourceTree = "<group>";
@@ -450,6 +457,7 @@
 				CC3300000000000000001802 /* TrimExport.swift in Sources */,
 				CC3300000000000000001502 /* PanelReturn.swift in Sources */,
 				CC3300000000000000001702 /* MainPanelReturn.swift in Sources */,
+				CC3300000000000000002202 /* MixedRecording.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -479,6 +487,8 @@
 				CC3300000000000000001903 /* TrimExportTests.swift in Sources */,
 				CC3300000000000000001503 /* PanelReturn.swift in Sources */,
 				CC3300000000000000001603 /* PanelReturnTests.swift in Sources */,
+				CC3300000000000000002203 /* MixedRecording.swift in Sources */,
+				CC3300000000000000002303 /* MixedRecordingTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
