@@ -22,4 +22,5 @@ enum StreamType: Int { case screen, window, windows, application, screenarea, sy
 
 enum BackgroundType: String { case wallpaper, clear, black, white, red, green, yellow, orange, gray, blue, custom }
 
-enum CapsuleMaterial: String { case glass, blur, black }
+/// The material of the main panel and the floating capsule, stored as "capsuleMaterial" from when only the capsule had one
+enum PanelMaterial: String { case glass, blur, black }

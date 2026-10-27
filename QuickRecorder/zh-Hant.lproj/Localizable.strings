@@ -209,7 +209,9 @@
 "Recording Controls" = "錄製控制";
 "Menu Bar Timer and Menu" = "選單列計時 + 選單";
 "Floating Capsule" = "浮動膠囊";
-"Capsule Material" = "膠囊材質";
+"Appearance" = "外觀";
+"Panel Material" = "面板材質";
+"The main panel and the floating capsule use this material." = "主面板和錄製時的懸浮膠囊都使用這個材質。";
 "Liquid Glass" = "Liquid Glass";
 "Frosted Glass" = "毛玻璃";
 "Opacity When Idle" = "滑鼠移開後的不透明度";

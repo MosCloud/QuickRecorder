@@ -23,7 +23,7 @@ final class CapsuleModel: ObservableObject {
 
 struct NotchCapsuleView: View {
     @ObservedObject var model: CapsuleModel
-    @AppStorage("capsuleMaterial") private var material: CapsuleMaterial = .glass
+    @AppStorage("capsuleMaterial") private var material: PanelMaterial = .glass
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {

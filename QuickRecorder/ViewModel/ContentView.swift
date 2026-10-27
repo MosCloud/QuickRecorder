@@ -8,176 +8,131 @@
 import SwiftUI
 import AVFoundation
 import ScreenCaptureKit
+import KeyboardShortcuts
 
+/// The main panel (#48): the recording tiles at 90% of their original size, then the microphone, Preferences and Quit,
+/// on the material the floating capsule uses.
 struct ContentView: View {
-    var fromStatusBar = false
-    @State private var window: NSWindow?
-    @State private var xmarkGlowing = false
-    @State private var infoGlowing = false
-    @State private var micGlowing = false
-    @State private var isPopoverShowing = false
-    @State private var isPopoverShowing2 = false
+    @State private var isDevicePopoverShowing = false
+    @State private var closeHovering = false
     @State private var micList = SCContext.getMicrophone()
     @AppStorage("recordMic") private var recordMic: Bool = false
     @AppStorage("micDevice") private var micDevice: String = "default"
     @AppStorage("showOnDock") private var showOnDock: Bool = true
     @AppStorage("showMenubar") private var showMenubar: Bool = false
+    @AppStorage("capsuleMaterial") private var material: PanelMaterial = .glass
+    @Environment(\.colorScheme) private var colorScheme
 
     var appDelegate = AppDelegate.shared
-    
+
+    /// The panel's size against the original's 110×80 tiles
+    private let k: CGFloat = 0.9
+
     var body: some View {
-        ZStack(alignment: Alignment(horizontal: .leading, vertical: .top)) {
-            ZStack {
-                ZStack {
-                    if !fromStatusBar {
-                        Color.clear
-                            .background(.ultraThinMaterial)
-                            .environment(\.controlActiveState, .active)
+        let shape = RoundedRectangle(cornerRadius: 14 * k, style: .continuous)
+        ZStack(alignment: .topLeading) {
+            HStack {
+                tile("System Audio", "waveform", hotkey: .startWithAudio) { appDelegate.recordSystemAudio() }
+                separator
+                tile("Screen", "tv.inset.filled", hotkey: .startWithScreen) { appDelegate.chooseScreen() }
+                separator
+                tile("Screen Area", "viewfinder", hotkey: .startWithArea) { appDelegate.chooseArea() }
+                separator
+                tile("Application", "app", symbolSize: 38, overlayer: "App", hotkey: nil) { appDelegate.chooseApps() }
+                separator
+                tile("Window", "macwindow", hotkey: .startWithWindow) { appDelegate.chooseWindow() }
+                separator
+                tile("Mobile Device", "apps.ipad", hotkey: nil) { isDevicePopoverShowing = true }
+                    .popover(isPresented: $isDevicePopoverShowing, arrowEdge: .bottom) {
+                        iDevicePopoverView(closePopover: { isDevicePopoverShowing = false })
                     }
-                }.cornerRadius(14)
-                HStack {
-                    if !fromStatusBar { Spacer() }
-                    ZStack(alignment: Alignment(horizontal: .center, vertical: .bottom)) {
-                        Button(action: {
-                            appDelegate.recordSystemAudio()
-                        }, label: {
-                            SelectorView(title: "System Audio".local, symbol: "waveform").cornerRadius(8)
-                        }).buttonStyle(.plain)
-                        Button {} label: {
-                            HStack(spacing: -2) {
-                                Button {
-                                    recordMic.toggle()
-                                } label: {
-                                    ZStack {
-                                        Image(systemName: "square.fill")
-                                            .font(.system(size: 15, weight: .medium))
-                                            .foregroundColor(.primary)
-                                            .colorInvert()
-                                            .opacity(0.2)
-                                        Image(systemName: recordMic ? "checkmark.square" : "square")
-                                            .font(.system(size: 16, weight: .medium))
-                                    }
-                                }
-                                .buttonStyle(.plain)
-                                .onChange(of: recordMic) { Task { await SCContext.performMicCheck() }}
-                                .onAppear{ if micList.isEmpty { recordMic = false } }
-                                .disabled(micList.isEmpty)
-                                Image(systemName: "mic.fill")
-                                    .font(.system(size: 13, weight: .bold))
-                                    .foregroundColor(recordMic ? .primary : .secondary)
-                                    .frame(width: 24)
-                                    .padding(.leading, 1)
-                                Picker("", selection: $micDevice) {
-                                    Text("Default".local).tag("default")
-                                    ForEach(micList, id: \.self) { device in
-                                        Text(device.localizedName).tag(device.localizedName)
-                                    }
-                                }.frame(width: 90)
-                                    .background(
-                                        ZStack {
-                                            Color.primary
-                                                .opacity(0.1)
-                                                .cornerRadius(4)
-                                                .padding(.vertical, -1)
-                                                .padding(.horizontal, 3)
-                                                .padding(.trailing, -16)
-                                            Image(systemName: "chevron.up.chevron.down")
-                                                .offset(x: 50)
-                                        }
-                                    )
-                                    .disabled(!recordMic)
-                                    .padding(.leading, -10)
-                                    .frame(width: 99)
-                                    .onAppear{
-                                        let list = micList.map({ $0.localizedName })
-                                        if !list.contains(micDevice) { micDevice = "default" }
-                                    }
-                            }.padding(.leading, -5)
-                        }.buttonStyle(.plain)
-                        .scaleEffect(0.69)
-                        .padding(.bottom, 4)
-                        .frame(width: 110)
-                        .background(.primary.opacity(0.00001))
-                    }
-                    Divider().frame(height: 70)
-                    Button(action: {
-                        appDelegate.chooseScreen()
-                    }, label: {
-                        SelectorView(title: "Screen".local, symbol: "tv.inset.filled").cornerRadius(8)
-                    }).buttonStyle(.plain)
-                    Divider().frame(height: 70)
-                    Button(action: {
-                        appDelegate.chooseArea()
-                    }, label: {
-                        SelectorView(title: "Screen Area".local, symbol: "viewfinder").cornerRadius(8)
-                    }).buttonStyle(.plain)
-                    Divider().frame(height: 70)
-                    Button(action: {
-                        appDelegate.chooseApps()
-                    }, label: {
-                        SelectorView(title: "Application".local, symbol: "app", symbolSize: 38, overlayer: "App")
-                            .cornerRadius(8)
-                    }).buttonStyle(.plain)
-                    Divider().frame(height: 70)
-                    Button(action: {
-                        appDelegate.chooseWindow()
-                    }, label: {
-                        SelectorView(title: "Window".local, symbol: "macwindow").cornerRadius(8)
-                    }).buttonStyle(.plain)
-                    /*Divider().frame(height: 70)
-                    Button(action: {
-                        isPopoverShowing2 = true
-                    }, label: {
-                        SelectorView(title: "Camera".local, symbol: "camera").cornerRadius(8)
-                    })
-                    .buttonStyle(.plain)
-                    .popover(isPresented: $isPopoverShowing2, arrowEdge: .bottom) {
-                        CameraPopoverView(closePopover: { isPopoverShowing2 = false })
-                    }*/
-                    Divider().frame(height: 70)
-                    Button(action: {
-                        isPopoverShowing = true
-                    }, label: {
-                        SelectorView(title: "Mobile Device".local, symbol: "apps.ipad").cornerRadius(8)
-                    })
-                    .buttonStyle(.plain)
-                    .popover(isPresented: $isPopoverShowing, arrowEdge: .bottom) {
-                        iDevicePopoverView(closePopover: { isPopoverShowing = false })
-                    }
-                    Divider().frame(height: 70)
-                    Button(action: {
-                        closeMainWindow()
-                        appDelegate.openSettingPanel()
-                    }, label: {
-                        SelectorView(title: "Preferences".local, symbol: "gearshape").cornerRadius(8)
-                    }).buttonStyle(.plain)
-                    if fromStatusBar || (!showOnDock && !showMenubar) {
-                        Divider().frame(height: 70)
-                        Button(action: {
-                            NSApp.terminate(self)
-                        }, label: {
-                            SelectorView(title: "Quit".local, symbol: "xmark.circle")
-                                .cornerRadius(8)
-                                .foregroundStyle(.darkMyRed)
-                        }).buttonStyle(.plain)
-                    }
-                    if !fromStatusBar { Spacer() }
-                }.padding(.vertical, 10).padding(.horizontal, fromStatusBar ? 10 : 20)
+                separator
+                microphoneAndApp
             }
-            if !fromStatusBar {
-                Button(action: {
+            .padding(.vertical, 10 * k)
+            .padding(.horizontal, 20 * k)
+            Button {
+                closeMainWindow()
+            } label: {
+                Image(systemName: "x.circle")
+                    .font(.system(size: 13 * k, weight: .bold))
+                    .opacity(closeHovering ? 1 : 0.4)
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+            .onHover { closeHovering = $0 }
+            .padding([.horizontal, .top], 7 * k)
+        }
+        .environment(\.colorScheme, material == .black ? .dark : colorScheme)
+        .background {
+            // An NSHostingView takes the mouse-down, so the panel's isMovableByWindowBackground alone moves nothing
+            background(shape)
+                .contentShape(shape)
+                .gesture(WindowDragGesture())
+        }
+        .allowsWindowActivationEvents(true)
+        .fixedSize()
+        .focusable(false)
+        .onChange(of: recordMic) { Task { await SCContext.performMicCheck() } }
+        .onAppear {
+            if micList.isEmpty { recordMic = false }
+            if !micList.map({ $0.localizedName }).contains(micDevice) { micDevice = "default" }
+        }
+    }
+
+    private var separator: some View { Divider().frame(height: 70 * k) }
+
+    private func tile(_ title: String, _ symbol: String, symbolSize: CGFloat = 36, overlayer: String = "",
+                      hotkey: KeyboardShortcuts.Name?, action: @escaping () -> Void) -> some View {
+        RecordTile(title: title, symbol: symbol, symbolSize: symbolSize, overlayer: overlayer, hotkey: hotkey, scale: k, action: action)
+    }
+
+    /// The microphone over its device's name, a short divider, then Preferences and Quit side by side.
+    /// The microphone applies to every recording, so it no longer sits under the System Audio tile.
+    private var microphoneAndApp: some View {
+        let device = micDevice == "default" ? "Default".local : micDevice
+        return VStack(spacing: 4 * k) {
+            MicToggle(isOn: $recordMic, size: 26 * k)
+                .disabled(micList.isEmpty)
+            Button {
+                MicDeviceMenu.shared.show(devices: micList.map { $0.localizedName })
+            } label: {
+                HStack(spacing: 2) {
+                    Text(device)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                    Image(systemName: "chevron.down").font(.system(size: 7, weight: .semibold))
+                }
+                .font(.system(size: 9))
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: 70 * k)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(!recordMic)
+            .help(device)
+            Divider().frame(width: 40 * k).padding(.vertical, 1)
+            HStack(spacing: 2) {
+                IconButton(symbol: "gearshape", help: "Preferences".local, size: 26 * k) {
                     closeMainWindow()
-                }, label: {
-                    Image(systemName: "x.circle")
-                        .font(.system(size: 13, weight: .bold))
-                        .opacity(xmarkGlowing ? 1.0 : 0.4)
-                        .foregroundStyle(.secondary)
-                        .onHover{ hovering in xmarkGlowing = hovering }
-                })
-                .buttonStyle(.plain)
-                .padding([.horizontal, .top], 7)
+                    appDelegate.openSettingPanel()
+                }
+                // Otherwise there is no Dock or menu bar icon to quit from
+                if !showOnDock && !showMenubar {
+                    IconButton(symbol: "xmark.circle", help: "Quit".local, hoverTint: .darkMyRed, size: 26 * k) { NSApp.terminate(nil) }
+                }
             }
-        }.focusable(false)
+        }
+        .frame(width: 76 * k)
+    }
+
+    /// The floating capsule's three materials
+    @ViewBuilder private func background(_ shape: RoundedRectangle) -> some View {
+        switch material {
+        case .glass: Color.clear.glassEffect(.regular, in: shape)
+        case .blur: shape.fill(.regularMaterial).environment(\.controlActiveState, .active)
+        case .black: shape.fill(.black)
+        }
     }
 }
 
@@ -188,39 +143,37 @@ struct SelectorView: View {
     var overlayer = ""
     /// The menu bar panel's tile, about two-thirds the size
     var compact = false
-    @State private var backgroundOpacity = 0.0001
+    /// The main panel's tile, at this fraction of the original 110×80
+    var scale: CGFloat = 1
+    @State private var hovering = false
 
     var body: some View {
-        // In the main panel the microphone controls sit at the bottom of the System Audio tile
-        let roomForMic = !compact && title == "System Audio".local
-        VStack(spacing: compact ? 5 : 6) {
+        let k = compact ? 0.84 : scale
+        VStack(spacing: compact ? 5 : 6 * k) {
             Text(title)
                 .opacity(0.95)
-                .font(.system(size: compact ? 11 : 12))
-                .offset(y: roomForMic ? -3.5 : 0)
+                .font(.system(size: compact ? 11 : 12 * k))
             ZStack {
-                if roomForMic {
-                    Image(systemName: symbol)
-                        .opacity(0.95)
-                        .offset(y: -9.5)
-                        .font(.system(size: 26, weight: .bold))
-                } else {
-                    Image(systemName: symbol)
-                        .opacity(0.95)
-                        .font(.system(size: compact ? 24 : symbolSize))
-                        .frame(height: compact ? 28 : 40)
-                }
+                Image(systemName: symbol)
+                    .opacity(0.95)
+                    .font(.system(size: compact ? 24 : symbolSize * k))
+                    .frame(height: compact ? 28 : 40 * k)
                 Text(overlayer)
                     .fontWeight(.bold)
                     .opacity(0.95)
-                    .font(.system(size: compact ? 7.5 : 11))
+                    .font(.system(size: compact ? 7.5 : 11 * k))
             }
         }
-        .frame(width: compact ? 92 : 110, height: compact ? 60 : 80)
-        .onHover{ hovering in
-            backgroundOpacity = hovering ? 0.2 : 0.0001
+        .frame(width: compact ? 92 : 110 * k, height: compact ? 60 : 80 * k)
+        // A soft highlight, clear of the dividers, fading in and out (#48)
+        .background {
+            RoundedRectangle(cornerRadius: 10 * k, style: .continuous)
+                .fill(.primary.opacity(hovering ? 0.1 : 0))
+                .padding(3 * k)
+                .animation(.easeOut(duration: 0.15), value: hovering)
         }
-        .background( .primary.opacity(backgroundOpacity) )
+        .contentShape(Rectangle())
+        .onHover { hovering = $0 }
     }
 }
 

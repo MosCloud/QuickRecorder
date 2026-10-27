@@ -175,7 +175,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
                 "showPreview": true,
                 "controlsMenuBar": true,
                 "controlsCapsule": true,
-                "capsuleMaterial": CapsuleMaterial.glass.rawValue,
+                "capsuleMaterial": PanelMaterial.glass.rawValue,
                 "capsuleIdleOpacity": 0.5,
                 "savedArea": [String: [String: CGFloat]]()
             ]
@@ -280,9 +280,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
         if SCContext.stream == nil {
             let visible = NSApp.windows.filter({ !$0.title.contains("Item-0") && !$0.title.isEmpty && $0.isVisible })
             if visible.isEmpty {
-                let offset = (!showOnDock && !showMenubar) ? 127 : 0
-                let mainPanel = EscPanel(contentRect: NSRect(x: 0, y: 0, width: 928 + offset, height: 100), styleMask: [.fullSizeContentView, .nonactivatingPanel], backing: .buffered, defer: false)
-                mainPanel.contentView = NSHostingView(rootView: ContentView())
+                let content = NSHostingView(rootView: ContentView())
+                let mainPanel = EscPanel(contentRect: NSRect(origin: .zero, size: content.fittingSize), styleMask: [.fullSizeContentView, .nonactivatingPanel], backing: .buffered, defer: false)
+                mainPanel.contentView = content
+                // The window shadow outlines a borderless window in a dark line, which shows as a black rim around Liquid Glass
+                mainPanel.hasShadow = ud.string(forKey: "capsuleMaterial") != PanelMaterial.glass.rawValue
                 mainPanel.title = "QuickRecorder".local
                 mainPanel.isOpaque = false
                 mainPanel.level = .floating
