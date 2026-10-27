@@ -14,6 +14,11 @@ import Combine
 import SwiftUI
 
 enum RightEnd: String, CaseIterable { case column = "第一版", aligned = "对齐一列", grouped = "分组一列" }
+extension EnvironmentValues {
+    /// The main panel's size, 1 = the original
+    @Entry var panelScale: CGFloat = 1
+}
+
 enum PanelMaterial: String, CaseIterable { case glass = "Liquid Glass", blur = "毛玻璃", black = "纯黑" }
 
 struct TileSpec {
@@ -40,6 +45,7 @@ final class Model: ObservableObject {
     @Published var rightEnd = RightEnd.grouped
     @Published var material = PanelMaterial.glass
     @Published var showQuit = true
+    @Published var scale: CGFloat = 0.9
     @Published var recordMic = true
     @Published var micDevice = "default"
     @Published var lastAction = "（还没有操作）"
@@ -72,34 +78,41 @@ struct MainPanel: View {
     @State private var closeHover = false
 
     var body: some View {
-        let shape = RoundedRectangle(cornerRadius: 14, style: .continuous)
+        let k = model.scale
+        let shape = RoundedRectangle(cornerRadius: 14 * k, style: .continuous)
         ZStack(alignment: .topLeading) {
             HStack {
                 ForEach(tiles.indices, id: \.self) { i in
-                    if i > 0 { Divider().frame(height: 70) }
+                    if i > 0 { Divider().frame(height: 70 * k) }
                     TileView(spec: tiles[i]) { model.did(tiles[i].title) }
                 }
-                Divider().frame(height: 70)
+                Divider().frame(height: 70 * k)
                 switch model.rightEnd {
                 case .column: column
                 case .aligned: aligned
                 case .grouped: grouped
                 }
             }
-            .padding(.vertical, 10)
-            .padding(.horizontal, 20)
+            .padding(.vertical, 10 * k)
+            .padding(.horizontal, 20 * k)
             Button(action: close) {
                 Image(systemName: "x.circle")
-                    .font(.system(size: 13, weight: .bold))
+                    .font(.system(size: 13 * k, weight: .bold))
                     .opacity(closeHover ? 1 : 0.4)
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
             .onHover { closeHover = $0 }
-            .padding([.horizontal, .top], 7)
+            .padding([.horizontal, .top], 7 * k)
         }
         .environment(\.colorScheme, model.material == .black ? .dark : colorScheme)
-        .background { background(shape) }
+        .background {
+            background(shape)
+                .contentShape(shape)
+                .gesture(WindowDragGesture())
+        }
+        .allowsWindowActivationEvents(true)
+        .environment(\.panelScale, k)
         .fixedSize()
         .onChange(of: model.recordMic) { model.did("麦克风 \(model.micSummary)") }
         .onChange(of: model.micDevice) { model.did("麦克风 \(model.micSummary)") }
@@ -126,7 +139,7 @@ struct MainPanel: View {
             IconButton(symbol: "gearshape", help: "偏好设置") { model.did("偏好设置") }
             if model.showQuit { quitButton }
         }
-        .frame(width: 56)
+        .frame(width: 56 * model.scale)
     }
 
     /// All three on one axis, evenly spaced; the device chevron is a small badge on the mic
@@ -145,12 +158,12 @@ struct MainPanel: View {
             IconButton(symbol: "gearshape", help: "偏好设置") { model.did("偏好设置") }
             if model.showQuit { quitButton }
         }
-        .frame(width: 48)
+        .frame(width: 48 * model.scale)
     }
 
     /// The mic over its device's name, a short divider, then ⚙ ⊗ side by side
     private var grouped: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 4 * model.scale) {
             MicToggle(isOn: $model.recordMic)
             devicePicker {
                 HStack(spacing: 2) {
@@ -159,9 +172,9 @@ struct MainPanel: View {
                         .truncationMode(.middle)
                     Image(systemName: "chevron.down").font(.system(size: 7, weight: .semibold))
                 }
-                .font(.system(size: 10))
+                .font(.system(size: max(9, 10 * model.scale)))
                 .foregroundStyle(.secondary)
-                .frame(maxWidth: 70)
+                .frame(maxWidth: 70 * model.scale)
             }
             Divider().frame(width: 40).padding(.vertical, 1)
             HStack(spacing: 2) {
@@ -169,7 +182,7 @@ struct MainPanel: View {
                 if model.showQuit { quitButton }
             }
         }
-        .frame(width: 76)
+        .frame(width: 76 * model.scale)
     }
 
     private var quitButton: some View {
@@ -213,20 +226,21 @@ final class DeviceMenu: NSObject {
 
 /// The main panel's `SelectorView`
 struct TileView: View {
+    @Environment(\.panelScale) private var k
     let spec: TileSpec
     let action: () -> Void
     @State private var hovering = false
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 6) {
-                Text(spec.title).opacity(0.95).font(.system(size: 12))
+            VStack(spacing: 6 * k) {
+                Text(spec.title).opacity(0.95).font(.system(size: 12 * k))
                 ZStack {
-                    Image(systemName: spec.symbol).opacity(0.95).font(.system(size: spec.symbolSize)).frame(height: 40)
-                    Text(spec.overlay).fontWeight(.bold).opacity(0.95).font(.system(size: 11))
+                    Image(systemName: spec.symbol).opacity(0.95).font(.system(size: spec.symbolSize * k)).frame(height: 40 * k)
+                    Text(spec.overlay).fontWeight(.bold).opacity(0.95).font(.system(size: 11 * k))
                 }
             }
-            .frame(width: 110, height: 80)
+            .frame(width: 110 * k, height: 80 * k)
             .background(.primary.opacity(hovering ? 0.2 : 0.0001))
             .cornerRadius(8)
         }
@@ -238,6 +252,7 @@ struct TileView: View {
 
 /// From the app (#47)
 struct MicToggle: View {
+    @Environment(\.panelScale) private var k
     @Binding var isOn: Bool
     @State private var hovering = false
     @State private var bounces = 0
@@ -249,11 +264,11 @@ struct MicToggle: View {
             if isOn { bounces += 1 }
         } label: {
             Image(systemName: isOn ? "mic.fill" : "mic.slash")
-                .font(.system(size: 14, weight: .semibold))
+                .font(.system(size: 14 * k, weight: .semibold))
                 .foregroundStyle(isOn ? AnyShapeStyle(.green) : AnyShapeStyle(.secondary))
                 .contentTransition(.symbolEffect(.replace, options: .speed(speed)))
                 .symbolEffect(.bounce, options: .speed(speed), value: bounces)
-                .frame(width: 26, height: 26)
+                .frame(width: 26 * k, height: 26 * k)
                 .background(.primary.opacity(hovering ? 0.12 : 0.0001), in: Circle())
                 .animation(.smooth(duration: 0.2 / speed), value: isOn)
         }
@@ -265,6 +280,7 @@ struct MicToggle: View {
 
 /// From the app (#47)
 struct IconButton: View {
+    @Environment(\.panelScale) private var k
     let symbol: String
     let help: String
     var hoverTint: Color = .primary
@@ -274,9 +290,9 @@ struct IconButton: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.system(size: 15))
+                .font(.system(size: 15 * k))
                 .foregroundStyle(hovering ? AnyShapeStyle(hoverTint) : AnyShapeStyle(.secondary))
-                .frame(width: 26, height: 26)
+                .frame(width: 26 * k, height: 26 * k)
                 .background(.primary.opacity(hovering ? 0.12 : 0.0001), in: Circle())
         }
         .buttonStyle(.plain)
@@ -319,7 +335,7 @@ struct InfoView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("主面板原型（#48）").font(.headline)
-            Text("屏幕中间偏上的就是新的主面板：设置和退出改成右端的图标，麦克风也移到右端，背景可以换三种材质。Liquid Glass 的黑边已修复（关掉了窗口阴影）。这个原型不会真的录制，只记录你点了什么；点 ⊗ 也不会退出。想和现在的主面板对比，可以打开 QuickRecorder 后按 ⌃⌥⌘R。")
+            Text("屏幕中间偏上的就是新的主面板：设置和退出改成右端的图标，麦克风也移到右端，背景可以换三种材质。Liquid Glass 的黑边已修复（关掉了窗口阴影）。这个原型不会真的录制，只记录你点了什么；点 ⊗ 也不会退出。主面板现在可以按住空白处拖动。想和现在的主面板对比，可以打开 QuickRecorder 后按 ⌃⌥⌘R。")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -328,6 +344,15 @@ struct InfoView: View {
                     Text("右端排法").foregroundStyle(.secondary)
                     Picker("", selection: $model.rightEnd) {
                         ForEach(RightEnd.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                    }
+                    .labelsHidden().pickerStyle(.segmented).fixedSize()
+                }
+                GridRow {
+                    Text("尺寸").foregroundStyle(.secondary)
+                    Picker("", selection: $model.scale) {
+                        Text("100%（原版）").tag(CGFloat(1))
+                        Text("90%").tag(CGFloat(0.9))
+                        Text("80%").tag(CGFloat(0.8))
                     }
                     .labelsHidden().pickerStyle(.segmented).fixedSize()
                 }
@@ -403,7 +428,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func diagnose(variant: Int, backdrop: String, output: String) {
         if variant >= 10 {
             // 10 + right end × 3 + material: the fixed panel as it now is
-            Model.shared.rightEnd = RightEnd.allCases[(variant - 10) / 3]
+            Model.shared.rightEnd = RightEnd.allCases[((variant - 10) / 3) % 3]
+            Model.shared.scale = [1, 0.9, 0.8][(variant - 10) / 9]
             Model.shared.material = PanelMaterial.allCases[(variant - 10) % 3]
         } else {
             Model.shared.material = .glass
@@ -470,6 +496,7 @@ struct MainPanelPrototype {
     @MainActor static let delegate = AppDelegate()
 
     @MainActor static func main() {
+        setvbuf(stdout, nil, _IOLBF, 0)   // the action log reaches a file line by line
         let app = NSApplication.shared
         app.delegate = delegate
         app.setActivationPolicy(.accessory)
