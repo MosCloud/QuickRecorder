@@ -68,6 +68,7 @@
 		CC3300000000000000001202 /* MicConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001201 /* MicConverter.swift */; };
 		CC3300000000000000001203 /* MicConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001201 /* MicConverter.swift */; };
 		CC3300000000000000001303 /* MicConverterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001301 /* MicConverterTests.swift */; };
+		CC3300000000000000001402 /* PanelControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001401 /* PanelControls.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -130,6 +131,7 @@
 		CC3300000000000000001101 /* HotkeyCheck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyCheck.swift; sourceTree = "<group>"; };
 		CC3300000000000000001201 /* MicConverter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicConverter.swift; sourceTree = "<group>"; };
 		CC3300000000000000001301 /* MicConverterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicConverterTests.swift; sourceTree = "<group>"; };
+		CC3300000000000000001401 /* PanelControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelControls.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -239,6 +241,7 @@
 				18CEED912D08312C00FBC4BF /* PreviewView.swift */,
 				CC3300000000000000000601 /* RecordingControls.swift */,
 				CC3300000000000000000701 /* NotchCapsule.swift */,
+				CC3300000000000000001401 /* PanelControls.swift */,
 			);
 			path = ViewModel;
 			sourceTree = "<group>";
@@ -422,6 +425,7 @@
 				CC3300000000000000001002 /* ColorGridPicker.swift in Sources */,
 				CC3300000000000000001102 /* HotkeyCheck.swift in Sources */,
 				CC3300000000000000001202 /* MicConverter.swift in Sources */,
+				CC3300000000000000001402 /* PanelControls.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

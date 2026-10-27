@@ -43,6 +43,7 @@ struct GeneralView: View {
     @AppStorage("countdown") private var countdown: Int = 0
     @AppStorage("showOnDock") private var showOnDock: Bool = true
     @AppStorage("showMenubar") private var showMenubar: Bool = false
+    @AppStorage("capsuleMaterial") private var material: PanelMaterial = .glass
     
     @State private var launchAtLogin = false
 
@@ -67,6 +68,13 @@ struct GeneralView: View {
                 SDivider()
                 SToggle("Show QuickRecorder on Menu Bar", isOn: $showMenubar)
                     //.disabled(!showOnDock)
+            }
+            SGroupBox(label: "Appearance") {
+                SPicker("Panel Material", selection: $material, tips: "The main panel and the floating capsule use this material.") {
+                    Text("Liquid Glass").tag(PanelMaterial.glass)
+                    Text("Frosted Glass").tag(PanelMaterial.blur)
+                    Text("Black").tag(PanelMaterial.black)
+                }
             }
             VStack(spacing: 8) {
                 if let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
@@ -97,7 +105,6 @@ struct RecorderView: View {
     @AppStorage("trimAfterRecord")  private var trimAfterRecord: Bool = false
     @AppStorage("controlsMenuBar")  private var controlsMenuBar: Bool = true
     @AppStorage("controlsCapsule")  private var controlsCapsule: Bool = true
-    @AppStorage("capsuleMaterial")  private var capsuleMaterial: CapsuleMaterial = .glass
     @AppStorage("capsuleIdleOpacity") private var capsuleIdleOpacity: Double = 0.5
     @AppStorage("hideSelf")         private var hideSelf: Bool = true
     @AppStorage("preventSleep")     private var preventSleep: Bool = true
@@ -124,12 +131,6 @@ struct RecorderView: View {
                 SToggle("Floating Capsule", isOn: $controlsCapsule,
                         tips: "At least one of them stays on. The capsule hangs below the notch and never appears in recordings.")
                     .disabled(controlsCapsule && !controlsMenuBar)
-                SDivider()
-                SPicker("Capsule Material", selection: $capsuleMaterial) {
-                    Text("Liquid Glass").tag(CapsuleMaterial.glass)
-                    Text("Frosted Glass").tag(CapsuleMaterial.blur)
-                    Text("Black").tag(CapsuleMaterial.black)
-                }.disabled(!controlsCapsule)
                 SDivider()
                 SItem(label: "Opacity When Idle") {
                     Slider(value: $capsuleIdleOpacity, in: 0.1...1, step: 0.05).frame(width: 150)
