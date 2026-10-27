@@ -254,3 +254,7 @@
 "macOS stopped the capture." = "macOS 停止了屏幕采集。";
 "The disk is full." = "磁盘空间不足。";
 "The capture ended unexpectedly: %@" = "屏幕采集意外结束：%@";
+"Reopen QuickRecorder" = "重新打开 QuickRecorder";
+"Screen recording is allowed in System Settings, and takes effect once QuickRecorder is reopened." = "系统设置里已经允许录屏，重新打开 QuickRecorder 后生效。";
+"Reopen" = "重新打开";
+"Later" = "稍后";

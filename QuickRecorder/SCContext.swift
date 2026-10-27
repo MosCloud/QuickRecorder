@@ -77,17 +77,12 @@ class SCContext {
     }
     
     private static func updateAvailableContent(completion: @escaping (SCShareableContent?) -> Void) {
-        SCShareableContent.getExcludingDesktopWindows(false, onScreenWindowsOnly: true) { [self] content, error in
+        SCShareableContent.getExcludingDesktopWindows(false, onScreenWindowsOnly: true) { content, error in
             if let error = error {
-                switch error {
-                case SCStreamError.userDeclined:
-                    DispatchQueue.global().asyncAfter(deadline: .now() + 1) {
-                        self.updateAvailableContent() {_ in}
-                    }
-                default:
-                    print("Error: failed to fetch available content: ".local, error.localizedDescription)
-                }
-                completion(nil) // 在错误情况下返回 nil
+                // Not asked again: retrying every second, for as long as the app ran, asked macOS each time (#5).
+                // macOS shows its own prompt; starting a recording explains the rest
+                log.error("Couldn't fetch the screen's content: \(error.localizedDescription, privacy: .public)")
+                completion(nil)
                 return
             }
 
@@ -262,17 +257,40 @@ class SCContext {
         }
     }
     
+    /// Starting a recording was refused the screen's content: says what it takes, and stays open (#5).
+    /// It used to quit whichever button was chosen.
     private static func requestPermissions() {
         DispatchQueue.main.async {
-            let alert = createAlert(title: "Permission Required",
-                                                       message: "QuickRecorder needs screen recording permissions, even if you only intend on recording audio.",
-                                                       button1: "Open Settings",
-                                                       button2: "Cancel")
-            if alert.runModal() == .alertFirstButtonReturn {
-                NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")!)
+            // A picker that opened before the refusal would stay empty
+            for w in NSApp.windows where ["Screen Selector", "Window Selector", "App Selector"].map(\.local).contains(w.title) { w.close() }
+            switch ScreenAccess.refused(userAsked: true, allowedInSettings: CGPreflightScreenCaptureAccess()) {
+            case .none:
+                break
+            case .explain:
+                let alert = createAlert(title: "Permission Required",
+                                        message: "QuickRecorder needs screen recording permissions, even if you only intend on recording audio.",
+                                        button1: "Open Settings",
+                                        button2: "Cancel")
+                if alert.runModal() == .alertFirstButtonReturn {
+                    NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")!)
+                }
+            case .reopen:
+                let alert = createAlert(title: "Reopen QuickRecorder",
+                                        message: "Screen recording is allowed in System Settings, and takes effect once QuickRecorder is reopened.",
+                                        button1: "Reopen",
+                                        button2: "Later")
+                if alert.runModal() == .alertFirstButtonReturn { reopen() }
             }
-            NSApp.terminate(self)
         }
+    }
+
+    /// Quits, then opens again from a shell once this instance is gone: a second instance would be told to quit
+    private static func reopen() {
+        let shell = Process()
+        shell.executableURL = URL(fileURLWithPath: "/bin/sh")
+        shell.arguments = ["-c", "sleep 1; /usr/bin/open \"$0\"", Bundle.main.bundlePath]
+        try? shell.run()
+        NSApp.terminate(nil)
     }
     
     static func requestCameraPermission() {
