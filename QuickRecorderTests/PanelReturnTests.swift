@@ -86,4 +86,32 @@ struct PanelReturnTests {
         #expect(!ended)
         #expect(!laterClose)
     }
+
+    @Test("Closing Settings opened from the panel brings it back, once (#66)")
+    func settings() {
+        var state = PanelReturn()
+        state.settingsOpened()
+        let closed = state.windowClosed(othersOpen: false, recording: false)
+        let again = state.windowClosed(othersOpen: false, recording: false)
+        #expect(closed)
+        #expect(!again)
+    }
+
+    @Test("Settings opened elsewhere don't bring the panel back")
+    func settingsElsewhere() {
+        var state = PanelReturn()
+        let closed = state.windowClosed(othersOpen: false, recording: false)
+        #expect(!closed)
+    }
+
+    @Test("A hotkey recording started while Settings is open ends the panel's flow")
+    func hotkeyFromSettings() {
+        var state = PanelReturn()
+        state.settingsOpened()
+        state.recordingStarted()
+        let settingsClosed = state.windowClosed(othersOpen: false, recording: true)
+        let ended = state.recordingEnded(trimmerOpens: false)
+        #expect(!settingsClosed)
+        #expect(!ended)
+    }
 }
