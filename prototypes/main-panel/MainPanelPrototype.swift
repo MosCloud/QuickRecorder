@@ -13,6 +13,7 @@ import AVFoundation
 import Combine
 import SwiftUI
 
+enum HoverStyle: String, CaseIterable { case original = "原版", soft = "柔和", glide = "滑动", glass = "玻璃" }
 enum RightEnd: String, CaseIterable { case column = "第一版", aligned = "对齐一列", grouped = "分组一列" }
 extension EnvironmentValues {
     /// The main panel's size, 1 = the original
@@ -46,6 +47,10 @@ final class Model: ObservableObject {
     @Published var material = PanelMaterial.glass
     @Published var showQuit = true
     @Published var scale: CGFloat = 0.9
+    @Published var hoverStyle = HoverStyle.glide
+    /// The tile under the pointer; one highlight for the whole row, so it can glide between tiles
+    @Published var hoveredTile: Int?
+    var hoverToken = 0
     @Published var recordMic = true
     @Published var micDevice = "default"
     @Published var lastAction = "（还没有操作）"
@@ -76,15 +81,20 @@ struct MainPanel: View {
     /// The glass is drawn by an AppKit NSGlassEffectView behind this view instead (diagnosis of the dark rim)
     var appKitGlass = false
     @State private var closeHover = false
+    @Namespace private var highlight
 
     var body: some View {
         let k = model.scale
         let shape = RoundedRectangle(cornerRadius: 14 * k, style: .continuous)
         ZStack(alignment: .topLeading) {
             HStack {
-                ForEach(tiles.indices, id: \.self) { i in
-                    if i > 0 { Divider().frame(height: 70 * k) }
-                    TileView(spec: tiles[i]) { model.did(tiles[i].title) }
+                GlassEffectContainer {
+                    HStack {
+                        ForEach(tiles.indices, id: \.self) { i in
+                            if i > 0 { Divider().frame(height: 70 * k) }
+                            TileView(index: i, spec: tiles[i], highlight: highlight) { model.did(tiles[i].title) }
+                        }
+                    }
                 }
                 Divider().frame(height: 70 * k)
                 switch model.rightEnd {
@@ -224,14 +234,17 @@ final class DeviceMenu: NSObject {
     @objc private func choose(_ sender: NSMenuItem) { pick?(sender.representedObject as! String) }
 }
 
-/// The main panel's `SelectorView`
+/// The main panel's `SelectorView`, with the hover highlight chosen in the info window
 struct TileView: View {
     @Environment(\.panelScale) private var k
+    @EnvironmentObject var model: Model
+    let index: Int
     let spec: TileSpec
+    var highlight: Namespace.ID
     let action: () -> Void
-    @State private var hovering = false
 
     var body: some View {
+        let on = model.hoveredTile == index
         Button(action: action) {
             VStack(spacing: 6 * k) {
                 Text(spec.title).opacity(0.95).font(.system(size: 12 * k))
@@ -241,12 +254,54 @@ struct TileView: View {
                 }
             }
             .frame(width: 110 * k, height: 80 * k)
-            .background(.primary.opacity(hovering ? 0.2 : 0.0001))
-            .cornerRadius(8)
+            .background { highlightView(on) }
+            // Glass goes on the tile itself, so the title and icon sit on top of it rather than under it
+            .glassEffect(model.hoverStyle == .glass && on ? .regular.interactive() : .identity,
+                         in: RoundedRectangle(cornerRadius: 10 * k, style: .continuous).inset(by: 3 * k))
+            .glassEffectID(on ? "highlight" : "tile \(index)", in: highlight)
+            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
-        .onHover { hovering = $0 }
+        .buttonStyle(TilePress(pressable: model.hoverStyle != .original))
+        .onHover { inside in
+            let animation: Animation? = model.hoverStyle == .glide || model.hoverStyle == .glass ? .snappy(duration: 0.22) : nil
+            if inside {
+                model.hoverToken += 1
+                withAnimation(animation) { model.hoveredTile = index }
+            } else if model.hoveredTile == index {
+                // Crossing the gap to the next tile shouldn't blink the highlight off and on
+                let token = model.hoverToken
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
+                    if model.hoverToken == token { withAnimation(animation ?? .easeOut(duration: 0.15)) { model.hoveredTile = nil } }
+                }
+            }
+        }
         .help(spec.hotkey.map { "⌃⌥⌘\($0)" } ?? "")
+    }
+
+    @ViewBuilder private func highlightView(_ on: Bool) -> some View {
+        let shape = RoundedRectangle(cornerRadius: 10 * k, style: .continuous)
+        switch model.hoverStyle {
+        case .original:
+            // As now: the whole cell, 20% grey, no fade
+            Rectangle().fill(.primary.opacity(on ? 0.2 : 0.0001)).cornerRadius(8)
+        case .soft:
+            shape.fill(.primary.opacity(on ? 0.1 : 0)).padding(3 * k).animation(.easeOut(duration: 0.15), value: on)
+        case .glide:
+            if on { shape.fill(.primary.opacity(0.1)).padding(3 * k).matchedGeometryEffect(id: "highlight", in: highlight) }
+        case .glass:
+            EmptyView()
+        }
+    }
+}
+
+/// Pressing a tile shrinks it a little, until released
+struct TilePress: ButtonStyle {
+    var pressable: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(pressable && configuration.isPressed ? 0.96 : 1)
+            .animation(.snappy(duration: 0.12), value: configuration.isPressed)
     }
 }
 
@@ -357,6 +412,13 @@ struct InfoView: View {
                     .labelsHidden().pickerStyle(.segmented).fixedSize()
                 }
                 GridRow {
+                    Text("悬停效果").foregroundStyle(.secondary)
+                    Picker("", selection: $model.hoverStyle) {
+                        ForEach(HoverStyle.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                    }
+                    .labelsHidden().pickerStyle(.segmented).fixedSize()
+                }
+                GridRow {
                     Text("背景材质").foregroundStyle(.secondary)
                     Picker("", selection: $model.material) {
                         ForEach(PanelMaterial.allCases, id: \.self) { Text($0.rawValue).tag($0) }
@@ -426,7 +488,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Shows the Liquid Glass panel one way over a test backdrop, captures that region, and quits.
     /// 0 as now · 1 no window shadow · 2 a 24-point margin · 3 both · 4 both, with AppKit's NSGlassEffectView
     private func diagnose(variant: Int, backdrop: String, output: String) {
-        if variant >= 10 {
+        if variant >= 40 {
+            Model.shared.scale = 0.9
+            Model.shared.rightEnd = .grouped
+            Model.shared.hoverStyle = HoverStyle.allCases[(variant - 40) % 4]
+            Model.shared.material = PanelMaterial.allCases[(variant - 40) / 4]
+            Model.shared.hoveredTile = 2
+        } else if variant >= 10 {
             // 10 + right end × 3 + material: the fixed panel as it now is
             Model.shared.rightEnd = RightEnd.allCases[((variant - 10) / 3) % 3]
             Model.shared.scale = [1, 0.9, 0.8][(variant - 10) / 9]
