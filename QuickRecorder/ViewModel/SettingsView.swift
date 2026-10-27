@@ -70,7 +70,7 @@ struct GeneralView: View {
                     //.disabled(!showOnDock)
             }
             SGroupBox(label: "Appearance") {
-                SPicker("Panel Material", selection: $material, tips: "The main panel and the floating capsule use this material.") {
+                SPicker("Panel and Capsule Material", selection: $material) {
                     Text("Liquid Glass").tag(PanelMaterial.glass)
                     Text("Frosted Glass").tag(PanelMaterial.blur)
                     Text("Black").tag(PanelMaterial.black)

@@ -212,8 +212,7 @@
 "Menu Bar Timer and Menu" = "菜单栏计时 + 菜单";
 "Floating Capsule" = "浮动胶囊";
 "Appearance" = "外观";
-"Panel Material" = "面板材质";
-"The main panel and the floating capsule use this material." = "主面板和录制时的悬浮胶囊都使用这个材质。";
+"Panel and Capsule Material" = "面板和胶囊材质";
 "Liquid Glass" = "Liquid Glass";
 "Frosted Glass" = "毛玻璃";
 "Opacity When Idle" = "鼠标移开后的不透明度";
