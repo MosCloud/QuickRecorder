@@ -122,8 +122,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
         if let monitor = mouseMonitor { NSEvent.removeMonitor(monitor); mouseMonitor = nil }
     }
     
-    func applicationWillTerminate(_ aNotification: Notification) {
+    /// Stops a recording that's running, then quits once it's mixed: quitting straight away left it unmixed, or in its parts (#71)
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         if SCContext.stream != nil { SCContext.stopRecording() }
+        guard SCContext.finishing.wait(timeout: .now()) == .timedOut else { return .terminateNow }
+        SCContext.log.info("Quitting once the recording is mixed")
+        var replied = false
+        let quit = {
+            guard !replied else { return }
+            replied = true
+            sender.reply(toApplicationShouldTerminate: true)
+        }
+        SCContext.finishing.notify(queue: .main, execute: quit)
+        // Rather than hold up quitting for good: the recording then stays as it is, playable with its tracks apart
+        DispatchQueue.main.asyncAfter(deadline: .now() + 60, execute: quit)
+        return .terminateLater
     }
     
     func application(_ application: NSApplication, open urls: [URL]) {
