@@ -42,6 +42,8 @@ class SCContext {
     static let audioQueue = DispatchQueue(label: "QuickRecorder.audio")
     static let log = Logger(subsystem: "com.lihaoyun6.QuickRecorder", category: "recording")
     private static var recordedAppsObserver: NSObjectProtocol?
+    /// Mixing that runs on after a recording stops: quitting waits for it, or the recording is left in its parts (#71)
+    static let finishing = DispatchGroup()
     static var filePath1: String!
     static var filePath2: String!
     static var audioFile: AVAudioFile?
@@ -426,7 +428,11 @@ class SCContext {
             // Recorded in two parts when the microphone was on at the start (filePath1 then differs from filePath)
             let parts = filePath1 != filePath ? (system: filePath1.url, microphone: filePath2.url) : nil
             let output = filePath.url
-            Task { await finishAudioRecording(output: output, parts: parts) }
+            finishing.enter()
+            Task {
+                await finishAudioRecording(output: output, parts: parts)
+                finishing.leave()
+            }
         }
         
         isPaused = false
@@ -722,7 +728,9 @@ class SCContext {
     /// Mixes the microphone into the main track, keeping the recording with its tracks apart if that fails (#6),
     /// then shows the preview or opens the trimmer.
     private static func finishMixedRecording(unmixed: URL, into output: URL, previewImage: NSImage?) {
+        finishing.enter()
         Task {
+            defer { finishing.leave() }
             let outcome = await MixedRecording.finish(unmixed: unmixed, into: output, retryAfter: .seconds(1)) { recording, output in
                 try await mixAudioTracks(from: recording, to: output)
             }
