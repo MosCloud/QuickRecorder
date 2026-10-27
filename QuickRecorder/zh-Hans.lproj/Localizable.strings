@@ -128,8 +128,6 @@
 "Show QuickRecorder on Dock" = "在程序坞中显示 QuickRecorder";
 "Show QuickRecorder on Menu Bar" = "在菜单栏中显示 QuickRecorder";
 "Icon Settings" = "图标设置";
-"Still Processing" = "仍在处理";
-"Mixing audio track..." = "正在混缩音轨...";
 "minutes " = "分钟后自动停止录制";
 " Stop after" = "在";
 "Don't remind me again" = "不再提醒";
