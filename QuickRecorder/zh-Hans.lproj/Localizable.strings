@@ -248,3 +248,5 @@
 "Share…" = "共享…";
 "Move to Trash" = "移到废纸篓";
 "Drag into another app to send the file; double-click to open it." = "拖到其他 app 里就是发送这个文件；双击打开。";
+"Couldn't mix the microphone into the main track" = "没能把麦克风混入主音轨";
+"The recording was saved with the microphone on a track of its own." = "录制已保存，麦克风在单独的音轨上。";

@@ -7,6 +7,7 @@
 
 import AVFAudio
 import AVFoundation
+import os
 import Foundation
 import ScreenCaptureKit
 import UserNotifications
@@ -34,6 +35,12 @@ class SCContext {
     static var micConfigObserver: NSObjectProtocol?
     static var backgroundColor: CGColor = CGColor.black
     static var filePath: String!
+    /// Where the recording at `filePath` is mixed to when it ends, its microphone written on a track of its own; nil when there is nothing to mix (#6)
+    static var mixedOutput: URL?
+    /// Frames and system audio arrive on these, one at a time, so that stopping can wait for what's already on its way
+    static let videoQueue = DispatchQueue(label: "QuickRecorder.video")
+    static let audioQueue = DispatchQueue(label: "QuickRecorder.audio")
+    static let log = Logger(subsystem: "com.lihaoyun6.QuickRecorder", category: "recording")
     static var filePath1: String!
     static var filePath2: String!
     static var audioFile: AVAudioFile?
@@ -348,17 +355,28 @@ class SCContext {
 
         if let w = NSApp.windows.first(where:  { $0.title == "Area Overlayer".local }) { w.close() }
         
-        if stream != nil { stream.stopCapture() }
+        // Every source stops, and what it has already delivered is written, before any input is finished:
+        // appending to a finished input raises, which quit the app on stopping (#6)
+        if stream != nil {
+            let stopped = DispatchSemaphore(value: 0)
+            let asked = Date()
+            stream.stopCapture { _ in stopped.signal() }
+            let waited = stopped.wait(timeout: .now() + 1) == .success
+            log.info("Capture stopped \(waited ? "after" : "without confirmation, gave up after", privacy: .public) \(Int(Date().timeIntervalSince(asked) * 1000), privacy: .public) ms")
+        }
         stream = nil
         if ud.bool(forKey: "recordMic") {
-            micInput.markAsFinished()
             AudioRecorder.shared.stop()
             if let observer = micConfigObserver { NotificationCenter.default.removeObserver(observer) }
             micConfigObserver = nil
             audioEngine.inputNode.removeTap(onBus: 0)
             audioEngine.stop()
-            //DispatchQueue.global().async { try? audioEngine.inputNode.setVoiceProcessingEnabled(false) }
         }
+        videoQueue.sync {}
+        audioQueue.sync {}
+        if ud.bool(forKey: "recordMic") { micInput.markAsFinished() }
+        let mixInto = mixedOutput
+        mixedOutput = nil
         // Taken now: mixing the microphone into the main track finishes after firstFrame is cleared below
         let previewImage = firstFrame?.nsImage
         if streamType != .systemaudio {
@@ -371,27 +389,8 @@ class SCContext {
                     print("Video writing failed with status: \(vW.status), error: \(String(describing: vW.error))")
                     let err = vW.error?.localizedDescription ?? "Unknow Error"
                     showNotification(title: "Failed to save file".local, body: "\(err)", id: "quickrecorder.error.\(UUID().uuidString)")
-                } else {
-                    if ud.bool(forKey: "recordMic") && ud.bool(forKey: "recordWinSound") && ud.bool(forKey: "remuxAudio") {
-                        mixAudioTracks(videoURL: filePath.url) { result in
-                            switch result {
-                            case .success(let url):
-                                print("Exported video to \(String(describing: url.path))")
-                                if !ud.bool(forKey: "showPreview") {
-                                    showNotification(title: "Recording Completed".local, body: String(format: "File saved to: %@".local, url.path), id: "quickrecorder.completed.\(UUID().uuidString)")
-                                }
-                                DispatchQueue.main.async {
-                                    if ud.bool(forKey: "trimAfterRecord") {
-                                        AppDelegate.shared.createNewWindow(view: VideoTrimmerView(videoURL: url), title: url.lastPathComponent, only: false)
-                                    } else {
-                                        showPreview(path: url.path, image: previewImage)
-                                    }
-                                }
-                            case .failure(let error):
-                                print("Failed to export video: \(error.localizedDescription)")
-                            }
-                        }
-                    }
+                } else if let output = mixInto {
+                    finishMixedRecording(unmixed: filePath.url, into: output, previewImage: previewImage)
                 }
                 dispatchGroup.leave()
             }
@@ -436,7 +435,7 @@ class SCContext {
         AppDelegate.shared.presenterType = "OFF"
         updateStatusBar()
         
-        if !(ud.bool(forKey: "recordMic") && ud.bool(forKey: "recordWinSound") && ud.bool(forKey: "remuxAudio")) && streamType != .systemaudio {
+        if mixInto == nil && streamType != .systemaudio {
             if let vW = vW {
                 if vW.status != .completed {
                     streamType = nil
@@ -691,31 +690,44 @@ class SCContext {
         }
     }
     
-    static func mixAudioTracks(videoURL: URL, completion: @escaping (Result<URL, Error>) -> Void) {
+    /// Mixes the microphone into the main track, keeping the recording with its tracks apart if that fails (#6),
+    /// then shows the preview or opens the trimmer.
+    private static func finishMixedRecording(unmixed: URL, into output: URL, previewImage: NSImage?) {
         showNotification(title: "Still Processing".local, body: "Mixing audio track...".local, id: "quickrecorder.processing.\(UUID().uuidString)")
         Task {
-            do {
-                completion(.success(try await mixAudioTracks(videoURL: videoURL)))
-            } catch {
-                completion(.failure(error))
+            let outcome = await MixedRecording.finish(unmixed: unmixed, into: output, retryAfter: .seconds(1)) { recording, output in
+                try await mixAudioTracks(from: recording, to: output)
+            }
+            var saved = output
+            switch outcome {
+            case .mixed:
+                if !ud.bool(forKey: "showPreview") {
+                    showNotification(title: "Recording Completed".local, body: String(format: "File saved to: %@".local, output.path), id: "quickrecorder.completed.\(UUID().uuidString)")
+                }
+            case .keptUnmixed(let url, let reason):
+                saved = url
+                log.error("Mixing the microphone into the main track failed twice: \(reason, privacy: .public)")
+                showNotification(title: "Couldn't mix the microphone into the main track".local,
+                                 body: "The recording was saved with the microphone on a track of its own.".local,
+                                 id: "quickrecorder.error.\(UUID().uuidString)")
+            }
+            DispatchQueue.main.async {
+                if ud.bool(forKey: "trimAfterRecord") {
+                    AppDelegate.shared.createNewWindow(view: VideoTrimmerView(videoURL: saved), title: saved.lastPathComponent, only: false)
+                } else {
+                    showPreview(path: saved.path, image: previewImage)
+                }
             }
         }
     }
 
-    /// Mixes all audio tracks of the recording into one (first export), then muxes that with the video track (passthrough export).
-    private static func mixAudioTracks(videoURL: URL) async throws -> URL {
-        let asset = AVURLAsset(url: videoURL)
-        let audioOutputURL = videoURL.deletingPathExtension()
-        let outputURL = audioOutputURL.deletingPathExtension()
+    /// Mixes all audio tracks of `recording` into one (an export to a temporary file), then puts that with the video in `output` (a passthrough export).
+    static func mixAudioTracks(from recording: URL, to output: URL) async throws {
+        let asset = AVURLAsset(url: recording)
+        let mixedAudio = fd.temporaryDirectory.appendingPathComponent("QuickRecorder-\(UUID().uuidString)").appendingPathExtension(output.pathExtension)
+        defer { try? fd.removeItem(at: mixedAudio) }
         let audioOnlyComposition = AVMutableComposition()
-
-        let fileEnding = ud.string(forKey: "videoFormat") ?? ""
-        var fileType: AVFileType?
-        switch fileEnding {
-        case VideoFormat.mov.rawValue: fileType = AVFileType.mov
-        case VideoFormat.mp4.rawValue: fileType = AVFileType.mp4
-        default: assertionFailure("loaded unknown video format".local)
-        }
+        let fileType = TrimExport.fileType(for: output)
 
         let audioTracks = try await asset.loadTracks(withMediaType: .audio)
         guard audioTracks.count > 1 else {
@@ -744,9 +756,9 @@ class SCContext {
             throw NSError(domain: "AudioExportSessionError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to create audio export session."])
         }
         audioExportSession.audioMix = audioMix
-        try await audioExportSession.export(to: audioOutputURL, as: fileType ?? .mp4)
+        try await audioExportSession.export(to: mixedAudio, as: fileType ?? .mp4)
 
-        let audioAsset = AVURLAsset(url: audioOutputURL)
+        let audioAsset = AVURLAsset(url: mixedAudio)
         let composition = AVMutableComposition()
 
         guard let videoTrack = try await asset.loadTracks(withMediaType: .video).first,
@@ -779,10 +791,6 @@ class SCContext {
             throw NSError(domain: "ExportSessionError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to create export session."])
         }
         exportSession.audioMix = audioMix
-        try await exportSession.export(to: outputURL, as: fileType ?? .mp4)
-
-        try? fd.removeItem(atPath: filePath)
-        try? fd.removeItem(atPath: audioOutputURL.path)
-        return outputURL
+        try await exportSession.export(to: output, as: fileType ?? .mp4)
     }
 }
