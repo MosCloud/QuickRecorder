@@ -42,6 +42,8 @@ class SCContext {
     static let audioQueue = DispatchQueue(label: "QuickRecorder.audio")
     static let log = Logger(subsystem: "com.lihaoyun6.QuickRecorder", category: "recording")
     private static var recordedAppsObserver: NSObjectProtocol?
+    /// The microphone setting a script changed for one recording, to put back when it's over (#72)
+    static var recordMicAfterRecording: Bool?
     /// Mixing that runs on after a recording stops: quitting waits for it, or the recording is left in its parts (#71)
     static let finishing = DispatchGroup()
     static var filePath1: String!
@@ -443,6 +445,8 @@ class SCContext {
             }
         }
         
+        restoreRecordMic()
+
         DispatchQueue.main.async {
             if isCameraRunning() {
                 if camWindow.isVisible { camWindow.close() }
@@ -716,6 +720,12 @@ class SCContext {
         return outSampleBuffer
     }
     
+    static func restoreRecordMic() {
+        guard let m = recordMicAfterRecording else { return }
+        ud.set(m, forKey: "recordMic")
+        recordMicAfterRecording = nil
+    }
+
     /// Ends an app recording once every recorded app has quit: the capture carries on regardless, recording nothing (#7)
     static func watchRecordedApps() {
         guard let apps = application, !apps.isEmpty else { return }

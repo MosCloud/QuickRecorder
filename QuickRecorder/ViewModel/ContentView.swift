@@ -326,7 +326,8 @@ extension AppDelegate {
     }
     
     func createNewWindow(view: some View, title: String, random: Bool = false, only: Bool = true) {
-        guard let screen = SCContext.getScreenWithMouse() else { return }
+        // The pointer's screen can be missing, with the screen locked or asleep: this did nothing then (#72)
+        guard let screen = SCContext.getScreenWithMouse() ?? NSScreen.main else { return }
         if only { closeAllWindow() }
         var seed = 0.0
         if random { seed = CGFloat(Int(arc4random_uniform(401)) - 200) }

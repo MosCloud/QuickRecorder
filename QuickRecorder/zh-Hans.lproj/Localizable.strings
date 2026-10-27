@@ -258,3 +258,4 @@
 "Screen recording is allowed in System Settings, and takes effect once QuickRecorder is reopened." = "系统设置里已经允许录屏，重新打开 QuickRecorder 后生效。";
 "Reopen" = "重新打开";
 "Later" = "稍后";
+"No display is available to record on. The screen may be locked or asleep." = "没有可以录制的显示器，屏幕可能已锁定或处于休眠。";

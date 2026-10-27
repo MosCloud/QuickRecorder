@@ -156,16 +156,10 @@ class selectWindows: NSScriptCommand {
                         createAlert(title: "Error".local, message: "Unable to find the screen this window belongs to!".local, button1: "OK".local).runModal()
                         return
                     }
-                    if let display = SCContext.getSCDisplayWithMouse() {
-                        if s.contains(display) {
-                            AppDelegate.shared.createCountdownPanel(screen: display) {
-                                AppDelegate.shared.prepRecord(type: "window" , screens: s.first!, windows: [window], applications: nil)
-                            }
-                        } else {
-                            AppDelegate.shared.createCountdownPanel(screen: s.first!) {
-                                AppDelegate.shared.prepRecord(type: "window" , screens: s.first!, windows: [window], applications: nil)
-                            }
-                        }
+                    // Without the pointer's display (the screen locked or asleep), this did nothing at all (#72)
+                    let display = DisplayPick.pick(pointer: SCContext.getSCDisplayWithMouse(), candidates: s, all: screens)!
+                    AppDelegate.shared.createCountdownPanel(screen: display) {
+                        AppDelegate.shared.prepRecord(type: "window" , screens: s.first!, windows: [window], applications: nil)
                     }
                 } else {
                     closeAllWindow()
@@ -185,13 +179,22 @@ class recordAudio: NSScriptCommand {
         }
         SCContext.updateAvailableContent {
             DispatchQueue.main.async {
-                let m = UserDefaults.standard.bool(forKey: "recordMic")
-                if let mic = self.evaluatedArguments!["mic"] as? Bool {
-                    UserDefaults.standard.set(mic, forKey: "recordMic")
+                guard let display = DisplayPick.pick(pointer: SCContext.getSCDisplayWithMouse(), candidates: [],
+                                                     all: SCContext.availableContent?.displays ?? []) else {
+                    createAlert(title: "Error".local, message: "No display is available to record on. The screen may be locked or asleep.".local, button1: "OK".local).runModal()
+                    return
+                }
+                let m = ud.bool(forKey: "recordMic")
+                if let mic = self.evaluatedArguments!["mic"] as? Bool, mic != m {
+                    ud.set(mic, forKey: "recordMic")
+                    // Put back once the recording is over: starting reads the setting after this returns, and stopping
+                    // reads it again. Put back at once, the microphone never started and the mix failed (#72)
+                    SCContext.recordMicAfterRecording = m
                 }
                 closeAllWindow()
-                AppDelegate.shared.prepRecord(type: "audio", screens: SCContext.getSCDisplayWithMouse(), windows: nil, applications: nil)
-                UserDefaults.standard.set(m, forKey: "recordMic")
+                AppDelegate.shared.prepRecord(type: "audio", screens: display, windows: nil, applications: nil)
+                // Didn't start: nothing to wait for
+                if SCContext.streamType == nil { SCContext.restoreRecordMic() }
             }
         }
         return nil

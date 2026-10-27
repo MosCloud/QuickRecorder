@@ -39,6 +39,8 @@
 - [ ] 应用程序（选多个应用）
 - [ ] 仅系统音频（AAC 和 ALAC 各一次）
 - [ ] iPhone / iPad（有设备时）
+- [ ] AppleScript：`record window titled "…"`、`record system audio with microphone` 能开始录制；锁屏时也不会没反应（能录就录，没有显示器时弹出提示）
+  - 麦克风设置关着时 `record system audio with microphone`：录制中麦克风在用，停止后设置恢复成关，得到一个混好音的文件
 
 ## 3. 音频
 

@@ -91,6 +91,9 @@
 		CC3300000000000000002903 /* ScreenAccessTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000002901 /* ScreenAccessTests.swift */; };
 		CC3300000000000000002802 /* ScreenAccess.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000002801 /* ScreenAccess.swift */; };
 		CC3300000000000000002803 /* ScreenAccess.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000002801 /* ScreenAccess.swift */; };
+		CC3300000000000000003103 /* DisplayPickTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000003101 /* DisplayPickTests.swift */; };
+		CC3300000000000000003002 /* DisplayPick.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000003001 /* DisplayPick.swift */; };
+		CC3300000000000000003003 /* DisplayPick.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000003001 /* DisplayPick.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -166,6 +169,8 @@
 		CC3300000000000000002601 /* OwnWindows.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OwnWindows.swift; sourceTree = "<group>"; };
 		CC3300000000000000002901 /* ScreenAccessTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenAccessTests.swift; sourceTree = "<group>"; };
 		CC3300000000000000002801 /* ScreenAccess.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenAccess.swift; sourceTree = "<group>"; };
+		CC3300000000000000003101 /* DisplayPickTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayPickTests.swift; sourceTree = "<group>"; };
+		CC3300000000000000003001 /* DisplayPick.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayPick.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -303,6 +308,7 @@
 				CC3300000000000000002401 /* StreamStop.swift */,
 				CC3300000000000000002601 /* OwnWindows.swift */,
 				CC3300000000000000002801 /* ScreenAccess.swift */,
+				CC3300000000000000003001 /* DisplayPick.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -321,6 +327,7 @@
 				CC3300000000000000002501 /* StreamStopTests.swift */,
 				CC3300000000000000002701 /* OwnWindowsTests.swift */,
 				CC3300000000000000002901 /* ScreenAccessTests.swift */,
+				CC3300000000000000003101 /* DisplayPickTests.swift */,
 			);
 			path = QuickRecorderTests;
 			sourceTree = "<group>";
@@ -482,6 +489,7 @@
 				CC3300000000000000002402 /* StreamStop.swift in Sources */,
 				CC3300000000000000002602 /* OwnWindows.swift in Sources */,
 				CC3300000000000000002802 /* ScreenAccess.swift in Sources */,
+				CC3300000000000000003002 /* DisplayPick.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -519,6 +527,8 @@
 				CC3300000000000000002603 /* OwnWindows.swift in Sources */,
 				CC3300000000000000002903 /* ScreenAccessTests.swift in Sources */,
 				CC3300000000000000002803 /* ScreenAccess.swift in Sources */,
+				CC3300000000000000003103 /* DisplayPickTests.swift in Sources */,
+				CC3300000000000000003003 /* DisplayPick.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
