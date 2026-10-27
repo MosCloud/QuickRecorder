@@ -119,16 +119,27 @@ class SCContext {
     /// The capsule's window, so recordings never show it, whatever "Exclude QuickRecorder itself" says.
     static func getControlWindows() -> [SCWindow] {
         guard let id = controlWindowID else { return [] }
-        if let window = availableContent?.windows.first(where: { $0.windowID == id }) { return [window] }
-        // The snapshot can predate the window, or list on-screen windows only (the one taken at launch): fetch a full list
+        return windows(withIDs: [id])
+    }
+
+    /// The overlays meant to be recorded: the camera and iPhone overlays and the highlighted pointer. With QuickRecorder
+    /// left out of a recording, they come back in as exceptions (#13).
+    static func getOverlayWindows() -> [SCWindow] {
+        windows(withIDs: [mousePointer, camWindow, deviceWindow].filter { $0.windowNumber > 0 }.map { CGWindowID($0.windowNumber) })
+    }
+
+    private static func windows(withIDs ids: [CGWindowID]) -> [SCWindow] {
+        let found = availableContent?.windows.filter { ids.contains($0.windowID) } ?? []
+        guard found.count < ids.count else { return found }
+        // The snapshot can predate a window, or list on-screen windows only (the one taken at launch): fetch a full list
         let semaphore = DispatchSemaphore(value: 0)
-        var window: SCWindow?
-        fetchAllWindows { windows in
-            window = windows.first(where: { $0.windowID == id })
+        var windows = [SCWindow]()
+        fetchAllWindows { all in
+            windows = all.filter { ids.contains($0.windowID) }
             semaphore.signal()
         }
         semaphore.wait()
-        return window.map { [$0] } ?? []
+        return windows
     }
 
     private static func fetchAllWindows(completion: @escaping ([SCWindow]) -> Void) {
