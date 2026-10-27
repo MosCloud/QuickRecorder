@@ -69,6 +69,9 @@
 		CC3300000000000000001203 /* MicConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001201 /* MicConverter.swift */; };
 		CC3300000000000000001303 /* MicConverterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001301 /* MicConverterTests.swift */; };
 		CC3300000000000000001402 /* PanelControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001401 /* PanelControls.swift */; };
+		CC3300000000000000002002 /* RecordingPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000002001 /* RecordingPreview.swift */; };
+		CC3300000000000000002003 /* RecordingPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000002001 /* RecordingPreview.swift */; };
+		CC3300000000000000002103 /* RecordingPreviewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000002101 /* RecordingPreviewTests.swift */; };
 		CC3300000000000000001802 /* TrimExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001801 /* TrimExport.swift */; };
 		CC3300000000000000001803 /* TrimExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001801 /* TrimExport.swift */; };
 		CC3300000000000000001903 /* TrimExportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001901 /* TrimExportTests.swift */; };
@@ -139,6 +142,8 @@
 		CC3300000000000000001201 /* MicConverter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicConverter.swift; sourceTree = "<group>"; };
 		CC3300000000000000001301 /* MicConverterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicConverterTests.swift; sourceTree = "<group>"; };
 		CC3300000000000000001401 /* PanelControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelControls.swift; sourceTree = "<group>"; };
+		CC3300000000000000002001 /* RecordingPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingPreview.swift; sourceTree = "<group>"; };
+		CC3300000000000000002101 /* RecordingPreviewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingPreviewTests.swift; sourceTree = "<group>"; };
 		CC3300000000000000001801 /* TrimExport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrimExport.swift; sourceTree = "<group>"; };
 		CC3300000000000000001901 /* TrimExportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrimExportTests.swift; sourceTree = "<group>"; };
 		CC3300000000000000001501 /* PanelReturn.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelReturn.swift; sourceTree = "<group>"; };
@@ -274,6 +279,7 @@
 				CC3300000000000000000801 /* AudioMix.swift */,
 				CC3300000000000000001101 /* HotkeyCheck.swift */,
 				CC3300000000000000001201 /* MicConverter.swift */,
+				CC3300000000000000002001 /* RecordingPreview.swift */,
 				CC3300000000000000001801 /* TrimExport.swift */,
 				CC3300000000000000001501 /* PanelReturn.swift */,
 			);
@@ -287,6 +293,7 @@
 				CC3300000000000000000201 /* RecordingControlsTests.swift */,
 				CC3300000000000000000901 /* AudioMixTests.swift */,
 				CC3300000000000000001301 /* MicConverterTests.swift */,
+				CC3300000000000000002101 /* RecordingPreviewTests.swift */,
 				CC3300000000000000001901 /* TrimExportTests.swift */,
 				CC3300000000000000001601 /* PanelReturnTests.swift */,
 			);
@@ -443,6 +450,7 @@
 				CC3300000000000000001102 /* HotkeyCheck.swift in Sources */,
 				CC3300000000000000001202 /* MicConverter.swift in Sources */,
 				CC3300000000000000001402 /* PanelControls.swift in Sources */,
+				CC3300000000000000002002 /* RecordingPreview.swift in Sources */,
 				CC3300000000000000001802 /* TrimExport.swift in Sources */,
 				CC3300000000000000001502 /* PanelReturn.swift in Sources */,
 				CC3300000000000000001702 /* MainPanelReturn.swift in Sources */,
@@ -469,6 +477,8 @@
 				CC3300000000000000001103 /* HotkeyCheck.swift in Sources */,
 				CC3300000000000000001203 /* MicConverter.swift in Sources */,
 				CC3300000000000000001303 /* MicConverterTests.swift in Sources */,
+				CC3300000000000000002003 /* RecordingPreview.swift in Sources */,
+				CC3300000000000000002103 /* RecordingPreviewTests.swift in Sources */,
 				CC3300000000000000001803 /* TrimExport.swift in Sources */,
 				CC3300000000000000001903 /* TrimExportTests.swift in Sources */,
 				CC3300000000000000001503 /* PanelReturn.swift in Sources */,
