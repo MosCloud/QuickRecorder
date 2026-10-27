@@ -47,7 +47,7 @@ final class Model: ObservableObject {
     @Published var material = PanelMaterial.glass
     @Published var showQuit = true
     @Published var scale: CGFloat = 0.9
-    @Published var hoverStyle = HoverStyle.glide
+    @Published var hoverStyle = HoverStyle.soft
     /// The tile under the pointer; one highlight for the whole row, so it can glide between tiles
     @Published var hoveredTile: Int?
     var hoverToken = 0
@@ -255,10 +255,7 @@ struct TileView: View {
             }
             .frame(width: 110 * k, height: 80 * k)
             .background { highlightView(on) }
-            // Glass goes on the tile itself, so the title and icon sit on top of it rather than under it
-            .glassEffect(model.hoverStyle == .glass && on ? .regular.interactive() : .identity,
-                         in: RoundedRectangle(cornerRadius: 10 * k, style: .continuous).inset(by: 3 * k))
-            .glassEffectID(on ? "highlight" : "tile \(index)", in: highlight)
+            .modifier(GlassHighlight(enabled: model.hoverStyle == .glass, on: on, index: index, k: k, highlight: highlight))
             .contentShape(Rectangle())
         }
         .buttonStyle(TilePress(pressable: model.hoverStyle != .original))
@@ -271,7 +268,7 @@ struct TileView: View {
                 // Crossing the gap to the next tile shouldn't blink the highlight off and on
                 let token = model.hoverToken
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
-                    if model.hoverToken == token { withAnimation(animation ?? .easeOut(duration: 0.15)) { model.hoveredTile = nil } }
+                    if model.hoverToken == token { withAnimation(animation) { model.hoveredTile = nil } }
                 }
             }
         }
@@ -290,6 +287,26 @@ struct TileView: View {
             if on { shape.fill(.primary.opacity(0.1)).padding(3 * k).matchedGeometryEffect(id: "highlight", in: highlight) }
         case .glass:
             EmptyView()
+        }
+    }
+}
+
+/// Glass goes on the tile itself, so the title and icon sit on top of it rather than under it. Only in the glass style:
+/// anywhere else the tile would still take part in glass morphing, and play a scaling morph when the pointer leaves it.
+struct GlassHighlight: ViewModifier {
+    let enabled: Bool
+    let on: Bool
+    let index: Int
+    let k: CGFloat
+    var highlight: Namespace.ID
+
+    func body(content: Content) -> some View {
+        if enabled {
+            content
+                .glassEffect(on ? .regular.interactive() : .identity, in: RoundedRectangle(cornerRadius: 10 * k, style: .continuous).inset(by: 3 * k))
+                .glassEffectID(on ? "highlight" : "tile \(index)", in: highlight)
+        } else {
+            content
         }
     }
 }
