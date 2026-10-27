@@ -30,6 +30,8 @@ class SCContext {
     static var timeOffset = CMTimeMake(value: 0, timescale: 0)
     static var screenArea: NSRect?
     static let audioEngine = AVAudioEngine()
+    /// Restarts the microphone when the audio configuration changes during a recording; nil otherwise
+    static var micConfigObserver: NSObjectProtocol?
     static var backgroundColor: CGColor = CGColor.black
     static var filePath: String!
     static var filePath1: String!
@@ -352,6 +354,8 @@ class SCContext {
         if ud.bool(forKey: "recordMic") {
             micInput.markAsFinished()
             AudioRecorder.shared.stop()
+            if let observer = micConfigObserver { NotificationCenter.default.removeObserver(observer) }
+            micConfigObserver = nil
             audioEngine.inputNode.removeTap(onBus: 0)
             audioEngine.stop()
             //DispatchQueue.global().async { try? audioEngine.inputNode.setVoiceProcessingEnabled(false) }

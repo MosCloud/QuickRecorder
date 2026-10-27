@@ -373,15 +373,18 @@ extension AppDelegate {
     
     func startMicRecording() {
         if micDevice == "default" {
-            let input = SCContext.audioEngine.inputNode
-            let inputFormat = input.inputFormat(forBus: 0)
-            input.installTap(onBus: 0, bufferSize: 1024, format: inputFormat) { buffer, time in
-                if SCContext.isPaused || SCContext.startTime == nil { return }
-                if SCContext.micInput.isReadyForMoreMediaData {
-                    SCContext.micInput.append(buffer.asSampleBuffer!)
-                }
-            }
+            let converter = MicConverter(target: SCContext.audioEngine.inputNode.inputFormat(forBus: 0))
+            installMicTap(converter)
             try! SCContext.audioEngine.start()
+            // A Bluetooth headset switches to its call mode once its microphone starts, and devices come and go mid-recording:
+            // the engine may then stop, and runs again only when started again
+            SCContext.micConfigObserver = NotificationCenter.default.addObserver(
+                forName: .AVAudioEngineConfigurationChange, object: SCContext.audioEngine, queue: .main) { _ in
+                guard SCContext.micConfigObserver != nil else { return }
+                SCContext.audioEngine.inputNode.removeTap(onBus: 0)
+                installMicTap(converter)
+                try? SCContext.audioEngine.start()
+            }
         } else {
             AudioRecorder.shared.setupAudioCapture()
             AudioRecorder.shared.start()
@@ -633,6 +636,17 @@ extension CMSampleBuffer {
                 return NSImage(cgImage: cgImage, size: .zero)
             }
             return nil
+        }
+    }
+}
+
+/// Taps the microphone in whatever format it now delivers, writing it in the format the track started in.
+private func installMicTap(_ converter: MicConverter) {
+    let input = SCContext.audioEngine.inputNode
+    input.installTap(onBus: 0, bufferSize: 1024, format: input.inputFormat(forBus: 0)) { buffer, time in
+        if SCContext.isPaused || SCContext.startTime == nil { return }
+        if SCContext.micInput.isReadyForMoreMediaData, let sample = converter.convert(buffer)?.asSampleBuffer {
+            SCContext.micInput.append(sample)
         }
     }
 }
