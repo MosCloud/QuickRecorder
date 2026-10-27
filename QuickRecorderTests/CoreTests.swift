@@ -91,12 +91,29 @@ struct AudioFormatSettingTests {
 
 @Suite("Recording names")
 struct RecordingNameTests {
-    @Test("Directory + prefix + y-MM-dd HH.mm.ss")
-    func path() throws {
+    let date = Date(timeIntervalSince1970: 1_793_027_045) // 2026-10-26 15:04:05 UTC
+
+    @Test("The system's names in English, with no spaces, whatever the system language (#61)", arguments: [
+        (RecordingName.Kind.screenRecording, "/Users/me/Desktop/ScreenRecording_2026-10-26_15.04.05"),
+        (.audioRecording, "/Users/me/Desktop/AudioRecording_2026-10-26_15.04.05"),
+        (.screenshot, "/Users/me/Desktop/Screenshot_2026-10-26_15.04.05"),
+    ])
+    func path(kind: RecordingName.Kind, expected: String) throws {
         let utc = try #require(TimeZone(identifier: "UTC"))
-        let date = Date(timeIntervalSince1970: 1_793_027_045) // 2026-10-26 15:04:05 UTC
-        #expect(RecordingName.path(directory: "/Users/me/Desktop", prefix: "/Recording at ", date: date, timeZone: utc)
-                == "/Users/me/Desktop/Recording at 2026-10-26 15.04.05")
+        #expect(RecordingName.path(directory: "/Users/me/Desktop", kind: kind, date: date, timeZone: utc) == expected)
+    }
+
+    @Test("A trimmed copy is named after its recording, numbered while the name is taken")
+    func trimmed() {
+        let source = URL(fileURLWithPath: "/Users/me/Desktop/ScreenRecording_2026-10-26_15.04.05.mp4")
+        var taken = Set<String>()
+        func next() -> String { RecordingName.trimmed(source, exists: { taken.contains($0.lastPathComponent) }).lastPathComponent }
+
+        #expect(next() == "ScreenRecording_2026-10-26_15.04.05_Trimmed.mp4")
+        taken.insert(next())
+        #expect(next() == "ScreenRecording_2026-10-26_15.04.05_Trimmed-2.mp4")
+        taken.insert(next())
+        #expect(next() == "ScreenRecording_2026-10-26_15.04.05_Trimmed-3.mp4")
     }
 }
 

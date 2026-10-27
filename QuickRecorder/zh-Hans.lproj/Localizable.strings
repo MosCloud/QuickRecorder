@@ -92,9 +92,6 @@
 "A Window" = "单个窗口";
 "Output Folder" = "文件保存位置";
 "Currently set to \"%@\"" = "当前保存在 \"%@\"";
-"/Recording at " = "/录制于 ";
-"/Capturing at " = "/捕获于 ";
-" (Cropped in " = " (修剪于 ";
 "Recording Completed" = "录制结束";
 "Clip Saved" = "剪辑已保存";
 "File saved to: %@" = "文件已保存至: %@";
@@ -228,8 +225,6 @@
 "Records with HEVC with Alpha, so transparent areas stay transparent in the video.\n\n• Turning it on fixes the encoder to H.265 and the format to MOV.\n• When recording an application, the Background menu then offers \"Transparent\": everything outside the selected apps' windows is transparent.\n• A full screen or screen area recording has no transparent areas, so it makes no difference there.\n• The transparency shows in apps that support transparent video, such as Final Cut Pro, Motion and Keynote. Most players and video sites don't." = "使用 HEVC with Alpha 编码，录像可以保留透明区域。\n\n• 开启后，编码器固定为 H.265，格式固定为 MOV。\n• 「录制应用程序」时，「画面背景」菜单中会多出「透明」：所选应用窗口以外的区域都是透明的。\n• 录制全屏画面或屏幕区域时，画面中没有透明区域，此选项不起作用。\n• 透明效果要在 Final Cut Pro、Motion、Keynote 等支持透明视频的软件中查看，普通播放器和多数视频网站不支持。";
 "Recording Behavior" = "录制行为";
 "Captured Content" = "画面内容";
-"(system audio)" = "（系统声音）";
-"(microphone)" = "（麦克风）";
 "Mixing failed. The system audio and the microphone were saved as two separate files." = "混合失败，系统声音和麦克风已分别保存为两个文件。";
 "Current Color" = "当前颜色";
 "More Colors…" = "更多颜色…";

@@ -263,7 +263,7 @@ extension AppDelegate {
         // AAC and ALAC both go into .m4a
         let fileEnding = "m4a"
         let fileType = AVFileType.m4a
-        SCContext.filePath = "\(SCContext.getFilePath()).\(fileEnding)"
+        SCContext.filePath = "\(SCContext.getFilePath(.audioRecording)).\(fileEnding)"
         if recordMic && SCContext.streamType == .systemaudio {
             // System audio and the microphone record separately; stopping mixes them into filePath
             let parts = fd.temporaryDirectory.appendingPathComponent("QuickRecorder-\(UUID().uuidString)")
@@ -316,9 +316,9 @@ extension AppDelegate {
         }
 
         if remuxAudio && recordMic && recordWinSound {
-            SCContext.filePath = "\(SCContext.getFilePath()).\(fileEnding).\(fileEnding).\(fileEnding)"
+            SCContext.filePath = "\(SCContext.getFilePath(.screenRecording)).\(fileEnding).\(fileEnding).\(fileEnding)"
         } else {
-            SCContext.filePath = "\(SCContext.getFilePath()).\(fileEnding)"
+            SCContext.filePath = "\(SCContext.getFilePath(.screenRecording)).\(fileEnding)"
         }
         SCContext.vW = try? AVAssetWriter.init(outputURL: SCContext.filePath.url, fileType: fileType!)
         let encoderIsH265 = (encoder.rawValue == Encoder.h265.rawValue) || recordHDR
@@ -418,7 +418,7 @@ extension AppDelegate {
             SCContext.saveFrame = false
             
             var ciImage = CIImage(cvPixelBuffer: imageBuffer)
-            let url = "\(SCContext.getFilePath(capture: true)).png".url
+            let url = "\(SCContext.getFilePath(.screenshot)).png".url
             if !recordHDR {
                 sampleBuffer.nsImage?.saveToFile(url)
             } else {

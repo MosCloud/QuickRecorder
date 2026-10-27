@@ -198,10 +198,9 @@ class SCContext {
         return nil
     }
     
-    static func getFilePath(capture: Bool = false) -> String {
-        return RecordingName.path(directory: ud.string(forKey: "saveDirectory")!,
-                                  prefix: capture ? "/Capturing at ".local : "/Recording at ".local,
-                                  date: Date())
+    /// Where a new recording or captured frame goes, without its extension
+    static func getFilePath(_ kind: RecordingName.Kind) -> String {
+        RecordingName.path(directory: ud.string(forKey: "saveDirectory")!, kind: kind, date: Date())
     }
     
     static func updateAudioSettings(format: String = ud.string(forKey: "audioFormat") ?? "", rate: Int = 48000) -> [String : Any] {
@@ -477,8 +476,8 @@ class SCContext {
             if let parts {
                 // Don't lose the recording: keep both parts next to where the mix should have gone
                 let base = output.deletingPathExtension().path
-                try? fd.moveItem(at: parts.system, to: URL(fileURLWithPath: base + " " + "(system audio)".local + "." + output.pathExtension))
-                try? fd.moveItem(at: parts.microphone, to: URL(fileURLWithPath: base + " " + "(microphone)".local + "." + parts.microphone.pathExtension))
+                try? fd.moveItem(at: parts.system, to: URL(fileURLWithPath: base + "_SystemAudio." + output.pathExtension))
+                try? fd.moveItem(at: parts.microphone, to: URL(fileURLWithPath: base + "_Microphone." + parts.microphone.pathExtension))
                 body = "Mixing failed. The system audio and the microphone were saved as two separate files.".local
             }
             showNotification(title: "Failed to save file".local, body: body, id: "quickrecorder.error.\(UUID().uuidString)")
