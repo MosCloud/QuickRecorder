@@ -13,7 +13,7 @@ import AVFoundation
 import Combine
 import SwiftUI
 
-enum RightEnd: String, CaseIterable { case column = "一列", rows = "两行" }
+enum RightEnd: String, CaseIterable { case column = "第一版", aligned = "对齐一列", grouped = "分组一列" }
 enum PanelMaterial: String, CaseIterable { case glass = "Liquid Glass", blur = "毛玻璃", black = "纯黑" }
 
 struct TileSpec {
@@ -37,7 +37,7 @@ let tiles: [TileSpec] = [
 @MainActor
 final class Model: ObservableObject {
     static let shared = Model()
-    @Published var rightEnd = RightEnd.column
+    @Published var rightEnd = RightEnd.grouped
     @Published var material = PanelMaterial.glass
     @Published var showQuit = true
     @Published var recordMic = true
@@ -67,6 +67,8 @@ struct MainPanel: View {
     @EnvironmentObject var model: Model
     @Environment(\.colorScheme) private var colorScheme
     var close: () -> Void
+    /// The glass is drawn by an AppKit NSGlassEffectView behind this view instead (diagnosis of the dark rim)
+    var appKitGlass = false
     @State private var closeHover = false
 
     var body: some View {
@@ -80,7 +82,8 @@ struct MainPanel: View {
                 Divider().frame(height: 70)
                 switch model.rightEnd {
                 case .column: column
-                case .rows: rows
+                case .aligned: aligned
+                case .grouped: grouped
                 }
             }
             .padding(.vertical, 10)
@@ -105,65 +108,107 @@ struct MainPanel: View {
     /// The capsule's three materials
     @ViewBuilder private func background(_ shape: RoundedRectangle) -> some View {
         switch model.material {
+        case .glass where appKitGlass: Color.clear
         case .glass: Color.clear.glassEffect(.regular, in: shape)
         case .blur: shape.fill(.regularMaterial).environment(\.controlActiveState, .active)
         case .black: shape.fill(.black)
         }
     }
 
-    /// One column of icons; the mic's device sits in the chevron beside it
+    /// Round 1: the mic with its device chevron beside it, then ⚙ ⊗
     private var column: some View {
         VStack(spacing: 1) {
             HStack(spacing: 0) {
                 MicToggle(isOn: $model.recordMic)
-                Menu {
-                    Picker("", selection: $model.micDevice) {
-                        Text("系统默认").tag("default")
-                        ForEach(model.micList, id: \.self) { Text($0).tag($0) }
-                    }
-                    .pickerStyle(.inline)
-                    .labelsHidden()
-                } label: {
-                    Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold))
-                }
-                .menuStyle(.borderlessButton)
-                .menuIndicator(.hidden)
-                .fixedSize()
-                .disabled(!model.recordMic)
-                .help("麦克风设备：\(model.micDevice == "default" ? "系统默认" : model.micDevice)")
+                devicePicker { Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold)) }
             }
             .padding(.leading, 12)
             IconButton(symbol: "gearshape", help: "偏好设置") { model.did("偏好设置") }
-            if model.showQuit {
-                IconButton(symbol: "xmark.circle", help: "退出程序", hoverTint: quitRed) { model.did("退出程序") }
-            }
+            if model.showQuit { quitButton }
         }
         .frame(width: 56)
     }
 
-    /// Two rows: the mic and its device picker, then ⚙ ⊗
-    private var rows: some View {
-        VStack(alignment: .trailing, spacing: 10) {
-            HStack(spacing: 4) {
-                MicToggle(isOn: $model.recordMic)
-                Picker("", selection: $model.micDevice) {
-                    Text("系统默认").tag("default")
-                    ForEach(model.micList, id: \.self) { Text($0).tag($0) }
+    /// All three on one axis, evenly spaced; the device chevron is a small badge on the mic
+    private var aligned: some View {
+        VStack(spacing: model.showQuit ? 1 : 12) {
+            MicToggle(isOn: $model.recordMic)
+                .overlay(alignment: .bottomTrailing) {
+                    devicePicker {
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 7, weight: .bold))
+                            .foregroundStyle(.secondary)
+                            .padding(3)
+                    }
+                    .offset(x: 9, y: 3)
                 }
-                .labelsHidden()
-                .fixedSize()
-                .controlSize(.small)
-                .disabled(!model.recordMic)
+            IconButton(symbol: "gearshape", help: "偏好设置") { model.did("偏好设置") }
+            if model.showQuit { quitButton }
+        }
+        .frame(width: 48)
+    }
+
+    /// The mic over its device's name, a short divider, then ⚙ ⊗ side by side
+    private var grouped: some View {
+        VStack(spacing: 4) {
+            MicToggle(isOn: $model.recordMic)
+            devicePicker {
+                HStack(spacing: 2) {
+                    Text(model.micDevice == "default" ? "系统默认" : model.micDevice)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                    Image(systemName: "chevron.down").font(.system(size: 7, weight: .semibold))
+                }
+                .font(.system(size: 10))
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: 70)
             }
-            HStack(spacing: 4) {
+            Divider().frame(width: 40).padding(.vertical, 1)
+            HStack(spacing: 2) {
                 IconButton(symbol: "gearshape", help: "偏好设置") { model.did("偏好设置") }
-                if model.showQuit {
-                    IconButton(symbol: "xmark.circle", help: "退出程序", hoverTint: quitRed) { model.did("退出程序") }
-                }
+                if model.showQuit { quitButton }
             }
         }
-        .padding(.leading, 4)
+        .frame(width: 76)
     }
+
+    private var quitButton: some View {
+        IconButton(symbol: "xmark.circle", help: "退出程序", hoverTint: quitRed) { model.did("退出程序") }
+    }
+
+    /// The microphone's device, in a menu that `label` opens; drawn by hand because SwiftUI's Menu restyles its label
+    private func devicePicker(@ViewBuilder label: () -> some View) -> some View {
+        Button {
+            DeviceMenu.shared.show(devices: model.micList, selected: model.micDevice) { model.micDevice = $0 }
+        } label: {
+            label().contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(!model.recordMic)
+        .help("麦克风设备：\(model.micDevice == "default" ? "系统默认" : model.micDevice)")
+    }
+}
+
+/// Pops up the microphone list under the pointer, with a checkmark on the chosen one
+@MainActor
+final class DeviceMenu: NSObject {
+    static let shared = DeviceMenu()
+    private var pick: ((String) -> Void)?
+
+    func show(devices: [String], selected: String, pick: @escaping (String) -> Void) {
+        self.pick = pick
+        let menu = NSMenu()
+        for (title, tag) in [("系统默认", "default")] + devices.map({ ($0, $0) }) {
+            let item = NSMenuItem(title: title, action: #selector(choose(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = tag
+            item.state = tag == selected ? .on : .off
+            menu.addItem(item)
+        }
+        menu.popUp(positioning: nil, at: NSEvent.mouseLocation, in: nil)
+    }
+
+    @objc private func choose(_ sender: NSMenuItem) { pick?(sender.representedObject as! String) }
 }
 
 /// The main panel's `SelectorView`
@@ -240,6 +285,31 @@ struct IconButton: View {
     }
 }
 
+/// A stand-in for what is behind the panel: a light page with text lines, or a dark wallpaper
+struct TestBackdrop: View {
+    let light: Bool
+
+    var body: some View {
+        ZStack {
+            if light {
+                Color.white
+                VStack(alignment: .leading, spacing: 14) {
+                    ForEach(0..<12, id: \.self) { i in
+                        Capsule().fill(Color.gray.opacity(0.35)).frame(width: CGFloat(300 + (i * 97) % 500), height: 8)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.leading, 30)
+                Circle().fill(Color.orange.opacity(0.8)).frame(width: 90).offset(x: 260, y: -30)
+            } else {
+                LinearGradient(colors: [Color(red: 0.05, green: 0.08, blue: 0.2), Color(red: 0.2, green: 0.15, blue: 0.35)],
+                               startPoint: .topLeading, endPoint: .bottomTrailing)
+                Circle().fill(Color.cyan.opacity(0.5)).frame(width: 120).offset(x: -300, y: 20)
+            }
+        }
+    }
+}
+
 // MARK: - Info window
 
 struct InfoView: View {
@@ -249,13 +319,13 @@ struct InfoView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("主面板原型（#48）").font(.headline)
-            Text("屏幕中间偏上的就是新的主面板：设置和退出改成右端的图标，麦克风也移到右端，背景可以换三种材质。这个原型不会真的录制，只记录你点了什么；点 ⊗ 也不会退出。想和现在的主面板对比，可以打开 QuickRecorder 后按 ⌃⌥⌘R。")
+            Text("屏幕中间偏上的就是新的主面板：设置和退出改成右端的图标，麦克风也移到右端，背景可以换三种材质。Liquid Glass 的黑边已修复（关掉了窗口阴影）。这个原型不会真的录制，只记录你点了什么；点 ⊗ 也不会退出。想和现在的主面板对比，可以打开 QuickRecorder 后按 ⌃⌥⌘R。")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 8) {
                 GridRow {
-                    Text("右端排列").foregroundStyle(.secondary)
+                    Text("右端排法").foregroundStyle(.secondary)
                     Picker("", selection: $model.rightEnd) {
                         ForEach(RightEnd.allCases, id: \.self) { Text($0.rawValue).tag($0) }
                     }
@@ -295,6 +365,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var changes: AnyCancellable?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        let args = CommandLine.arguments
+        if let i = args.firstIndex(of: "--diagnose"), args.count > i + 3 {
+            diagnose(variant: Int(args[i + 1]) ?? 0, backdrop: args[i + 2], output: args[i + 3])
+            return
+        }
         // Like the app's main panel: borderless, floating, moved by its background
         panel = NSPanel(contentRect: .zero, styleMask: [.fullSizeContentView, .nonactivatingPanel], backing: .buffered, defer: false)
         host = NSHostingView(rootView: AnyView(MainPanel { [unowned self] in panel.orderOut(nil) }.environmentObject(Model.shared)))
@@ -323,7 +398,65 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate()
     }
 
+    /// Shows the Liquid Glass panel one way over a test backdrop, captures that region, and quits.
+    /// 0 as now · 1 no window shadow · 2 a 24-point margin · 3 both · 4 both, with AppKit's NSGlassEffectView
+    private func diagnose(variant: Int, backdrop: String, output: String) {
+        if variant >= 10 {
+            // 10 + right end × 3 + material: the fixed panel as it now is
+            Model.shared.rightEnd = RightEnd.allCases[(variant - 10) / 3]
+            Model.shared.material = PanelMaterial.allCases[(variant - 10) % 3]
+        } else {
+            Model.shared.material = .glass
+        }
+        let shadow = variant >= 10 ? Model.shared.material != .glass : variant == 0 || variant == 2
+        let margin: CGFloat = variant >= 2 && variant < 10 ? 24 : 0
+        let appKit = variant == 4
+        let host = NSHostingView(rootView: MainPanel(close: {}, appKitGlass: appKit).environmentObject(Model.shared))
+        let size = host.fittingSize
+        let container = NSView(frame: NSRect(x: 0, y: 0, width: size.width + 2 * margin, height: size.height + 2 * margin))
+        let inner = NSRect(x: margin, y: margin, width: size.width, height: size.height)
+        if appKit {
+            let glass = NSGlassEffectView(frame: inner)
+            glass.cornerRadius = 14
+            host.frame = glass.bounds
+            glass.contentView = host
+            container.addSubview(glass)
+        } else {
+            host.frame = inner
+            container.addSubview(host)
+        }
+        guard let screen = NSScreen.main else { return }
+        let frame = NSRect(x: screen.frame.midX - container.frame.width / 2, y: screen.frame.midY - container.frame.height / 2,
+                           width: container.frame.width, height: container.frame.height)
+        panel = NSPanel(contentRect: frame, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+        panel.contentView = container
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = shadow
+        panel.level = NSWindow.Level(rawValue: NSWindow.Level.floating.rawValue + 1)
+
+        let around = frame.insetBy(dx: -40, dy: -40)
+        let back = NSWindow(contentRect: around, styleMask: [.borderless], backing: .buffered, defer: false)
+        back.level = .floating
+        back.contentView = NSHostingView(rootView: TestBackdrop(light: backdrop == "light"))
+        back.orderFrontRegardless()
+        panel.orderFrontRegardless()
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            // screencapture's -R counts from the top left of the main display
+            let top = NSScreen.screens[0].frame.maxY - around.maxY
+            let capture = Process()
+            capture.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+            capture.arguments = ["-x", "-R", "\(Int(around.minX)),\(Int(top)),\(Int(around.width)),\(Int(around.height))", output]
+            try? capture.run()
+            capture.waitUntilExit()
+            NSApp.terminate(nil)
+        }
+    }
+
     private func fit(recenter: Bool) {
+        // The window shadow outlines a borderless window in a dark line, which shows as a black rim around Liquid Glass
+        panel.hasShadow = Model.shared.material != .glass
         let size = host.fittingSize
         guard let screen = NSScreen.main else { return }
         let midX = recenter ? screen.frame.midX : panel.frame.midX
