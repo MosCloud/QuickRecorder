@@ -52,11 +52,7 @@ class RecorderPlayerModel: NSObject, ObservableObject {
                             let startTime = playerItem.reversePlaybackEndTime
                             let endTime = playerItem.forwardPlaybackEndTime
                             let timeRange = CMTimeRangeFromTimeToTime(start: startTime, end: endTime)
-                            let dateFormatter = DateFormatter()
-                            let fileEnding = fileUrl.pathExtension.lowercased()
-                            dateFormatter.dateFormat = "y-MM-dd HH.mm.ss"
-                            let path = fileUrl.deletingPathExtension().path
-                            let filePath = path.removingPercentEncoding! + " (Cropped in ".local + "\(dateFormatter.string(from: Date())))." + fileEnding
+                            let filePath = RecordingName.trimmed(fileUrl, exists: { fd.fileExists(atPath: $0.path) }).path
                             Task {
                                 do {
                                     // Audio-only recordings (.m4a) too: this used to know only .mp4 and .mov, and saved nothing (#56)
