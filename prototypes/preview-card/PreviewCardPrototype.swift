@@ -23,7 +23,9 @@ final class Model: ObservableObject {
     @Published var material = PanelMaterial.glass
     @Published var content = Content.video
     @Published var autoHide = false
-    @Published var swipe: CGFloat = 0
+    /// How far the card has slid right of its place, and its opacity: the window itself stays put
+    @Published var slide: CGFloat = 0
+    @Published var fade: Double = 1
     @Published var lastAction = "（还没有操作）"
     var thumbnail = NSImage()
     var videoURL: URL!
@@ -86,8 +88,8 @@ struct PreviewCard: View {
         .environment(\.colorScheme, model.material == .black ? .dark : colorScheme)
         .background { background(shape) }
         .padding(8)   // room for the close button and the shadow
-        .offset(x: max(0, model.swipe))
-        .opacity(1 - min(0.6, max(0, model.swipe) / 200))
+        .offset(x: model.slide)
+        .opacity(model.fade * (1 - min(0.5, model.slide / 400)))
         .onHover { inside in withAnimation(.easeOut(duration: 0.15)) { hovering = inside } }
         .contextMenu {
             Button("拷贝") { model.did("拷贝") }
@@ -121,8 +123,8 @@ struct PreviewCard: View {
         case .strip:
             HStack(spacing: 10) {
                 media(width: 120, height: 76)
-                // The file name ends where the trash can does: four buttons for a video, three for audio
-                let buttons = CGFloat(model.content == .video ? 4 : 3)
+                // The file name ends where the trash can does; audio has as many buttons as video, Copy taking Trim's place
+                let buttons: CGFloat = 4
                 let toTrash = buttons * 26 + (buttons - 1) * 2 - 5 - 6
                 VStack(alignment: .leading, spacing: 4) {
                     VStack(alignment: .leading, spacing: 1) {
@@ -197,8 +199,15 @@ struct PreviewCard: View {
                 NSWorkspace.shared.activateFileViewerSelecting([model.url])
                 model.did("在访达中显示")
             }
+            // The third place is always taken, so Delete never moves under a pointer used to the video card
             if model.content == .video {
                 IconButton(symbol: "scissors", help: "剪辑") { model.did("剪辑（原型里不执行）") }
+            } else {
+                IconButton(symbol: "doc.on.doc", help: "拷贝") {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.writeObjects([model.url as NSURL])
+                    model.did("拷贝（可以粘贴到聊天或访达里）")
+                }
             }
             IconButton(symbol: "trash", help: "删除", hoverTint: dangerRed) { model.did("删除（原型里不执行）") }
         }
@@ -425,10 +434,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // A two-finger swipe right dismisses it, as with notifications
         observers.append(NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { [unowned self] event in
             guard event.window === panel else { return event }
-            if event.phase == .began { model.swipe = 0 }
-            if event.phase == .changed || event.phase == .began { model.swipe += event.scrollingDeltaX }
+            if event.phase == .changed || event.phase == .began { model.slide = max(0, model.slide + event.scrollingDeltaX) }
             if event.phase == .ended || event.phase == .cancelled {
-                if model.swipe > 60 { dismiss() } else { withAnimation(.snappy) { model.swipe = 0 } }
+                if model.slide > 60 { dismiss() } else { withAnimation(.snappy) { model.slide = 0 } }
             }
             return nil
         } as Any)
@@ -466,50 +474,51 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// Flush with the screen's right edge, so the card sliding out of the window slides off the screen
     private var target: NSRect {
         host.layoutSubtreeIfNeeded()
         let size = host.fittingSize
         let visible = NSScreen.main?.visibleFrame ?? .zero
-        return NSRect(x: visible.maxX - size.width - 8, y: visible.minY + 8, width: size.width, height: size.height)
+        return NSRect(x: visible.maxX - size.width, y: visible.minY + 8, width: size.width, height: size.height)
     }
 
-    /// Slides in from the right edge
+    private var reduceMotion: Bool { NSWorkspace.shared.accessibilityDisplayShouldReduceMotion }
+
+    /// Slides in from the right edge. The card moves inside a window that stays put: SwiftUI animates it on the GPU,
+    /// where moving the window frame by frame stutters.
     func present() {
-        Model.shared.swipe = 0
-        panel.hasShadow = Model.shared.material != .glass
-        var start = target
-        start.origin.x = (NSScreen.main?.frame.maxX ?? start.maxX) + 10
-        panel.setFrame(start, display: false)
-        panel.alphaValue = 1
+        let model = Model.shared
+        panel.hasShadow = model.material != .glass
+        panel.setFrame(target, display: false)
+        model.slide = reduceMotion ? 0 : target.width
+        model.fade = reduceMotion ? 0 : 1
         panel.orderFrontRegardless()
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.35
-            context.timingFunction = CAMediaTimingFunction(controlPoints: 0.2, 0.9, 0.3, 1)
-            panel.animator().setFrame(target, display: true)
+        DispatchQueue.main.async { [unowned self] in
+            withAnimation(reduceMotion ? .easeOut(duration: 0.2) : .timingCurve(0.2, 0.9, 0.3, 1, duration: 0.35)) {
+                model.slide = 0
+                model.fade = 1
+            }
         }
         scheduleHide()
     }
 
-    /// Slides out to the right
+    /// Slides out to the right from wherever the card is, a swipe included: quick at first, easing off as it fades
     func dismiss() {
         hideTimer?.invalidate()
-        var end = panel.frame
-        end.origin.x = (NSScreen.main?.frame.maxX ?? end.maxX) + 10
-        NSAnimationContext.runAnimationGroup({ context in
-            context.duration = 0.25
-            context.timingFunction = CAMediaTimingFunction(name: .easeIn)
-            panel.animator().setFrame(end, display: true)
-        }, completionHandler: { [unowned self] in
-            MainActor.assumeIsolated {
-                panel.orderOut(nil)
-                Model.shared.swipe = 0
-                Model.shared.did("关闭")
-            }
-        })
+        let model = Model.shared
+        withAnimation(reduceMotion ? .easeIn(duration: 0.2) : .smooth(duration: 0.3)) {
+            if !reduceMotion { model.slide = panel.frame.width }
+            model.fade = 0
+        } completion: { [unowned self] in
+            panel.orderOut(nil)
+            model.slide = 0
+            model.fade = 1
+            model.did("关闭")
+        }
     }
 
     private func refit() {
-        guard panel.isVisible, Model.shared.swipe == 0 else { return }
+        guard panel.isVisible, Model.shared.slide == 0, Model.shared.fade == 1 else { return }
         panel.hasShadow = Model.shared.material != .glass
         panel.setFrame(target, display: true)
         scheduleHide()
