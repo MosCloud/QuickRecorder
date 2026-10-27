@@ -256,6 +256,7 @@ extension AppDelegate {
             return
         }
         if !audioOnly { registerGlobalMouseMonitor() }
+        if SCContext.streamType == .application { DispatchQueue.main.async { SCContext.watchRecordedApps() } }
         DispatchQueue.main.async { updateStatusBar() }
         if preventSleep { SleepPreventer.shared.preventSleep(reason: "Screen recording in progress") }
     }
@@ -544,12 +545,31 @@ extension AppDelegate {
         }
     }
 
-    func stream(_ stream: SCStream, didStopWithError error: Error) { // stream error
-        print("closing stream with error:\n".local, error,
-              "\nthis might be due to the window closing or the user stopping from the sonoma ui".local)
+    /// The system ended the capture: the recorded window closed, Stop was chosen in the system's screen-recording menu, and so on (#7)
+    func stream(_ stream: SCStream, didStopWithError error: Error) {
+        let error = error as NSError
+        SCContext.log.error("Capture ended by the system: \(error.domain, privacy: .public) \(error.code, privacy: .public), \(error.localizedDescription, privacy: .public)")
+        let stop = StreamStop(domain: error.domain, code: error.code, description: error.localizedDescription)
         DispatchQueue.main.async {
+            let recordingWindows = [.window, .windows].contains(SCContext.streamType)
             SCContext.stream = nil
             SCContext.stopRecording()
+            // Saved as usual by now. Without this, the recording seemed to stop for no reason
+            SCContext.notifyStopped(stop.message(recordingWindows: recordingWindows))
+        }
+    }
+}
+
+extension StreamStop {
+    func message(recordingWindows: Bool) -> String {
+        switch self {
+        case .userStopped: "Stopped from the screen recording menu in the menu bar.".local
+        case .sourceGone where recordingWindows: "The window being recorded closed, or the display went off.".local
+        case .sourceGone: "The display went off: the lid was closed, the Mac went to sleep, or a display was unplugged.".local
+        case .systemStopped: "macOS stopped the capture.".local
+        case .insufficientStorage: "The disk is full.".local
+        case .other(let detail): String(format: "The capture ended unexpectedly: %@".local, detail)
+        case .appsQuit: "The app being recorded quit.".local
         }
     }
 }

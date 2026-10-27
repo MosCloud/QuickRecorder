@@ -201,8 +201,6 @@
 "loaded unknown video format" = "加载了未知的视频格式";
 "unknown stream type" = "未知的流类型";
 "audio file writing issue" = "音频文件写入出错";
-"closing stream with error:\n" = "关闭流时发生错误:\n";
-"\nthis might be due to the window closing or the user stopping from the sonoma ui" = "\n这可能是有由于用户关闭了正在录制中的窗口, 或使用窗口上的附加按钮停止了录制.";
 "Recording Controls" = "錄製控制";
 "Menu Bar Timer and Menu" = "選單列計時 + 選單";
 "Floating Capsule" = "浮動膠囊";
@@ -250,3 +248,11 @@
 "Encoder Warning" = "編碼器警告";
 "Couldn't mix the microphone into the main track" = "沒能把麥克風混入主音軌";
 "The recording was saved with the microphone on a track of its own." = "錄製已儲存，麥克風在單獨的音軌上。";
+"Recording stopped" = "錄製已停止";
+"Stopped from the screen recording menu in the menu bar." = "在選單列的螢幕錄製選單中停止了錄製。";
+"The window being recorded closed, or the display went off." = "被錄視窗已關閉，或顯示器已關閉。";
+"The display went off: the lid was closed, the Mac went to sleep, or a display was unplugged." = "顯示器已關閉：闔上了螢幕、Mac 進入了睡眠，或拔掉了顯示器。";
+"The app being recorded quit." = "被錄應用程式已結束。";
+"macOS stopped the capture." = "macOS 停止了螢幕擷取。";
+"The disk is full." = "磁碟空間不足。";
+"The capture ended unexpectedly: %@" = "螢幕擷取意外結束：%@";
