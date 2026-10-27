@@ -99,7 +99,9 @@ final class MenuBarItem: NSObject, NSMenuDelegate {
     @objc private func togglePanel() {
         guard let button = item.button else { return }
         if panelPopover.isShown { panelPopover.performClose(nil); return }
-        panelPopover.contentViewController = NSHostingController(rootView: ContentViewNew().onAppear { closeAllWindow() })
+        let panel = NSHostingController(rootView: MenuBarPanel { [weak self] in self?.closePanel() }.onAppear { closeAllWindow() })
+        panel.sizingOptions = [.preferredContentSize]
+        panelPopover.contentViewController = panel
         panelPopover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
     }
 
