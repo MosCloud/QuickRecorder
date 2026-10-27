@@ -356,6 +356,8 @@ class SCContext {
             audioEngine.stop()
             //DispatchQueue.global().async { try? audioEngine.inputNode.setVoiceProcessingEnabled(false) }
         }
+        // Taken now: mixing the microphone into the main track finishes after firstFrame is cleared below
+        let previewImage = firstFrame?.nsImage
         if streamType != .systemaudio {
             let dispatchGroup = DispatchGroup()
             dispatchGroup.enter()
@@ -379,7 +381,7 @@ class SCContext {
                                     if ud.bool(forKey: "trimAfterRecord") {
                                         AppDelegate.shared.createNewWindow(view: VideoTrimmerView(videoURL: url), title: url.lastPathComponent, only: false)
                                     } else {
-                                        showPreview(path: url.path)
+                                        showPreview(path: url.path, image: previewImage)
                                     }
                                 }
                             case .failure(let error):
@@ -444,7 +446,7 @@ class SCContext {
                 let id = "quickrecorder.completed.\(UUID().uuidString)"
                 showNotification(title: title, body: body, id: id)
             } else {
-                showPreview(path: filePath)
+                showPreview(path: filePath, image: previewImage)
             }
             trimVideo()
         }
@@ -479,14 +481,10 @@ class SCContext {
         }
     }
 
-    static func showPreview(path: String, image: NSImage? = nil) {
+    /// Shows the floating preview with `image`: the recording's first frame, or the audio icon.
+    static func showPreview(path: String, image: NSImage?) {
         if !ud.bool(forKey: "showPreview") { return }
-        var previewImage: NSImage?
-        let previewURL = fd.temporaryDirectory.appendingPathComponent("qr-preview.jpg")
-        if image == nil { firstFrame?.nsImage?.saveToFile(previewURL, type: .jpeg) }
-        
-        if let i = image { previewImage = i } else { previewImage = NSImage(contentsOf: previewURL) }
-        if let previewImage = previewImage, let screen = getScreenWithMouse() {
+        if let previewImage = image, let screen = getScreenWithMouse() {
             let contentView = NSHostingView(rootView: PreviewView(frame: previewImage, filePath: path))
             previewWindow.contentView = contentView
             previewWindow.setFrameOrigin(NSPoint(x: screen.frame.maxX - 280, y: screen.frame.minY + 20))
