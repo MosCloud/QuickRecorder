@@ -19,7 +19,7 @@ enum Content: String, CaseIterable { case video = "视频", audio = "音频" }
 @MainActor
 final class Model: ObservableObject {
     static let shared = Model()
-    @Published var layout = Layout.thumbnail
+    @Published var layout = Layout.strip
     @Published var material = PanelMaterial.glass
     @Published var content = Content.video
     @Published var autoHide = false
@@ -121,11 +121,25 @@ struct PreviewCard: View {
         case .strip:
             HStack(spacing: 10) {
                 media(width: 120, height: 76)
+                // The file name ends where the trash can does: four buttons for a video, three for audio
+                let buttons = CGFloat(model.content == .video ? 4 : 3)
+                let toTrash = buttons * 26 + (buttons - 1) * 2 - 5 - 6
                 VStack(alignment: .leading, spacing: 4) {
-                    info
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(model.fileName)
+                            .font(.system(size: 12, weight: .medium))
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                            .frame(width: toTrash, alignment: .leading)
+                            .help(model.fileName)
+                        Text("\(model.duration) · \(model.size)")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                            .fixedSize()
+                    }
                     actions.padding(.leading, -5)
                 }
-                .frame(width: 176, alignment: .leading)
+                .padding(.trailing, 4)
             }
         }
     }
