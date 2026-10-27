@@ -41,6 +41,7 @@ class SCContext {
     static let videoQueue = DispatchQueue(label: "QuickRecorder.video")
     static let audioQueue = DispatchQueue(label: "QuickRecorder.audio")
     static let log = Logger(subsystem: "com.lihaoyun6.QuickRecorder", category: "recording")
+    private static var recordedAppsObserver: NSObjectProtocol?
     static var filePath1: String!
     static var filePath2: String!
     static var audioFile: AVAudioFile?
@@ -354,6 +355,8 @@ class SCContext {
         AppDelegate.shared.stopGlobalMouseMonitor()
 
         if let w = NSApp.windows.first(where:  { $0.title == "Area Overlayer".local }) { w.close() }
+        if let observer = recordedAppsObserver { NSWorkspace.shared.notificationCenter.removeObserver(observer) }
+        recordedAppsObserver = nil
         
         // Every source stops, and what it has already delivered is written, before any input is finished:
         // appending to a finished input raises, which quit the app on stopping (#6)
@@ -678,6 +681,32 @@ class SCContext {
         return outSampleBuffer
     }
     
+    /// Ends an app recording once every recorded app has quit: the capture carries on regardless, recording nothing (#7)
+    static func watchRecordedApps() {
+        guard let apps = application, !apps.isEmpty else { return }
+        let recorded = Set(apps.map(\.processID))
+        recordedAppsObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didTerminateApplicationNotification, object: nil, queue: .main) { _ in
+            guard stream != nil, !NSWorkspace.shared.runningApplications.contains(where: { recorded.contains($0.processIdentifier) }) else { return }
+            log.error("Every recorded app quit")
+            stopRecording()
+            notifyStopped(StreamStop.appsQuit.message(recordingWindows: false))
+        }
+    }
+
+    /// Says why a recording ended on its own (#7). While the display is off or the screen locked a notification never shows
+    /// as a banner, so this one waits until the screen is in use again.
+    static func notifyStopped(_ reason: String) {
+        let id = "quickrecorder.stopped.\(UUID().uuidString)"
+        // Checked from a second later: the display may still be turning off when the capture ends
+        Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { timer in
+            let session = CGSessionCopyCurrentDictionary() as? [String: Any]
+            guard session?["CGSSessionScreenIsLocked"] as? Bool != true, CGDisplayIsAsleep(CGMainDisplayID()) == 0 else { return }
+            timer.invalidate()
+            showNotification(title: "Recording stopped".local, body: reason, id: id)
+        }
+    }
+
     static func showNotification(title: String, body: String, id: String) {
         let content = UNMutableNotificationContent()
         content.title = title
