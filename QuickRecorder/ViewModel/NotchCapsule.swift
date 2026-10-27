@@ -217,6 +217,7 @@ final class NotchCapsule {
         onCountdownEnd = nil
         retract()
         for w in NSApp.windows where w.title == "Area Overlayer".local { w.close() }
+        MainPanelReturn.shared.countdownCancelled()
     }
 
     func update(elapsed: String, paused: Bool) {
