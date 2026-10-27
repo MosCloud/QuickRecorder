@@ -122,6 +122,7 @@ struct ContentView: View {
             Divider().frame(width: 40 * k).padding(.vertical, 1)
             HStack(spacing: 2) {
                 IconButton(symbol: "gearshape", help: "Preferences".local, size: 26 * k) {
+                    MainPanelReturn.shared.settingsOpened()
                     closeMainWindow()
                     appDelegate.openSettingPanel()
                 }

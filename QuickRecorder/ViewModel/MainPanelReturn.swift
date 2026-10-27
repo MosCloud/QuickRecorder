@@ -2,7 +2,8 @@
 //  MainPanelReturn.swift
 //  QuickRecorder
 //
-//  Brings the main panel back when a recording, or the setup for one, that started from it ends (#53).
+//  Brings the main panel back when a recording, or the setup for one, that started from it ends (#53),
+//  and when Settings opened from it closes (#66).
 //
 
 import AppKit
@@ -30,6 +31,10 @@ final class MainPanelReturn {
     /// A main panel tile opened a picker or started a countdown.
     func tileChosen() { state.tileChosen() }
 
+    func settingsOpened() { state.settingsOpened() }
+
+    func menuBarPanelOpened() { state.menuBarPanelOpened() }
+
     /// Start was pressed in a picker, or the panel started a recording itself.
     func startPressed() { state.startPressed() }
 
@@ -54,7 +59,7 @@ final class MainPanelReturn {
         if state.windowClosed(othersOpen: othersOpen, recording: SCContext.streamType != nil) { show() }
     }
 
-    /// Pickers, the countdown, the trimmer: titled windows other than the main panel itself and the preview
+    /// Pickers, the countdown, the trimmer, Settings: titled windows other than the main panel itself and the preview
     private static func isFlowWindow(_ window: NSWindow) -> Bool {
         !window.title.isEmpty && window.title != "Item-0" && window.title != "QuickRecorder".local && window !== previewWindow
     }

@@ -3,8 +3,8 @@
 //  QuickRecorder
 //
 
-/// When the main panel comes back: a recording, or the setup for one, that started from it has ended (#53).
-/// Recordings started elsewhere (a hotkey, the menu bar panel) leave it alone.
+/// When the main panel comes back: a recording, or the setup for one, that started from it has ended (#53),
+/// or Settings opened from it closed (#66). Recordings and Settings started elsewhere (a hotkey, the menu bar panel) leave it alone.
 struct PanelReturn {
     private enum Phase { case idle, choosing, starting }
     private var phase = Phase.idle
@@ -12,6 +12,16 @@ struct PanelReturn {
     /// A main panel tile opened a picker or started a countdown.
     mutating func tileChosen() {
         phase = .choosing
+    }
+
+    /// The panel's Preferences button opened Settings: closing it is backing out, as from a picker.
+    mutating func settingsOpened() {
+        phase = .choosing
+    }
+
+    /// The menu bar panel opened, closing every window: whatever the main panel was setting up is abandoned.
+    mutating func menuBarPanelOpened() {
+        phase = .idle
     }
 
     /// Start was pressed: a countdown, then a recording, is on its way.
