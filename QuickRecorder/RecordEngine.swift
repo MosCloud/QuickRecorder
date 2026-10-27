@@ -58,6 +58,8 @@ extension AppDelegate {
         let qrSelf = SCContext.getSelf()
         let qrWindows = SCContext.getSelfWindows()
         let controlWindows = SCContext.getControlWindows()
+        let overlays = SCContext.getOverlayWindows()
+        SCContext.log.info("Found \(overlays.count, privacy: .public) of the 3 overlays meant to be recorded")
         let dockApp = SCContext.availableContent!.applications.first(where: { $0.bundleIdentifier.description == "com.apple.dock" })
         let wallpaper = SCContext.availableContent!.windows.filter({
             guard let title = $0.title else { return false }
@@ -108,8 +110,9 @@ extension AppDelegate {
                 var except = [SCWindow]()
                 excluded += excliudedApps
                 if hideCCenter { excluded += controlCenterWindow }
-                if hideSelf { if let qrWindows = qrWindows { except += qrWindows }}
-                except += controlWindows
+                let own = OwnWindows.screen(hideSelf: hideSelf, app: qrSelf, overlays: overlays, capsule: controlWindows, opened: qrWindows ?? [])
+                excluded += own.excludedApps
+                except += own.exceptions
                 if background.rawValue != BackgroundType.wallpaper.rawValue { if dockApp != nil {
                     except += wallpaper
                     except += desktop
@@ -121,12 +124,11 @@ extension AppDelegate {
             if SCContext.streamType == .application {
                 var includ = SCContext.application!
                 var except = [SCWindow]()
-                if let qrSelf = qrSelf { includ.append(qrSelf) }
+                let own = OwnWindows.apps(hideSelf: hideSelf, app: qrSelf, overlays: overlays, capsule: controlWindows)
+                includ += own.includedApps
+                except += own.exceptions
                 let withFinder = includ.map{ $0.bundleIdentifier }.contains("com.apple.finder")
                 if withFinder && hideDesktopFiles { except += desktopFiles }
-                if hideSelf { if let qrWindows = qrWindows { except += qrWindows }}
-                except += controlWindows
-                //if ud.bool(forKey: "highlightMouse") { if let qrSelf = qrSelf { includ.append(qrSelf) }}
                 if background.rawValue == BackgroundType.wallpaper.rawValue { if let dock = dockApp { includ.append(dock); except += dockWindow}}
                 SCContext.filter = SCContentFilter(display: screen, including: includ, exceptingWindows: except)
                 SCContext.filter?.includeMenuBar = includeMenuBar
