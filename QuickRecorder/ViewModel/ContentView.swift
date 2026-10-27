@@ -44,7 +44,11 @@ struct ContentView: View {
                 separator
                 tile("Mobile Device", "apps.ipad", hotkey: nil) { isDevicePopoverShowing = true }
                     .popover(isPresented: $isDevicePopoverShowing, arrowEdge: .bottom) {
-                        iDevicePopoverView(closePopover: { isDevicePopoverShowing = false })
+                        iDevicePopoverView(closePopover: {
+                            // A device was chosen: its recording starts right away
+                            isDevicePopoverShowing = false
+                            MainPanelReturn.shared.startPressed()
+                        })
                     }
                 separator
                 microphoneAndApp
@@ -82,9 +86,13 @@ struct ContentView: View {
 
     private var separator: some View { Divider().frame(height: 70 * k) }
 
+    /// A tile whose recording, or the setup for it, brings the panel back when it ends (#53)
     private func tile(_ title: String, _ symbol: String, symbolSize: CGFloat = 36, overlayer: String = "",
                       hotkey: KeyboardShortcuts.Name?, action: @escaping () -> Void) -> some View {
-        RecordTile(title: title, symbol: symbol, symbolSize: symbolSize, overlayer: overlayer, hotkey: hotkey, scale: k, action: action)
+        RecordTile(title: title, symbol: symbol, symbolSize: symbolSize, overlayer: overlayer, hotkey: hotkey, scale: k) {
+            MainPanelReturn.shared.tileChosen()
+            action()
+        }
     }
 
     /// The microphone over its device's name, a short divider, then Preferences and Quit side by side.
@@ -195,6 +203,7 @@ struct CountdownView: View {
                     $0.title == "Countdown Panel".local ||
                     $0.title == "Area Overlayer".local
                 }) { w.close() }
+                MainPanelReturn.shared.countdownCancelled()
             }, label: {
                 ZStack {
                     Color.white.opacity(0.2)
@@ -296,6 +305,7 @@ extension AppDelegate {
     }
     
     func createCountdownPanel(screen: SCDisplay, action: @escaping () -> Void) {
+        MainActor.assumeIsolated { MainPanelReturn.shared.startPressed() }
         guard let screen = screen.nsScreen else { return }
         let countdown = ud.integer(forKey: "countdown")
         if countdown == 0 {

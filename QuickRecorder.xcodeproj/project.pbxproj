@@ -72,6 +72,10 @@
 		CC3300000000000000001802 /* TrimExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001801 /* TrimExport.swift */; };
 		CC3300000000000000001803 /* TrimExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001801 /* TrimExport.swift */; };
 		CC3300000000000000001903 /* TrimExportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001901 /* TrimExportTests.swift */; };
+		CC3300000000000000001502 /* PanelReturn.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001501 /* PanelReturn.swift */; };
+		CC3300000000000000001503 /* PanelReturn.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001501 /* PanelReturn.swift */; };
+		CC3300000000000000001603 /* PanelReturnTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001601 /* PanelReturnTests.swift */; };
+		CC3300000000000000001702 /* MainPanelReturn.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001701 /* MainPanelReturn.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -137,6 +141,9 @@
 		CC3300000000000000001401 /* PanelControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelControls.swift; sourceTree = "<group>"; };
 		CC3300000000000000001801 /* TrimExport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrimExport.swift; sourceTree = "<group>"; };
 		CC3300000000000000001901 /* TrimExportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrimExportTests.swift; sourceTree = "<group>"; };
+		CC3300000000000000001501 /* PanelReturn.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelReturn.swift; sourceTree = "<group>"; };
+		CC3300000000000000001601 /* PanelReturnTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelReturnTests.swift; sourceTree = "<group>"; };
+		CC3300000000000000001701 /* MainPanelReturn.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainPanelReturn.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -247,6 +254,7 @@
 				CC3300000000000000000601 /* RecordingControls.swift */,
 				CC3300000000000000000701 /* NotchCapsule.swift */,
 				CC3300000000000000001401 /* PanelControls.swift */,
+				CC3300000000000000001701 /* MainPanelReturn.swift */,
 			);
 			path = ViewModel;
 			sourceTree = "<group>";
@@ -267,6 +275,7 @@
 				CC3300000000000000001101 /* HotkeyCheck.swift */,
 				CC3300000000000000001201 /* MicConverter.swift */,
 				CC3300000000000000001801 /* TrimExport.swift */,
+				CC3300000000000000001501 /* PanelReturn.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -279,6 +288,7 @@
 				CC3300000000000000000901 /* AudioMixTests.swift */,
 				CC3300000000000000001301 /* MicConverterTests.swift */,
 				CC3300000000000000001901 /* TrimExportTests.swift */,
+				CC3300000000000000001601 /* PanelReturnTests.swift */,
 			);
 			path = QuickRecorderTests;
 			sourceTree = "<group>";
@@ -434,6 +444,8 @@
 				CC3300000000000000001202 /* MicConverter.swift in Sources */,
 				CC3300000000000000001402 /* PanelControls.swift in Sources */,
 				CC3300000000000000001802 /* TrimExport.swift in Sources */,
+				CC3300000000000000001502 /* PanelReturn.swift in Sources */,
+				CC3300000000000000001702 /* MainPanelReturn.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -459,6 +471,8 @@
 				CC3300000000000000001303 /* MicConverterTests.swift in Sources */,
 				CC3300000000000000001803 /* TrimExport.swift in Sources */,
 				CC3300000000000000001903 /* TrimExportTests.swift in Sources */,
+				CC3300000000000000001503 /* PanelReturn.swift in Sources */,
+				CC3300000000000000001603 /* PanelReturnTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

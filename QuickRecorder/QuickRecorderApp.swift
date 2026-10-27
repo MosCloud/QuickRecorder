@@ -277,33 +277,35 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
     }
     
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        if SCContext.stream == nil {
-            let visible = NSApp.windows.filter({ !$0.title.contains("Item-0") && !$0.title.isEmpty && $0.isVisible })
-            if visible.isEmpty {
-                let content = NSHostingView(rootView: ContentView())
-                let mainPanel = EscPanel(contentRect: NSRect(origin: .zero, size: content.fittingSize), styleMask: [.fullSizeContentView, .nonactivatingPanel], backing: .buffered, defer: false)
-                mainPanel.contentView = content
-                // The window shadow outlines a borderless window in a dark line, which shows as a black rim around Liquid Glass
-                mainPanel.hasShadow = ud.string(forKey: "capsuleMaterial") != PanelMaterial.glass.rawValue
-                mainPanel.title = "QuickRecorder".local
-                mainPanel.isOpaque = false
-                mainPanel.level = .floating
-                mainPanel.isRestorable = false
-                mainPanel.backgroundColor = .clear
-                mainPanel.isReleasedWhenClosed = false
-                mainPanel.isMovableByWindowBackground = true
-                mainPanel.collectionBehavior = [.canJoinAllSpaces]
-                mainPanel.center()
-                if let screen = mainPanel.screen {
-                    let wX = (screen.frame.width - mainPanel.frame.width) / 2 + screen.frame.minX
-                    let wY = (screen.frame.height - mainPanel.frame.height) / 2 + screen.frame.minY
-                    mainPanel.setFrameOrigin(NSPoint(x: wX, y: wY))
-                }
-                mainPanel.makeKeyAndOrderFront(self)
-                RecordingControls.shared.closeMenuBarPanel()
-            }
-        }
+        let visible = NSApp.windows.filter({ !$0.title.contains("Item-0") && !$0.title.isEmpty && $0.isVisible })
+        if visible.isEmpty { showMainPanel() }
         return false
+    }
+
+    /// Shows the main panel in the middle of the screen, unless it's already there or a recording is running.
+    @MainActor func showMainPanel() {
+        guard SCContext.stream == nil, !NSApp.windows.contains(where: { $0.title == "QuickRecorder".local && $0.isVisible }) else { return }
+        let content = NSHostingView(rootView: ContentView())
+        let mainPanel = EscPanel(contentRect: NSRect(origin: .zero, size: content.fittingSize), styleMask: [.fullSizeContentView, .nonactivatingPanel], backing: .buffered, defer: false)
+        mainPanel.contentView = content
+        // The window shadow outlines a borderless window in a dark line, which shows as a black rim around Liquid Glass
+        mainPanel.hasShadow = ud.string(forKey: "capsuleMaterial") != PanelMaterial.glass.rawValue
+        mainPanel.title = "QuickRecorder".local
+        mainPanel.isOpaque = false
+        mainPanel.level = .floating
+        mainPanel.isRestorable = false
+        mainPanel.backgroundColor = .clear
+        mainPanel.isReleasedWhenClosed = false
+        mainPanel.isMovableByWindowBackground = true
+        mainPanel.collectionBehavior = [.canJoinAllSpaces]
+        mainPanel.center()
+        if let screen = mainPanel.screen {
+            let wX = (screen.frame.width - mainPanel.frame.width) / 2 + screen.frame.minX
+            let wY = (screen.frame.height - mainPanel.frame.height) / 2 + screen.frame.minY
+            mainPanel.setFrameOrigin(NSPoint(x: wX, y: wY))
+        }
+        mainPanel.makeKeyAndOrderFront(self)
+        RecordingControls.shared.closeMenuBarPanel()
     }
     
     func openSettingPanel() {
