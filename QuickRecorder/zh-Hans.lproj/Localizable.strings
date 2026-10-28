@@ -215,6 +215,7 @@
 "Frosted Glass" = "毛玻璃";
 "Opacity When Idle" = "鼠标移开后的不透明度";
 "At least one of them stays on. The capsule hangs below the notch and never appears in recordings." = "两者至少保留一个。胶囊固定在刘海下方，任何情况下都不会出现在录像里。";
+"Start Recording" = "开始录制";
 "Recording" = "录制中";
 "Paused" = "已暂停";
 "Pause Recording" = "暂停录制";
