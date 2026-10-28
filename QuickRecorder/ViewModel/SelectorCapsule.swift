@@ -663,6 +663,8 @@ final class FloatingCapsulePanel: NSPanel {
     private var base = NSSize.zero
     /// Room above the capsule for the tallest bubble
     private let headroom: CGFloat = 300
+    /// Room on each side, for a bubble wider than a short capsule under it: the System Audio one's microphone (#100)
+    private let sideRoom: CGFloat = 150
 
     override var canBecomeKey: Bool { true }
     override func cancelOperation(_ sender: Any?) { onCancel?() }
@@ -699,16 +701,27 @@ final class FloatingCapsulePanel: NSPanel {
 
     @MainActor
     private func fit(bubbleOpen: Bool) {
-        let height = base.height + (bubbleOpen ? headroom : 0)
         if bubbleOpen {
-            setFrame(NSRect(x: frame.minX, y: frame.minY, width: frame.width, height: height), display: true)
+            setFrame(fitted(bubbleOpen: true), display: true)
         } else {
             // After the bubble's closing animation, if none opened meanwhile
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
                 guard let self, CapsuleBubbles.shared.open == nil else { return }
-                setFrame(NSRect(x: frame.minX, y: frame.minY, width: frame.width, height: height), display: true)
+                setFrame(fitted(bubbleOpen: false), display: true)
             }
         }
+    }
+
+    /// Grown the same on both sides, so the capsule centred in it stays put; no wider than the screen allows either side
+    private func fitted(bubbleOpen: Bool) -> NSRect {
+        var side: CGFloat = 0
+        if bubbleOpen {
+            let visible = screen?.visibleFrame ?? frame
+            let left = frame.midX - base.width / 2 - visible.minX, right = visible.maxX - frame.midX - base.width / 2
+            side = max(0, min(sideRoom, left, right))
+        }
+        let width = base.width + 2 * side
+        return NSRect(x: frame.midX - width / 2, y: frame.minY, width: width, height: base.height + (bubbleOpen ? headroom : 0))
     }
 }
 
@@ -720,6 +733,8 @@ private struct FloatingRoot<Content: View>: View {
             Spacer(minLength: 0)
             content.padding(10)
         }
+        // Wide as the panel grows for a bubble, or the hosting view caps the panel at the capsule's width (#100)
+        .frame(maxWidth: .infinity)
         .onHover { inside in
             if inside { NSApp.windows.first { $0 is FloatingCapsulePanel && $0.isVisible }?.makeKey() }
         }
