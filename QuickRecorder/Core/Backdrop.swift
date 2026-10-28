@@ -7,9 +7,9 @@ import Foundation
 
 /// What a recording puts behind what it records (#83)
 enum Backdrop {
-    /// Whether `type` recordings use the chosen background. Screen and area recordings show the screen as it is,
-    /// so a colour picked for an app can't leak into a full-screen recording started from a hotkey or a script.
-    static func applies(to type: StreamType) -> Bool { [.window, .windows, .application].contains(type) }
+    /// Whether `type` recordings use the chosen background (#117: application recordings only — a window recording
+    /// is the window itself, with no area for a backdrop; screen and area recordings show the screen as it is).
+    static func applies(to type: StreamType) -> Bool { type == .application }
 
     /// Whether a window draws the desktop picture: WindowManager's "Wallpaper" window on macOS 27, the Dock's windows
     /// other than the Dock itself and Launchpad on older systems

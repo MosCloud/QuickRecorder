@@ -58,7 +58,7 @@ struct WinSelector: View {
             // Refresh's own settings, as a right-click opens the microphone's and the timer's
             SelectorCapsule(leading: [CapsuleLeading(symbol: "arrow.clockwise", label: "Refresh".local, spins: true, action: refresh,
                                                      bubble: AnyView(listSettings))],
-                            screen: display?.nsScreen ?? NSScreen.main, canStart: selected.count >= 1) {
+                            screen: display?.nsScreen ?? NSScreen.main, showsBackground: false, canStart: selected.count >= 1) {
                 startRecording(autoStop: $0)
             }
             Spacer()

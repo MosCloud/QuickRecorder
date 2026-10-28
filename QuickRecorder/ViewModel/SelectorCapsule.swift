@@ -30,8 +30,14 @@ final class CapsuleBubbles: ObservableObject {
     private var extraHitAreas: [WeakView] = []
     private var monitors: [Any] = []
 
-    func register(hitArea view: NSView?) {
-        extraHitAreas = view.map { [WeakView(view: $0)] } ?? []
+    /// Surfaces of the open bubble kept where they are: the colour window and the system panel it opens (#117)
+    func addHitArea(_ view: NSView) {
+        extraHitAreas.removeAll { $0.view == nil || $0.view === view }
+        extraHitAreas.append(WeakView(view: view))
+    }
+
+    func removeHitArea(_ view: NSView) {
+        extraHitAreas.removeAll { $0.view === nil || $0.view === view }
     }
 
     func toggle(_ bubble: CapsuleBubble) { set(open == bubble ? nil : bubble) }
@@ -695,7 +701,11 @@ private struct BubbleFrameReporter: NSViewRepresentable {
         override func layout() { super.layout(); report() }
 
         private func report() {
-            MainActor.assumeIsolated { ColorWindow.shared.note(view: self) }
+            guard window != nil else { return }
+            MainActor.assumeIsolated {
+                ColorWindow.shared.note(view: self)
+                CapsuleBubbles.shared.addHitArea(self)
+            }
         }
     }
 }
@@ -835,3 +845,4 @@ struct SelectableCard<Thumbnail: View>: View {
         .onHover { h in withAnimation(.easeOut(duration: 0.15)) { hovering = h } }
     }
 }
+

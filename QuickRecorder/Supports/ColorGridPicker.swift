@@ -64,23 +64,14 @@ struct BackgroundColorWindow: View {
             .onDisappear { model.hovered = nil }
         }
         .padding(16)
-        .background { chrome }
+        // The same three materials the capsule and the main panel use (#117)
+        .background(CapsuleMaterial(shape: RoundedRectangle(cornerRadius: 12, style: .continuous)))
         .overlay {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .strokeBorder(.primary.opacity(0.10), lineWidth: 0.5)
         }
         .environment(\.colorScheme, material == .black ? .dark : colorScheme)
         .fixedSize()
-    }
-
-    /// Glass only shows its active look in a key window, which this one can never be: the blur stands in for it
-    @ViewBuilder private var chrome: some View {
-        let shape = RoundedRectangle(cornerRadius: 12, style: .continuous)
-        if material == .black {
-            shape.fill(Color.black)
-        } else {
-            shape.fill(.regularMaterial).environment(\.controlActiveState, .active)
-        }
     }
 }
 
@@ -149,6 +140,8 @@ private final class SystemColorPanel: NSObject {
         panel.setTarget(self)
         panel.setAction(#selector(changed(_:)))
         panel.orderFront(nil)
+        // Clicks in the panel are part of the bubble's surface: they must not dismiss it (#117)
+        if let view = panel.contentView { CapsuleBubbles.shared.addHitArea(view) }
     }
 
     @objc private func changed(_ sender: NSColorPanel) {
