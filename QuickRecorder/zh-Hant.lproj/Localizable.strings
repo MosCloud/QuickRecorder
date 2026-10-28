@@ -166,7 +166,6 @@
 "Main Panel" = "主面板";
 "More Info" = "更多資訊";
 "Keep Main Panel on Top" = "主面板置頂";
-"The main panel floats above other windows. Turn it off to let other windows cover it; the Dock icon, the hotkey or the menu bar brings it back to the front." = "主面板會浮在其他視窗上面。關掉後，其他視窗可以蓋住它；點 Dock 圖示、按快速鍵或點選單列，它會回到最前。";
 "Hotkey" = "快速鍵";
 "Blocklist" = "遮蔽列表";
 "Select..." = "選擇...";

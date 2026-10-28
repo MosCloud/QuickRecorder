@@ -96,9 +96,7 @@ struct GeneralSettingsView: View {
                 }
             }
             Section("Main Panel") {
-                InfoToggle("Keep Main Panel on Top",
-                           info: "The main panel floats above other windows. Turn it off to let other windows cover it; the Dock icon, the hotkey or the menu bar brings it back to the front.",
-                           isOn: $mainPanelOnTop)
+                InfoToggle("Keep Main Panel on Top", isOn: $mainPanelOnTop)
             }
             Section {
             } footer: {
