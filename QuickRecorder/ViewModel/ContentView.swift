@@ -10,14 +10,10 @@ import AVFoundation
 import ScreenCaptureKit
 import KeyboardShortcuts
 
-/// The main panel (#48): the recording tiles at 90% of their original size, then the microphone, Preferences and Quit,
+/// The main panel (#48): the recording tiles at 90% of their original size, then Close over Preferences,
 /// on the material the floating capsule uses.
 struct ContentView: View {
     @State private var isDevicePopoverShowing = false
-    @State private var closeHovering = false
-    @State private var micList = SCContext.getMicrophone()
-    @AppStorage("recordMic") private var recordMic: Bool = false
-    @AppStorage("micDevice") private var micDevice: String = "default"
     @AppStorage("showOnDock") private var showOnDock: Bool = true
     @AppStorage("showMenubar") private var showMenubar: Bool = false
     @AppStorage("capsuleMaterial") private var material: PanelMaterial = .glass
@@ -30,43 +26,31 @@ struct ContentView: View {
 
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: 14 * k, style: .continuous)
-        ZStack(alignment: .topLeading) {
-            HStack {
-                tile("System Audio", "waveform", hotkey: .startWithAudio) { appDelegate.recordSystemAudio() }
-                separator
-                tile("Screen", "tv.inset.filled", hotkey: .startWithScreen) { appDelegate.chooseScreen() }
-                separator
-                tile("Screen Area", "viewfinder", hotkey: .startWithArea) { appDelegate.chooseArea() }
-                separator
-                tile("Application", "app", symbolSize: 38, overlayer: "App", hotkey: nil) { appDelegate.chooseApps() }
-                separator
-                tile("Window", "macwindow", hotkey: .startWithWindow) { appDelegate.chooseWindow() }
-                separator
-                tile("Mobile Device", "apps.ipad", hotkey: nil) { isDevicePopoverShowing = true }
-                    .popover(isPresented: $isDevicePopoverShowing, arrowEdge: .bottom) {
-                        iDevicePopoverView(closePopover: {
-                            // A device was chosen: its recording starts right away
-                            isDevicePopoverShowing = false
-                            MainPanelReturn.shared.startPressed()
-                        })
-                    }
-                separator
-                microphoneAndApp
-            }
-            .padding(.vertical, 10 * k)
-            .padding(.horizontal, 20 * k)
-            Button {
-                closeMainWindow()
-            } label: {
-                Image(systemName: "x.circle")
-                    .font(.system(size: 13 * k, weight: .bold))
-                    .opacity(closeHovering ? 1 : 0.4)
-                    .foregroundStyle(.secondary)
-            }
-            .buttonStyle(.plain)
-            .onHover { closeHovering = $0 }
-            .padding([.horizontal, .top], 7 * k)
+        // System Audio, the least used, comes last (#96)
+        HStack {
+            tile("Screen", "tv.inset.filled", hotkey: .startWithScreen) { appDelegate.chooseScreen() }
+            separator
+            tile("Screen Area", "viewfinder", hotkey: .startWithArea) { appDelegate.chooseArea() }
+            separator
+            tile("Application", "app", symbolSize: 38, overlayer: "App", hotkey: nil) { appDelegate.chooseApps() }
+            separator
+            tile("Window", "macwindow", hotkey: .startWithWindow) { appDelegate.chooseWindow() }
+            separator
+            tile("Mobile Device", "apps.ipad", hotkey: nil) { isDevicePopoverShowing = true }
+                .popover(isPresented: $isDevicePopoverShowing, arrowEdge: .bottom) {
+                    iDevicePopoverView(closePopover: {
+                        // A device was chosen: its recording starts right away
+                        isDevicePopoverShowing = false
+                        MainPanelReturn.shared.startPressed()
+                    })
+                }
+            separator
+            tile("System Audio", "waveform", hotkey: .startWithAudio) { appDelegate.recordSystemAudio() }
+            separator
+            appButtons
         }
+        .padding(.vertical, 10 * k)
+        .padding(.horizontal, 20 * k)
         .environment(\.colorScheme, material == .black ? .dark : colorScheme)
         .background {
             // An NSHostingView takes the mouse-down, so the panel's isMovableByWindowBackground alone moves nothing
@@ -77,11 +61,6 @@ struct ContentView: View {
         .allowsWindowActivationEvents(true)
         .fixedSize()
         .focusable(false)
-        .onChange(of: recordMic) { Task { await SCContext.performMicCheck() } }
-        .onAppear {
-            if micList.isEmpty { recordMic = false }
-            if !micList.map({ $0.localizedName }).contains(micDevice) { micDevice = "default" }
-        }
     }
 
     private var separator: some View { Divider().frame(height: 70 * k) }
@@ -95,44 +74,25 @@ struct ContentView: View {
         }
     }
 
-    /// The microphone over its device's name, a short divider, then Preferences and Quit side by side.
-    /// The microphone applies to every recording, so it no longer sits under the System Audio tile.
-    private var microphoneAndApp: some View {
-        let device = micDevice == "default" ? "Default".local : micDevice
-        return VStack(spacing: 4 * k) {
-            MicToggle(isOn: $recordMic, size: 26 * k)
-                .disabled(micList.isEmpty)
-            Button {
-                MicDeviceMenu.shared.show(devices: micList.map { $0.localizedName })
-            } label: {
-                HStack(spacing: 2) {
-                    Text(device)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                    Image(systemName: "chevron.down").font(.system(size: 7, weight: .semibold))
-                }
-                .font(.system(size: 9))
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: 70 * k)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .disabled(!recordMic)
-            .help(device)
-            Divider().frame(width: 40 * k).padding(.vertical, 1)
-            HStack(spacing: 2) {
-                IconButton(symbol: "gearshape", help: "Preferences".local, size: 26 * k) {
+    /// Close over Preferences, a short rule between them as the dividers between the tiles; Quit beside Preferences when
+    /// there is no Dock or menu bar icon to quit from. The microphone is in every capsule now, the System Audio tile's too (#96).
+    private var appButtons: some View {
+        VStack(spacing: 5 * k) {
+            IconButton(symbol: "xmark.circle", help: "Close".local, size: 32 * k) { closeMainWindow() }
+            Divider().frame(width: 22 * k)
+            HStack(spacing: 2 * k) {
+                IconButton(symbol: "gearshape", help: "Preferences".local, size: 32 * k) {
                     MainPanelReturn.shared.settingsOpened()
                     closeMainWindow()
                     appDelegate.openSettingPanel()
                 }
-                // Otherwise there is no Dock or menu bar icon to quit from
+                // A power symbol, so it doesn't read as a second Close
                 if !showOnDock && !showMenubar {
-                    IconButton(symbol: "xmark.circle", help: "Quit".local, hoverTint: .darkMyRed, size: 26 * k) { NSApp.terminate(nil) }
+                    IconButton(symbol: "power", help: "Quit".local, hoverTint: .darkMyRed, size: 32 * k) { NSApp.terminate(nil) }
                 }
             }
         }
-        .frame(width: 76 * k)
+        .padding(.horizontal, 4 * k)
     }
 
     /// The floating capsule's three materials
@@ -232,14 +192,32 @@ struct CountdownView: View {
 }
 
 
+/// The System Audio tile's capsule (#96): Close, the microphone and the timer, then Record
+struct SystemAudioCapsule: View {
+    @State private var nsWindow: NSWindow?
+    let display: SCDisplay
+
+    var body: some View {
+        SelectorCapsule(leading: [CapsuleLeading(symbol: "xmark", label: "Close".local, action: { nsWindow?.close() })],
+                        screen: display.nsScreen, recordsVideo: false) { autoStop in
+            closeAllWindow()
+            AppDelegate.shared.countdownAndRecord(type: "audio", screen: display, autoStop: autoStop)
+        }
+        .background(WindowAccessor(onWindowOpen: { nsWindow = $0 }))
+    }
+}
+
 extension AppDelegate {
     // What the tiles do, in the main panel and the menu bar panel alike
 
+    /// A capsule first, as the other tiles open a picker; the hotkey and AppleScript still start right away
     func recordSystemAudio() {
-        guard let display = SCContext.getSCDisplayWithMouse() else { return }
+        guard let display = SCContext.getSCDisplayWithMouse(), let screen = display.nsScreen else { return }
         closeMainWindow()
-        createCountdownPanel(screen: display) {
-            AppDelegate.shared.prepRecord(type: "audio", screens: SCContext.getSCDisplayWithMouse(), windows: nil, applications: nil)
+        MainActor.assumeIsolated {
+            let panel = FloatingCapsulePanel.show(SystemAudioCapsule(display: display), title: "Start Recording".local,
+                                                  centerX: screen.frame.midX, bottom: screen.visibleFrame.minY + 60)
+            panel.onCancel = { [weak panel] in panel?.close() }
         }
     }
 

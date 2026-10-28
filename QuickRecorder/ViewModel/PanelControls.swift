@@ -38,38 +38,6 @@ struct TilePress: ButtonStyle {
     }
 }
 
-/// The microphone is its own switch: a green mic while on, a grey slashed mic while off.
-struct MicToggle: View {
-    @Binding var isOn: Bool
-    var size: CGFloat = 26
-    @State private var hovering = false
-    @State private var bounces = 0
-
-    /// 1.5× the system speed for symbol effects; the owner found 1× slow (#46)
-    private let speed = 1.5
-
-    var body: some View {
-        Button {
-            isOn.toggle()
-            if isOn { bounces += 1 }
-        } label: {
-            Image(systemName: isOn ? "mic.fill" : "mic.slash")
-                .font(.system(size: 14 * size / 26, weight: .semibold))
-                .foregroundStyle(isOn ? AnyShapeStyle(.green) : AnyShapeStyle(.secondary))
-                .contentTransition(.symbolEffect(.replace, options: .speed(speed)))
-                .symbolEffect(.bounce, options: .speed(speed), value: bounces)
-                .frame(width: size, height: size)
-                .background(.primary.opacity(hovering ? 0.12 : 0.0001), in: Circle())
-                .animation(.smooth(duration: 0.2 / speed), value: isOn)
-        }
-        .buttonStyle(.plain)
-        .onHover { hovering = $0 }
-        .help("Microphone".local)
-        .accessibilityLabel("Microphone".local)
-        .accessibilityAddTraits(isOn ? .isSelected : [])
-    }
-}
-
 /// An icon-only button: secondary until hovered, then a round highlight and `hoverTint`.
 struct IconButton: View {
     let symbol: String
@@ -91,29 +59,5 @@ struct IconButton: View {
         .onHover { hovering = $0 }
         .help(help)
         .accessibilityLabel(help)
-    }
-}
-
-/// Pops up the microphones under the pointer, with a checkmark on the chosen one. Drawn by AppKit:
-/// SwiftUI's Menu restyles a custom label, and the device's name has to stay small.
-@MainActor
-final class MicDeviceMenu: NSObject {
-    static let shared = MicDeviceMenu()
-
-    func show(devices: [String]) {
-        let selected = ud.string(forKey: "micDevice") ?? "default"
-        let menu = NSMenu()
-        for (title, tag) in [("Default".local, "default")] + devices.map({ ($0, $0) }) {
-            let item = NSMenuItem(title: title, action: #selector(choose(_:)), keyEquivalent: "")
-            item.target = self
-            item.representedObject = tag
-            item.state = tag == selected ? .on : .off
-            menu.addItem(item)
-        }
-        menu.popUp(positioning: nil, at: NSEvent.mouseLocation, in: nil)
-    }
-
-    @objc private func choose(_ sender: NSMenuItem) {
-        ud.set(sender.representedObject as? String, forKey: "micDevice")
     }
 }
