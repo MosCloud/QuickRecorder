@@ -19,26 +19,27 @@ struct MenuBarPanel: View {
     var body: some View {
         VStack(spacing: 0) {
             VStack(spacing: 4) {
+                // The main panel's order: System Audio, the least used, comes last (#96)
                 HStack(spacing: 4) {
-                    tile("System Audio", "waveform", hotkey: .startWithAudio) { appDelegate.recordSystemAudio() }
-                    separator
                     tile("Screen", "tv.inset.filled", hotkey: .startWithScreen) { appDelegate.chooseScreen() }
                     separator
                     tile("Screen Area", "viewfinder", hotkey: .startWithArea) { appDelegate.chooseArea() }
+                    separator
+                    tile("Application", "app", overlayer: "App", hotkey: nil) { appDelegate.chooseApps() }
                 }
                 HStack(spacing: 9) {
                     // A divider is vertical inside an HStack; the VStack around each makes it horizontal
                     ForEach(0..<3, id: \.self) { _ in VStack { Divider() }.frame(width: 76).frame(width: 92) }
                 }
                 HStack(spacing: 4) {
-                    tile("Application", "app", overlayer: "App", hotkey: nil) { appDelegate.chooseApps() }
-                    separator
                     tile("Window", "macwindow", hotkey: .startWithWindow) { appDelegate.chooseWindow() }
                     separator
                     RecordTile(title: "Mobile Device", symbol: "apps.ipad", compact: true) { isDevicePopoverShowing = true }
                     .popover(isPresented: $isDevicePopoverShowing, arrowEdge: .bottom) {
                         iDevicePopoverView(closePopover: { isDevicePopoverShowing = false; close() })
                     }
+                    separator
+                    tile("System Audio", "waveform", hotkey: .startWithAudio) { appDelegate.recordSystemAudio() }
                 }
             }
             .padding(8)

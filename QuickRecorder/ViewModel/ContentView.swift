@@ -26,9 +26,8 @@ struct ContentView: View {
 
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: 14 * k, style: .continuous)
+        // System Audio, the least used, comes last (#96)
         HStack {
-            tile("System Audio", "waveform", hotkey: .startWithAudio) { appDelegate.recordSystemAudio() }
-            separator
             tile("Screen", "tv.inset.filled", hotkey: .startWithScreen) { appDelegate.chooseScreen() }
             separator
             tile("Screen Area", "viewfinder", hotkey: .startWithArea) { appDelegate.chooseArea() }
@@ -45,6 +44,8 @@ struct ContentView: View {
                         MainPanelReturn.shared.startPressed()
                     })
                 }
+            separator
+            tile("System Audio", "waveform", hotkey: .startWithAudio) { appDelegate.recordSystemAudio() }
             separator
             appButtons
         }
