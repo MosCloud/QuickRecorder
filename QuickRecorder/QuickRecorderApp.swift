@@ -282,6 +282,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
     }
     
     func applicationDidFinishLaunching(_ aNotification: Notification) {
+        SCContext.migrateBackgroundPresets()
         closeAllWindow()
         // Launched hidden, by a script command or as a hidden login item, it keeps the main panel to itself (#88)
         if showOnDock && !NSApp.isHidden { _ = applicationShouldHandleReopen(NSApp, hasVisibleWindows: true) }

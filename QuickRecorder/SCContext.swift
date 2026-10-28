@@ -232,6 +232,19 @@ class SCContext {
         return backgroundColor
     }
 
+    /// Background presets that moved into the custom colour window (#117): the recording keeps the colour it had,
+    /// only now as Custom with that colour picked
+    static func migrateBackgroundPresets() {
+        guard let type = BackgroundType(rawValue: ud.string(forKey: "background") ?? "") else { return }
+        switch type {
+        case .yellow, .orange, .red:
+            ud.setColor(Color(cgColor: color(for: type)), forKey: "userColor")
+            ud.set(BackgroundType.custom.rawValue, forKey: "background")
+        default:
+            break
+        }
+    }
+
     /// The colour a background fills with; the capsule's swatches show the same (#79)
     static func color(for type: BackgroundType) -> CGColor {
         switch type {

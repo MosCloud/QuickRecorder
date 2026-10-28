@@ -26,7 +26,13 @@ final class CapsuleBubbles: ObservableObject {
     /// against them as they are when it comes: a frame noted earlier went stale, caught mid scale-in at 85% (#105)
     fileprivate weak var bubbleView: NSView?
     fileprivate var sourceViews: [CapsuleBubble: WeakView] = [:]
+    /// A surface of the open bubble that lives in a window of its own: the background colour window (#117)
+    private var extraHitAreas: [WeakView] = []
     private var monitors: [Any] = []
+
+    func register(hitArea view: NSView?) {
+        extraHitAreas = view.map { [WeakView(view: $0)] } ?? []
+    }
 
     func toggle(_ bubble: CapsuleBubble) { set(open == bubble ? nil : bubble) }
 
@@ -39,6 +45,8 @@ final class CapsuleBubbles: ObservableObject {
 
     private func set(_ bubble: CapsuleBubble?) {
         startDismissal()
+        // The colour window is part of the bubble that opened it: it goes when the bubble does
+        if bubble == nil { ColorWindow.shared.close() }
         withAnimation(.spring(response: 0.3, dampingFraction: 0.82)) { open = bubble }
     }
 
@@ -53,6 +61,7 @@ final class CapsuleBubbles: ObservableObject {
                 let bubbles = CapsuleBubbles.shared
                 guard let open = bubbles.open else { return }
                 if bubbles.bubbleView?.covers(point, in: window) == true { return }
+                if bubbles.extraHitAreas.contains(where: { $0.view?.covers(point, in: window) == true }) { return }
                 if bubbles.sourceViews[open]?.view?.covers(point, in: window) == true { return }
                 bubbles.close()
             }
@@ -67,7 +76,10 @@ final class CapsuleBubbles: ObservableObject {
         monitors.append(NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             let isEscape = event.keyCode == 53
             let closed = MainActor.assumeIsolated {
-                guard isEscape, CapsuleBubbles.shared.open != nil else { return false }
+                guard isEscape else { return false }
+                // The colour window is a layer finer than the bubble: Esc closes it before the bubble
+                if ColorWindow.shared.isOpen { ColorWindow.shared.close(); return true }
+                guard CapsuleBubbles.shared.open != nil else { return false }
                 CapsuleBubbles.shared.close()
                 return true
             }
@@ -352,7 +364,7 @@ private struct CapsuleTimer: View {
             autoStopDuration = next.duration.totalSeconds
             autoStopOn = next.on
         } label: {
-            Image(systemName: autoStopOn ? "timer" : "timer.slash")
+            Image(systemName: autoStopOn ? "alarm" : "alarm.slash")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(autoStopOn ? AnyShapeStyle(.red) : AnyShapeStyle(.secondary))
                 .contentTransition(.symbolEffect(.replace, options: .speed(speed)))
@@ -532,7 +544,7 @@ private struct OptionsBubble: View {
     @AppStorage("videoQuality") private var videoQuality = 1.0
     @AppStorage("background")   private var background: BackgroundType = .wallpaper
     @AppStorage("recordHDR")    private var recordHDR = false
-    @State private var customColor = ud.color(forKey: "userColor") ?? .black
+    @ObservedObject private var colors = ColorWindow.shared.model
 
     var body: some View {
         let retina = (screen?.backingScaleFactor ?? 2) > 1
@@ -553,12 +565,8 @@ private struct OptionsBubble: View {
                     Segments(items: [(1.0, "High ".local), (0.7, "Medium ".local), (0.3, "Low ".local)], value: $videoQuality)
                 }
                 if showsBackground {
-                    GridRow { label("Background"); Swatches(value: $background, customColor: customColor) }
-                    // Custom opens its colours right here, rather than in Settings (#92)
-                    if background == .custom {
-                        GridRow { Color.clear.frame(width: 0, height: 0); ColorGridPicker(selection: $customColor) }
-                            .transition(.opacity)
-                    }
+                    // Custom opens the colour window beside the bubble, which stays open while it is used (#117)
+                    GridRow { label("Background"); Swatches(value: $background, customColor: colors.color) }
                 }
                 GridRow {
                     label("HDR")
@@ -566,6 +574,7 @@ private struct OptionsBubble: View {
                 }
             }
         }
+        .background(BubbleFrameReporter())
     }
 
     private func label(_ key: String) -> some View {
@@ -629,18 +638,22 @@ private struct FrameRateStepper: View {
     }
 }
 
-/// The backgrounds as swatches, the chosen one ringed like a chosen thumbnail. Custom is the colour picked in Settings
-/// for now (#92 moves the picking here).
+/// The backgrounds as swatches, the chosen one ringed like a chosen thumbnail. Custom is the colour picked in the
+/// window it opens (#117); the presets are the ones a recording asks for, the rest of the palette lives in that window.
 private struct Swatches: View {
     @Binding var value: BackgroundType
     let customColor: Color
     @AppStorage("withAlpha") private var withAlpha = false
 
     var body: some View {
-        let types: [BackgroundType] = [.wallpaper] + (withAlpha ? [.clear] : []) + [.black, .white, .gray, .yellow, .orange, .green, .blue, .red, .custom]
+        let types: [BackgroundType] = [.wallpaper] + (withAlpha ? [.clear] : []) + [.black, .white, .gray, .blue, .green, .custom]
         HStack(spacing: 2) {
             ForEach(types, id: \.self) { type in
-                Button { withAnimation(.smooth(duration: 0.2)) { value = type } } label: {
+                Button {
+                    withAnimation(.smooth(duration: 0.2)) { value = type }
+                    // The window belongs to Custom: it opens with it and closes when another background is picked
+                    if type == .custom { ColorWindow.shared.show() } else { ColorWindow.shared.close() }
+                } label: {
                     swatch(type).frame(width: 16, height: 16)
                         .overlay(Circle().strokeBorder(.primary.opacity(0.25), lineWidth: 0.5))
                         .padding(3)
@@ -667,6 +680,22 @@ private struct Swatches: View {
                 .overlay(Circle().strokeBorder(AngularGradient(colors: [.red, .yellow, .green, .blue, .purple, .red], center: .center), lineWidth: 3.5))
         default:
             Circle().fill(Color(cgColor: SCContext.color(for: type)))
+        }
+    }
+}
+
+/// Reports where the bubble is on screen, in AppKit's bottom-left coordinates, so the colour window can sit beside it
+private struct BubbleFrameReporter: NSViewRepresentable {
+    func makeNSView(context: Context) -> Reporter { Reporter() }
+    func updateNSView(_ view: Reporter, context: Context) {}
+
+    final class Reporter: NSView {
+        override func hitTest(_ point: NSPoint) -> NSView? { nil }
+        override func viewDidMoveToWindow() { super.viewDidMoveToWindow(); report() }
+        override func layout() { super.layout(); report() }
+
+        private func report() {
+            MainActor.assumeIsolated { ColorWindow.shared.note(view: self) }
         }
     }
 }

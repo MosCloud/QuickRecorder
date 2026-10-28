@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CC3300000000000000011702 /* ColorWindowPlacement.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000011701 /* ColorWindowPlacement.swift */; };
+		CC3300000000000000011703 /* ColorWindowPlacement.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000011701 /* ColorWindowPlacement.swift */; };
+		CC3300000000000000011705 /* ColorWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000011704 /* ColorWindow.swift */; };
+		CC3300000000000000011707 /* ColorWindowPlacementTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000011706 /* ColorWindowPlacementTests.swift */; };
 		1821F2E82CF4B226004A2EC0 /* MenuBarPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1821F2E72CF4B226004A2EC0 /* MenuBarPanel.swift */; };
 		184CAEC72BDCCC2300D61D57 /* AVContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 184CAEC62BDCCC2300D61D57 /* AVContext.swift */; };
 		184CAEC92BDDEC6800D61D57 /* AppBlockSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 184CAEC82BDDEC6800D61D57 /* AppBlockSelector.swift */; };
@@ -111,6 +115,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		CC3300000000000000011701 /* ColorWindowPlacement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorWindowPlacement.swift; sourceTree = "<group>"; };
+		CC3300000000000000011704 /* ColorWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorWindow.swift; sourceTree = "<group>"; };
+		CC3300000000000000011706 /* ColorWindowPlacementTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorWindowPlacementTests.swift; sourceTree = "<group>"; };
 		1821F2E72CF4B226004A2EC0 /* MenuBarPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarPanel.swift; sourceTree = "<group>"; };
 		184CAEC62BDCCC2300D61D57 /* AVContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVContext.swift; sourceTree = "<group>"; };
 		184CAEC82BDDEC6800D61D57 /* AppBlockSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBlockSelector.swift; sourceTree = "<group>"; };
@@ -233,6 +240,7 @@
 				18A551F32D0749C3008FC5F6 /* WindowAccessor.swift */,
 				18A551F42D0749C3008FC5F6 /* WindowHighlighter.swift */,
 				CC3300000000000000001001 /* ColorGridPicker.swift */,
+				CC3300000000000000011704 /* ColorWindow.swift */,
 			);
 			path = Supports;
 			sourceTree = "<group>";
@@ -339,6 +347,7 @@
 				CC3300000000000000004001 /* SizeTag.swift */,
 				CC3300000000000000003501 /* AutoStop.swift */,
 				CC3300000000000000003701 /* FrameRates.swift */,
+				CC3300000000000000011701 /* ColorWindowPlacement.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -362,6 +371,7 @@
 				CC3300000000000000004101 /* SizeTagTests.swift */,
 				CC3300000000000000003601 /* AutoStopTests.swift */,
 				CC3300000000000000003801 /* FrameRatesTests.swift */,
+				CC3300000000000000011706 /* ColorWindowPlacementTests.swift */,
 			);
 			path = QuickRecorderTests;
 			sourceTree = "<group>";
@@ -530,6 +540,8 @@
 				CC3300000000000000003502 /* AutoStop.swift in Sources */,
 				CC3300000000000000003702 /* FrameRates.swift in Sources */,
 				CC3300000000000000003902 /* SelectorCapsule.swift in Sources */,
+				CC3300000000000000011702 /* ColorWindowPlacement.swift in Sources */,
+				CC3300000000000000011705 /* ColorWindow.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -577,6 +589,8 @@
 				CC3300000000000000003603 /* AutoStopTests.swift in Sources */,
 				CC3300000000000000003703 /* FrameRates.swift in Sources */,
 				CC3300000000000000003803 /* FrameRatesTests.swift in Sources */,
+				CC3300000000000000011703 /* ColorWindowPlacement.swift in Sources */,
+				CC3300000000000000011707 /* ColorWindowPlacementTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
