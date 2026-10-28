@@ -244,8 +244,7 @@ extension AppDelegate {
     }
 
     func chooseScreen() {
-        closeMainWindow()
-        createNewWindow(view: ScreenSelector(), title: "Screen Selector".local, closesOnEsc: true)
+        openPicker(ScreenSelector(), title: "Screen Selector".local)
     }
 
     func chooseArea() {
@@ -267,13 +266,19 @@ extension AppDelegate {
     }
 
     func chooseApps() {
-        closeMainWindow()
-        createNewWindow(view: AppSelector(), title: "App Selector".local, closesOnEsc: true)
+        openPicker(AppSelector(), title: "App Selector".local)
     }
 
     func chooseWindow() {
+        openPicker(WinSelector(), title: "Window Selector".local)
+    }
+
+    /// A tile's picker brings QuickRecorder to the front, so the picker takes the keys, Esc among them (#95).
+    /// The panels the tiles sit on never activate it; a script's picker leaves the front app alone (#88)
+    private func openPicker(_ view: some View, title: String) {
         closeMainWindow()
-        createNewWindow(view: WinSelector(), title: "Window Selector".local, closesOnEsc: true)
+        NSApp.activate()
+        createNewWindow(view: view, title: title, closesOnEsc: true)
     }
 
     func showAreaSelector(size: NSSize, noPanel: Bool = false) {
