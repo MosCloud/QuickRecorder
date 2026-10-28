@@ -31,18 +31,46 @@ struct SettingsView: View {
     }
 }
 
+/// The title bar material behind the settings window's toolbar; clicks fall through to the tabs above it
+private final class SettingsHeaderStrip: NSVisualEffectView {
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
+}
+
 /// The settings window's toolbar looks like a preference pane's: its bar stays behind the tabs instead of
 /// appearing only while the pointer is over it
 private struct SettingsWindowStyle: NSViewRepresentable {
     func makeNSView(context: Context) -> NSView {
         let view = NSView()
-        DispatchQueue.main.async {
-            view.window?.toolbarStyle = .preference
-        }
+        apply(to: view)
         return view
     }
 
-    func updateNSView(_ view: NSView, context: Context) {}
+    func updateNSView(_ view: NSView, context: Context) { apply(to: view) }
+
+    private func apply(to view: NSView) {
+        DispatchQueue.main.async {
+            guard let window = view.window else { return }
+            window.toolbarStyle = .preference
+            // SwiftUI's settings window lets its title bar follow the content, which shows its background only on
+            // hover; an ordinary title bar keeps one there all the time
+            window.titlebarAppearsTransparent = false
+            window.titlebarSeparatorStyle = .line
+
+            // The window's content runs under the toolbar (.fullSizeContentView), and macOS 26 draws the toolbar's
+            // background only while the pointer is over it. A strip of title bar material behind it stays put.
+            guard let content = window.contentView,
+                  !content.subviews.contains(where: { $0 is SettingsHeaderStrip }) else { return }
+            let height = window.frame.height - window.contentLayoutRect.height
+            guard height > 0 else { return }
+            let strip = SettingsHeaderStrip(frame: NSRect(x: 0, y: content.bounds.height - height,
+                                                          width: content.bounds.width, height: height))
+            strip.material = .headerView
+            strip.blendingMode = .withinWindow
+            strip.state = .active
+            strip.autoresizingMask = [.width, .minYMargin]
+            content.addSubview(strip)
+        }
+    }
 }
 
 // MARK: - Rows
