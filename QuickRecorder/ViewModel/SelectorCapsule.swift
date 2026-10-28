@@ -200,6 +200,8 @@ struct SelectorCapsule: View {
     var screen: NSScreen?
     /// Screen and area recordings show the screen as it is (#83)
     var showsBackground = true
+    /// System audio has no picture (#96): no cursor, no Options, and its own audio is what it records
+    var recordsVideo = true
     var canStart = true
     /// Starts with the seconds after which to stop, 0 for never
     let start: (_ autoStop: TimeInterval) -> Void
@@ -219,8 +221,10 @@ struct SelectorCapsule: View {
         HStack(spacing: 4) {
             ForEach(leading) { LeadingButton(item: $0) }
             separator
-            CapsuleToggle(on: "cursorarrow", off: "cursorarrow.slash", tint: .blue, label: "Record Cursor".local, isOn: $showMouse)
-            CapsuleToggle(on: "speaker.wave.2.fill", off: "speaker.slash", tint: .orange, label: "App's Audio".local, isOn: $recordWinSound)
+            if recordsVideo {
+                CapsuleToggle(on: "cursorarrow", off: "cursorarrow.slash", tint: .blue, label: "Record Cursor".local, isOn: $showMouse)
+                CapsuleToggle(on: "speaker.wave.2.fill", off: "speaker.slash", tint: .orange, label: "App's Audio".local, isOn: $recordWinSound)
+            }
             // Click to switch on or off, right-click for its own settings: the microphone's device, the timer's duration
             CapsuleToggle(on: "mic.fill", off: "mic.slash", tint: .green, label: "Microphone".local, isOn: $recordMic, owns: .mic)
                 .disabled(micList.isEmpty)
@@ -228,8 +232,10 @@ struct SelectorCapsule: View {
                 .bubble(.mic) { MicBubble(devices: micList.map(\.localizedName)) }
             CapsuleTimer()
             separator
-            CapsuleIcon(symbol: "slider.horizontal.3", label: "Options".local, active: bubbles.open == .options) { bubbles.toggle(.options) }
-                .background(GeometryReporter(source: .options))
+            if recordsVideo {
+                CapsuleIcon(symbol: "slider.horizontal.3", label: "Options".local, active: bubbles.open == .options) { bubbles.toggle(.options) }
+                    .background(GeometryReporter(source: .options))
+            }
             Button {
                 bubbles.close()
                 start(autoStopOn ? TimeInterval(autoStopDuration) : 0)

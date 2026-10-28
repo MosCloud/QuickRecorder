@@ -3,7 +3,7 @@
 //  QuickRecorder
 //
 //  What the menu bar item opens while idle (#46): the main panel's tiles at about two-thirds size and in its order,
-//  over one line of icon buttons: the microphone switch with its device, Preferences and Quit. The controls are in PanelControls.swift.
+//  over one line of icon buttons: Preferences and Quit. The controls are in PanelControls.swift.
 //
 
 import SwiftUI
@@ -13,9 +13,6 @@ import KeyboardShortcuts
 struct MenuBarPanel: View {
     var close: () -> Void
     @State private var isDevicePopoverShowing = false
-    @State private var micList = SCContext.getMicrophone()
-    @AppStorage("recordMic") private var recordMic: Bool = false
-    @AppStorage("micDevice") private var micDevice: String = "default"
 
     var appDelegate = AppDelegate.shared
 
@@ -46,19 +43,8 @@ struct MenuBarPanel: View {
             }
             .padding(8)
             Divider()
+            // The microphone is in every capsule now, the System Audio tile's too (#96)
             HStack(spacing: 4) {
-                MicToggle(isOn: $recordMic)
-                    .disabled(micList.isEmpty)
-                Picker("", selection: $micDevice) {
-                    Text("Default".local).tag("default")
-                    ForEach(micList, id: \.self) { device in
-                        Text(device.localizedName).tag(device.localizedName)
-                    }
-                }
-                .labelsHidden()
-                .fixedSize()
-                .controlSize(.small)
-                .disabled(!recordMic)
                 Spacer()
                 IconButton(symbol: "gearshape", help: "Preferences".local) {
                     close()
@@ -70,11 +56,6 @@ struct MenuBarPanel: View {
             .padding(.vertical, 6)
         }
         .fixedSize()
-        .onChange(of: recordMic) { Task { await SCContext.performMicCheck() } }
-        .onAppear {
-            if micList.isEmpty { recordMic = false }
-            if !micList.map({ $0.localizedName }).contains(micDevice) { micDevice = "default" }
-        }
     }
 
     private var separator: some View { Divider().frame(height: 46) }
