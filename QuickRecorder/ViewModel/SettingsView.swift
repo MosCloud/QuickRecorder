@@ -25,6 +25,8 @@ struct SettingsView: View {
             BlocklistSettingsView()
                 .tabItem { Label("Blocklist", systemImage: "hand.raised") }
         }
+        // Safari's settings keep the toolbar's background behind the tabs instead of showing it on hover only
+        .toolbarBackgroundVisibility(.visible, for: .windowToolbar)
     }
 }
 
