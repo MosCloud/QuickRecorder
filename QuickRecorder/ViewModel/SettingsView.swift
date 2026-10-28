@@ -27,7 +27,22 @@ struct SettingsView: View {
         }
         // Safari's settings keep the toolbar's background behind the tabs instead of showing it on hover only
         .toolbarBackgroundVisibility(.visible, for: .windowToolbar)
+        .background(SettingsWindowStyle())
     }
+}
+
+/// The settings window's toolbar looks like a preference pane's: its bar stays behind the tabs instead of
+/// appearing only while the pointer is over it
+private struct SettingsWindowStyle: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async {
+            view.window?.toolbarStyle = .preference
+        }
+        return view
+    }
+
+    func updateNSView(_ view: NSView, context: Context) {}
 }
 
 // MARK: - Rows
