@@ -110,18 +110,12 @@ struct RecorderView: View {
     @AppStorage("preventSleep")     private var preventSleep: Bool = true
     @AppStorage("showPreview")      private var showPreview: Bool = true
     @AppStorage("hideCCenter")      private var hideCCenter: Bool = false
-    
-    @State private var userColor: Color = Color.black
 
     var body: some View {
         SForm(spacing: 10) {
             SGroupBox(label: "Recorder") {
+                // The custom background colour is chosen in the selectors' Options now (#92)
                 SSteper("Delay Before Recording", value: $countdown, min: 0, max: 99)
-                SDivider()
-                SItem(label: "Custom Background Color") {
-                    ColorGridPicker(selection: $userColor)
-                        .onChange(of: userColor) { _, userColor in ud.setColor(userColor, forKey: "userColor") }
-                }
             }
             SGroupBox(label: "Recording Controls") {
                 // At least one stays on: the one left on can't be switched off
@@ -159,7 +153,7 @@ struct RecorderView: View {
                 SDivider()
                 SToggle("Exclude Files on Desktop", isOn: $hideDesktopFiles, tips: "If enabled, all files on the Desktop will be hidden from the video when recording.")
             }
-        }.onAppear{ userColor = ud.color(forKey: "userColor") ?? Color.black }
+        }
     }
 }
 

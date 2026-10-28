@@ -81,7 +81,6 @@
 "Delay Before Recording" = "开始录制前倒数 (秒)";
 "s" = "秒";
 "Close" = "关闭";
-"Custom Background Color" = "用户预设颜色 (自定义背景)";
 "File size: %@" = "文件大小: %@";
 "Recording: " = "正在录制: ";
 "Preferences…" = "设置…";
@@ -224,12 +223,12 @@
 "Recording Behavior" = "录制行为";
 "Captured Content" = "画面内容";
 "Mixing failed. The system audio and the microphone were saved as two separate files." = "混合失败，系统声音和麦克风已分别保存为两个文件。";
-"Current Color" = "当前颜色";
 "More Colors…" = "更多颜色…";
 "Light Gray" = "浅灰";
 "Graphite" = "石墨";
 "Mist Blue" = "雾蓝";
 "Mint" = "薄荷";
+"Sage" = "鼠尾草绿";
 "Apricot" = "杏色";
 "Lavender" = "淡紫";
 "Warm Gray" = "暖灰";
