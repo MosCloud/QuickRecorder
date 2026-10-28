@@ -583,6 +583,10 @@ private struct OptionsBubble: View {
                 }
             }
         }
+        // A click on the bubble's blank space puts the colour window away, leaving the bubble open; the controls
+        // above it take their own clicks first
+        .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .onTapGesture { ColorWindow.shared.close() }
         .background(BubbleFrameReporter())
     }
 
