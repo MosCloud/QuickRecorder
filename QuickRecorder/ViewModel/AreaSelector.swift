@@ -78,7 +78,7 @@ struct AreaSelector: View {
     
     var body: some View {
         SelectorCapsule(leading: [
-            CapsuleLeading(symbol: "xmark", label: "Close".local, action: { nsWindow?.close() }),
+            CapsuleLeading(symbol: "xmark.circle", label: "Close".local, action: { nsWindow?.close() }),
             CapsuleLeading(symbol: "macwindow", label: "Window Area".local, action: selectWindowArea),
             CapsuleLeading(symbol: "viewfinder", label: "Resize".local, bubble: AnyView(AreaSizeFields(screen: screen))),
         ], screen: screen.nsScreen, showsBackground: false) {

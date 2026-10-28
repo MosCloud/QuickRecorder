@@ -198,7 +198,7 @@ struct SystemAudioCapsule: View {
     let display: SCDisplay
 
     var body: some View {
-        SelectorCapsule(leading: [CapsuleLeading(symbol: "xmark", label: "Close".local, action: { nsWindow?.close() })],
+        SelectorCapsule(leading: [CapsuleLeading(symbol: "xmark.circle", label: "Close".local, action: { nsWindow?.close() })],
                         screen: display.nsScreen, recordsVideo: false) { autoStop in
             closeAllWindow()
             AppDelegate.shared.countdownAndRecord(type: "audio", screen: display, autoStop: autoStop)

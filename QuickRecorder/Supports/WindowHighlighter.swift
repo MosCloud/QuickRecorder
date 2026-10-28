@@ -57,7 +57,7 @@ class WindowHighlighter {
         let frame = mask?.frame ?? screen?.visibleFrame ?? .zero
         let visible = screen?.visibleFrame ?? frame
         capsule = FloatingCapsulePanel.show(
-            SelectorCapsule(leading: [CapsuleLeading(symbol: "xmark", label: "Close".local, action: { [weak self] in self?.cancel() })],
+            SelectorCapsule(leading: [CapsuleLeading(symbol: "xmark.circle", label: "Close".local, action: { [weak self] in self?.cancel() })],
                             screen: screen, showsBackground: Mode != 2) { [weak self] autoStop in
                 self?.startRecording(window: window, display: display, autoStop: autoStop)
             },
