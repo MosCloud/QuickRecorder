@@ -291,6 +291,11 @@ extension NSScreen {
         guard let id = self.displayID else { return false }
         return (CGDisplayIsMain(id) == 1)
     }
+    /// The camera housing, with the origin at the screen's top left; nil when the screen has none
+    var notch: CGRect? {
+        guard safeAreaInsets.top > 0, let left = auxiliaryTopLeftArea, let right = auxiliaryTopRightArea else { return nil }
+        return CGRect(x: left.width, y: 0, width: frame.width - left.width - right.width, height: safeAreaInsets.top)
+    }
 }
 
 extension SCDisplay {
