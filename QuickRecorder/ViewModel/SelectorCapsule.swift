@@ -737,7 +737,8 @@ struct SelectableCard<Thumbnail: View>: View {
         Button { withAnimation(.smooth(duration: 0.2)) { action() } } label: {
             VStack(spacing: 6) {
                 thumbnail
-                    .overlay {
+                    // Behind the thumbnail, so a window's app icon over its bottom edge stays on top of the ring (#94)
+                    .background {
                         if chosen {
                             RoundedRectangle(cornerRadius: 11, style: .continuous).strokeBorder(Color.accentColor, lineWidth: 3).padding(-4)
                         }
