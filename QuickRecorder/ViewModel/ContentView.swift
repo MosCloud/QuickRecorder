@@ -245,7 +245,7 @@ extension AppDelegate {
 
     func chooseScreen() {
         closeMainWindow()
-        createNewWindow(view: ScreenSelector(), title: "Screen Selector".local)
+        createNewWindow(view: ScreenSelector(), title: "Screen Selector".local, closesOnEsc: true)
     }
 
     func chooseArea() {
@@ -268,12 +268,12 @@ extension AppDelegate {
 
     func chooseApps() {
         closeMainWindow()
-        createNewWindow(view: AppSelector(), title: "App Selector".local)
+        createNewWindow(view: AppSelector(), title: "App Selector".local, closesOnEsc: true)
     }
 
     func chooseWindow() {
         closeMainWindow()
-        createNewWindow(view: WinSelector(), title: "Window Selector".local)
+        createNewWindow(view: WinSelector(), title: "Window Selector".local, closesOnEsc: true)
     }
 
     func showAreaSelector(size: NSSize, noPanel: Bool = false) {
@@ -312,7 +312,8 @@ extension AppDelegate {
         }
     }
     
-    func createNewWindow(view: some View, title: String, random: Bool = false, only: Bool = true) {
+    /// `closesOnEsc` for a picker: Esc closes it like its close button, and the main panel comes back as then (#95)
+    func createNewWindow(view: some View, title: String, random: Bool = false, only: Bool = true, closesOnEsc: Bool = false) {
         // The pointer's screen can be missing, with the screen locked or asleep: this did nothing then (#72)
         guard let screen = SCContext.getScreenWithMouse() ?? NSScreen.main else { return }
         if only { closeAllWindow() }
@@ -322,7 +323,8 @@ extension AppDelegate {
         let wY = (screen.frame.height - 555) / 2 + 100 + seed + screen.frame.minY
         let contentView = NSHostingView(rootView: view)
         contentView.frame = NSRect(x: wX, y: wY, width: 780, height: 555)
-        let window = NSWindow(contentRect: contentView.frame, styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false)
+        let windowClass: NSWindow.Type = closesOnEsc ? EscWindow.self : NSWindow.self
+        let window = windowClass.init(contentRect: contentView.frame, styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false)
         window.title = title
         window.contentView = contentView
         window.titleVisibility = .hidden
@@ -332,6 +334,11 @@ extension AppDelegate {
         window.makeKeyAndOrderFront(self)
         window.orderFrontRegardless()
     }
+}
+
+/// A window Esc closes, unless an open bubble of its capsule takes the Esc first
+final class EscWindow: NSWindow {
+    override func cancelOperation(_ sender: Any?) { close() }
 }
 
 extension View {

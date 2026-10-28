@@ -42,7 +42,7 @@ class selectScreen: ScriptCommand {
                     }
                 } else {
                     closeAllWindow()
-                    AppDelegate.shared.createNewWindow(view: ScreenSelector(), title: "Screen Selector".local)
+                    AppDelegate.shared.createNewWindow(view: ScreenSelector(), title: "Screen Selector".local, closesOnEsc: true)
                 }
             }
         }
@@ -111,7 +111,7 @@ class selectApps: ScriptCommand {
                         return
                     }
                     if s.count != 1 {
-                        AppDelegate.shared.createNewWindow(view: AppSelector(), title: "App Selector".local)
+                        AppDelegate.shared.createNewWindow(view: AppSelector(), title: "App Selector".local, closesOnEsc: true)
                         createAlert(title: "Error".local, message: "This app exists in multiple screens, please select it manually!".local, button1: "OK".local).runModal()
                     } else {
                         AppDelegate.shared.createCountdownPanel(screen: s.first!) {
@@ -120,7 +120,7 @@ class selectApps: ScriptCommand {
                     }
                 } else {
                     closeAllWindow()
-                    AppDelegate.shared.createNewWindow(view: AppSelector(), title: "App Selector".local)
+                    AppDelegate.shared.createNewWindow(view: AppSelector(), title: "App Selector".local, closesOnEsc: true)
                 }
             }
         }
@@ -151,7 +151,7 @@ class selectWindows: ScriptCommand {
                         return
                     }
                     if windows.count > 1 {
-                        AppDelegate.shared.createNewWindow(view: WinSelector(), title: "Window Selector".local)
+                        AppDelegate.shared.createNewWindow(view: WinSelector(), title: "Window Selector".local, closesOnEsc: true)
                         createAlert(title: "Error".local, message: "Duplicate window exists, please select it manually!".local, button1: "OK".local).runModal()
                         return
                     }
@@ -172,7 +172,7 @@ class selectWindows: ScriptCommand {
                     }
                 } else {
                     closeAllWindow()
-                    AppDelegate.shared.createNewWindow(view: WinSelector(), title: "Window Selector".local)
+                    AppDelegate.shared.createNewWindow(view: WinSelector(), title: "Window Selector".local, closesOnEsc: true)
                 }
             }
         }
