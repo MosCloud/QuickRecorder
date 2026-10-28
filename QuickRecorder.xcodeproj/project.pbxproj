@@ -97,6 +97,7 @@
 		CC3300000000000000003202 /* Backdrop.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000003201 /* Backdrop.swift */; };
 		CC3300000000000000003203 /* Backdrop.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000003201 /* Backdrop.swift */; };
 		CC3300000000000000003303 /* BackdropTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000003301 /* BackdropTests.swift */; };
+		CC3300000000000000003402 /* SelectorParts.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000003401 /* SelectorParts.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -176,6 +177,7 @@
 		CC3300000000000000003001 /* DisplayPick.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayPick.swift; sourceTree = "<group>"; };
 		CC3300000000000000003201 /* Backdrop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Backdrop.swift; sourceTree = "<group>"; };
 		CC3300000000000000003301 /* BackdropTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackdropTests.swift; sourceTree = "<group>"; };
+		CC3300000000000000003401 /* SelectorParts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectorParts.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -287,6 +289,7 @@
 				CC3300000000000000000701 /* NotchCapsule.swift */,
 				CC3300000000000000001401 /* PanelControls.swift */,
 				CC3300000000000000001701 /* MainPanelReturn.swift */,
+				CC3300000000000000003401 /* SelectorParts.swift */,
 			);
 			path = ViewModel;
 			sourceTree = "<group>";
@@ -498,6 +501,7 @@
 				CC3300000000000000002802 /* ScreenAccess.swift in Sources */,
 				CC3300000000000000003002 /* DisplayPick.swift in Sources */,
 				CC3300000000000000003202 /* Backdrop.swift in Sources */,
+				CC3300000000000000003402 /* SelectorParts.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

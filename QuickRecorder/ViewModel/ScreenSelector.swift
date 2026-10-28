@@ -9,12 +9,9 @@ import SwiftUI
 @preconcurrency import ScreenCaptureKit
 
 struct ScreenSelector: View {
-    @Environment(\.colorScheme) var colorScheme
     @StateObject var viewModel = ScreenSelectorViewModel()
-    
+
     @State private var selected: SCDisplay?
-    @State private var isPopoverShowing = false
-    @State private var autoStop = 0
     var appDelegate = AppDelegate.shared
     
     var body: some View {
@@ -34,27 +31,8 @@ struct ScreenSelector: View {
                                         }, label: {
                                             ZStack {
                                                 VStack(spacing: 4) {
-                                                    ZStack{
-                                                        if colorScheme == .light {
-                                                            Image(nsImage: viewModel.screenThumbnails[index].image)
-                                                                .resizable()
-                                                                .aspectRatio(contentMode: .fit)
-                                                                .colorMultiply(.black)
-                                                                .blur(radius: 0.5)
-                                                                .opacity(1)
-                                                        } else {
-                                                            Image(nsImage: viewModel.screenThumbnails[index].image)
-                                                                .resizable()
-                                                                .aspectRatio(contentMode: .fit)
-                                                                .colorMultiply(.black)
-                                                                .colorInvert()
-                                                                .blur(radius: 0.5)
-                                                                .opacity(1)
-                                                        }
-                                                        Image(nsImage: viewModel.screenThumbnails[index].image)
-                                                            .resizable()
-                                                            .aspectRatio(contentMode: .fit)
-                                                    }.frame(width: count == 1 ? 672 : 320, height: count == 1 ? 378 : 180, alignment: .center)
+                                                    ShadowedThumbnail(image: viewModel.screenThumbnails[index].image)
+                                                        .frame(width: count == 1 ? 672 : 320, height: count == 1 ? 378 : 180, alignment: .center)
                                                     let screenName = NSScreen.screens.first(where: { $0.displayID == viewModel.screenThumbnails[index].screen.displayID })?.localizedName ?? "Display ".local + "\(viewModel.screenThumbnails[index].screen.displayID)"
                                                     Text(screenName)
                                                         .foregroundStyle(.secondary)
@@ -63,22 +41,9 @@ struct ScreenSelector: View {
                                                         .offset(y:count == 1 ? 5 : 2)
                                                 }
                                                 .padding(count == 1 ? 19 : 10)
-                                                .background(
-                                                    Rectangle()
-                                                        .foregroundStyle(.blue)
-                                                        .cornerRadius(5)
-                                                        .opacity((selected == viewModel.screenThumbnails[index].screen) ? 0.2 : 0.0)
-                                                )
-                                                Group {
-                                                    Image(systemName: "circle.fill")
-                                                        .font(.system(size: count == 1 ? 62 : 31))
-                                                        .foregroundStyle(.white)
-                                                        .opacity((selected == viewModel.screenThumbnails[index].screen) ? 1.0 : 0.0)
-                                                    Image(systemName: "checkmark.circle.fill")
-                                                        .font(.system(size: count == 1 ? 54 : 27))
-                                                        .foregroundStyle(.green)
-                                                        .opacity((selected == viewModel.screenThumbnails[index].screen) ? 1.0 : 0.0)
-                                                }.offset(x: count == 1 ? 270 : 120, y: count == 1 ? 130 : 50)
+                                                .background(SelectionBackground(selected: selected == viewModel.screenThumbnails[index].screen))
+                                                SelectionMark(selected: selected == viewModel.screenThumbnails[index].screen, size: count == 1 ? 54 : 27)
+                                                    .offset(x: count == 1 ? 270 : 120, y: count == 1 ? 130 : 50)
                                             }
                                         }).buttonStyle(.plain)
                                     }
@@ -92,71 +57,22 @@ struct ScreenSelector: View {
                 .frame(height: 445)
                 
                 HStack(spacing: 4) {
-                    Button(action: {
-                        viewModel.setupStreams()
-                    }, label: {
-                        VStack{
-                            Image(systemName: "arrow.clockwise.circle.fill")
-                                .font(.system(size: 36))
-                                .foregroundStyle(.blue)
-                            Text("Refresh")
-                                .foregroundStyle(.secondary)
-                                .font(.system(size: 12))
-                        }
-                        
-                    }).buttonStyle(.plain)
+                    BarButton(icon: "arrow.clockwise.circle.fill", style: .blue, title: "Refresh") { viewModel.setupStreams() }
                     Spacer()
                     OptionsView(showsBackground: false).padding(.leading, 18)
                     Spacer()
-                    Button(action: {
-                        isPopoverShowing = true
-                    }, label: {
-                        Image(systemName: "timer")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundStyle(.blue)
-                    })
-                    .buttonStyle(.plain)
-                    .padding(.top, 42.5)
-                    .popover(isPresented: $isPopoverShowing, arrowEdge: .bottom, content: {
-                        HStack {
-                            Text(" Stop after".local)
-                            TextField("", value: $autoStop, formatter: NumberFormatter())
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
-                            Stepper("", value: $autoStop)
-                                .padding(.leading, -10)
-                            Text("minutes ".local)
-                        }
-                        .fixedSize()
-                        .padding()
-                    })
-                    Button(action: {
-                        startRecording()
-                    }, label: {
-                        VStack{
-                            Image(systemName: "record.circle.fill")
-                                .font(.system(size: 36))
-                                .foregroundStyle(.red)
-                            Text("Start")
-                                .foregroundStyle(.secondary)
-                                .font(.system(size: 12))
-                        }
-                    })
-                    .buttonStyle(.plain)
-                    .disabled(selected == nil)
+                    StartControls(canStart: selected != nil) { autoStop in startRecording(autoStop: autoStop) }
                 }.padding(.horizontal, 40)
                 Spacer()
             }
             .padding(.top, -5)
         }.frame(width: 780, height:555)
     }
-    
-    func startRecording() {
+
+    func startRecording(autoStop: Int) {
         closeAllWindow()
         if let screen = selected {
-            appDelegate.createCountdownPanel(screen: screen) {
-                SCContext.autoStop = autoStop
-                appDelegate.prepRecord(type: "display", screens: screen, windows: nil, applications: nil)
-            }
+            appDelegate.countdownAndRecord(type: "display", screen: screen, autoStop: autoStop)
         }
     }
 }

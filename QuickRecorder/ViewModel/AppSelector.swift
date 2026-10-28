@@ -13,155 +13,70 @@ struct AppSelector: View {
     @StateObject var viewModel = AppSelectorViewModel()
     @State private var selected = [SCRunningApplication]()
     @State private var display: SCDisplay!
-    @State private var selectedTab = 0
-    @State private var isPopoverShowing = false
-    @State private var autoStop = 0
     var appDelegate = AppDelegate.shared
-    
+
     var body: some View {
         ZStack {
             VStack(spacing: 15) {
                 Text("Please select the App(s) to record").offset(y: 12)
-                TabView(selection: $selectedTab) {
-                    let allApps = viewModel.allApps.sorted(by: { $0.key.displayID < $1.key.displayID })
-                    ForEach(allApps, id: \.key) { element in
-                        let (screen, apps) = element
-                        let index = allApps.firstIndex(where: { $0.key == screen }) ?? 0
-                        ScrollView(.vertical) {
-                            VStack(spacing: 8) {
-                                ForEach(0..<apps.count/5 + 1, id: \.self) { rowIndex in
-                                    HStack(spacing: 20) {
-                                        ForEach(0..<5, id: \.self) { columnIndex in
-                                            let index = 5 * rowIndex + columnIndex
-                                            if index <= apps.count - 1 {
-                                                let item = apps[index]
-                                                Button(action: {
-                                                    if !selected.contains(item) {
-                                                        selected.append(item)
-                                                    } else {
-                                                        selected.removeAll{ $0 == item }
+                DisplayTabs(items: { viewModel.allApps }, isReady: viewModel.$isReady, windowTitle: "App Selector".local,
+                            onShow: { display = $0 }, onSwitch: { selected.removeAll() }) { screen, apps in
+                    ScrollView(.vertical) {
+                        VStack(spacing: 8) {
+                            ForEach(0..<apps.count/5 + 1, id: \.self) { rowIndex in
+                                HStack(spacing: 20) {
+                                    ForEach(0..<5, id: \.self) { columnIndex in
+                                        let index = 5 * rowIndex + columnIndex
+                                        if index <= apps.count - 1 {
+                                            let item = apps[index]
+                                            Button(action: {
+                                                if !selected.contains(item) {
+                                                    selected.append(item)
+                                                } else {
+                                                    selected.removeAll{ $0 == item }
+                                                }
+                                            }, label: {
+                                                ZStack {
+                                                    VStack {
+                                                        Image(nsImage: SCContext.getAppIcon(item)!)
+                                                        let appName = item.applicationName
+                                                        let appID = item.bundleIdentifier
+                                                        Text(appName != "" ? appName : appID)
+                                                            .foregroundStyle(.secondary)
+                                                            .lineLimit(1)
+                                                            .truncationMode(.tail)
                                                     }
-                                                }, label: {
-                                                    ZStack {
-                                                        VStack {
-                                                            Image(nsImage: SCContext.getAppIcon(item)!)
-                                                            let appName = item.applicationName
-                                                            let appID = item.bundleIdentifier
-                                                            Text(appName != "" ? appName : appID)
-                                                                .foregroundStyle(.secondary)
-                                                                .lineLimit(1)
-                                                                .truncationMode(.tail)
-                                                        }
-                                                        .frame(width: 110, height: 94)
-                                                        .padding(10)
-                                                        .background(
-                                                            Rectangle()
-                                                                .foregroundStyle(.blue)
-                                                                .cornerRadius(5)
-                                                                .opacity(selected.contains(item) ? 0.2 : 0.0)
-                                                        )
-                                                        Image(systemName: "circle.fill")
-                                                            .font(.system(size: 31))
-                                                            .foregroundStyle(.white)
-                                                            .opacity(selected.contains(item) ? 1.0 : 0.0)
-                                                            .offset(x: 20, y: 10)
-                                                        Image(systemName: "checkmark.circle.fill")
-                                                            .font(.system(size: 27))
-                                                            .foregroundStyle(.green)
-                                                            .opacity(selected.contains(item) ? 1.0 : 0.0)
-                                                            .offset(x: 20, y: 10)
-                                                    }
-                                                }).buttonStyle(.plain)
-                                            }
+                                                    .frame(width: 110, height: 94)
+                                                    .padding(10)
+                                                    .background(SelectionBackground(selected: selected.contains(item)))
+                                                    SelectionMark(selected: selected.contains(item))
+                                                        .offset(x: 20, y: 10)
+                                                }
+                                            }).buttonStyle(.plain)
                                         }
                                     }
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(.leading, 12).padding(.top, 4)
                                 }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.leading, 12).padding(.top, 4)
                             }
-                        }
-                        .tag(index)
-                        .tabItem { Text(screen.nsScreen?.localizedName ?? ("Display ".local + "\(index)")) }
-                        .onAppear{ display = screen }
-                    }
-                }
-                .frame(height: 445)
-                .padding(.horizontal, 10)
-                .onChange(of: selectedTab) { selected.removeAll() }
-                .onReceive(viewModel.$isReady) { isReady in
-                    if isReady {
-                        let allApps = viewModel.allApps.sorted(by: { $0.key.displayID < $1.key.displayID })
-                        if let s = NSApp.windows.first(where: { $0.title == "App Selector".local })?.screen,
-                           let index = allApps.firstIndex(where: { $0.key.displayID == s.displayID }) {
-                            selectedTab = index
                         }
                     }
                 }
                 HStack(spacing: 4) {
-                    Button(action: {
-                        viewModel.updateAppList()
-                    }, label: {
-                        VStack{
-                            Image(systemName: "arrow.clockwise.circle.fill")
-                                .font(.system(size: 36))
-                                .foregroundStyle(.blue)
-                            Text("Refresh")
-                                .foregroundStyle(.secondary)
-                                .font(.system(size: 12))
-                        }
-                        
-                    }).buttonStyle(.plain)
+                    BarButton(icon: "arrow.clockwise.circle.fill", style: .blue, title: "Refresh") { viewModel.updateAppList() }
                     Spacer()
                     OptionsView().padding(.leading, 18)
                     Spacer()
-                    Button(action: {
-                        isPopoverShowing = true
-                    }, label: {
-                        Image(systemName: "timer")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundStyle(.blue)
-                    })
-                    .buttonStyle(.plain)
-                    .padding(.top, 42.5)
-                    .popover(isPresented: $isPopoverShowing, arrowEdge: .bottom, content: {
-                        HStack {
-                            Text(" Stop after".local)
-                            TextField("", value: $autoStop, formatter: NumberFormatter())
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
-                                //.onChange(of: autoStop) { newValue in SCContext.autoStop = newValue }
-                            Stepper("", value: $autoStop)
-                                .padding(.leading, -10)
-                            Text("minutes ".local)
-                        }
-                        .fixedSize()
-                        .padding()
-                    })
-                    Button(action: {
-                        startRecording()
-                    }, label: {
-                        VStack{
-                            Image(systemName: "record.circle.fill")
-                                .font(.system(size: 36))
-                                .foregroundStyle(.red)
-                            Text("Start")
-                                .foregroundStyle(.secondary)
-                                .font(.system(size: 12))
-                        }
-                    })
-                    .buttonStyle(.plain)
-                    .disabled(selected.count < 1)
+                    StartControls(canStart: selected.count >= 1) { autoStop in startRecording(autoStop: autoStop) }
                 }.padding(.horizontal, 40)
                 Spacer()
             }.padding(.top, -5)
         }.frame(width: 780, height:555)
     }
-    
-    func startRecording() {
+
+    func startRecording(autoStop: Int) {
         closeAllWindow()
-        appDelegate.createCountdownPanel(screen: display) {
-            SCContext.autoStop = autoStop
-            appDelegate.prepRecord(type: "application", screens: display, windows: nil, applications: selected)
-        }
+        appDelegate.countdownAndRecord(type: "application", screen: display, applications: selected, autoStop: autoStop)
     }
 }
 
@@ -201,8 +116,6 @@ struct OptionsView: View {
     
     @AppStorage("frameRate")      private var frameRate: Int = 60
     @AppStorage("videoQuality")   private var videoQuality: Double = 1.0
-    @AppStorage("saveDirectory")  private var saveDirectory: String?
-    @AppStorage("hideSelf")       private var hideSelf: Bool = false
     @AppStorage("showMouse")      private var showMouse: Bool = true
     @AppStorage("recordMic")      private var recordMic: Bool = false
     @AppStorage("recordWinSound") private var recordWinSound: Bool = true

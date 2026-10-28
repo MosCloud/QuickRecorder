@@ -23,11 +23,7 @@ struct HighlightMask: View {
     @State var display: SCDisplay?
     @State var color: Color = .blue
     @State var showSheet: Bool = false
-    @State private var isPopoverShowing = false
-    @State private var disableFilter = false
-    @State private var donotCapture = false
-    @State private var autoStop = 0
-    
+
     var body: some View {
         color
             .opacity(0.2)
@@ -35,54 +31,11 @@ struct HighlightMask: View {
             .help("\(app) - \(title)")
             .sheet(isPresented: $showSheet) {
                 HStack(spacing: 4) {
-                    Button(action: {
-                        showSheet = false
-                    }, label: {
-                        VStack{
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 36))
-                                .foregroundStyle(.gray)
-                            Text("Cancel")
-                                .foregroundStyle(.secondary)
-                                .font(.system(size: 12))
-                        }
-                    }).buttonStyle(.plain)
+                    BarButton(icon: "xmark.circle.fill", style: .gray, title: "Cancel") { showSheet = false }
                     Spacer()
                     OptionsView()
                     Spacer()
-                    Button(action: {
-                        isPopoverShowing = true
-                    }, label: {
-                        Image(systemName: "timer")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundStyle(.blue)
-                    })
-                    .buttonStyle(.plain)
-                    .padding(.top, 42.5)
-                    .popover(isPresented: $isPopoverShowing, arrowEdge: .bottom, content: {
-                        HStack {
-                            Text(" Stop after".local)
-                            TextField("", value: $autoStop, formatter: NumberFormatter())
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
-                            Stepper("", value: $autoStop)
-                                .padding(.leading, -10)
-                            Text("minutes ".local)
-                        }
-                        .fixedSize()
-                        .padding()
-                    })
-                    Button(action: {
-                        startRecording()
-                    }, label: {
-                        VStack{
-                            Image(systemName: "record.circle.fill")
-                                .font(.system(size: 36))
-                                .foregroundStyle(.red)
-                            Text("Start")
-                                .foregroundStyle(.secondary)
-                                .font(.system(size: 12))
-                        }
-                    }).buttonStyle(.plain)
+                    StartControls { autoStop in startRecording(autoStop: autoStop) }
                 }
                 .focusable(false)
                 .frame(width: 640, height: 90)
@@ -107,36 +60,18 @@ struct HighlightMask: View {
             }
     }
     
-    func startRecording() {
+    func startRecording(autoStop: Int) {
         closeAllWindow()
         switch WindowHighlighter.shared.Mode {
         case 2:
-            var dashWindow = NSWindow()
             guard let screen = display, let nsScreen = display?.nsScreen, var area = window?.frame else { return }
             area = CGRectTransform(cgRect: area)
             SCContext.screenArea = NSRect(x: area.origin.x - nsScreen.frame.minX, y: area.origin.y - nsScreen.frame.minY, width:area.width, height: area.height)
-            let frame = NSRect(x: Int(area.origin.x - 3),
-                               y: Int(area.origin.y - 3),
-                               width: Int(area.width + 6), height: Int(area.height + 6))
-            dashWindow = NSWindow(contentRect: frame, styleMask: [.fullSizeContentView], backing: .buffered, defer: false)
-            dashWindow.hasShadow = false
-            dashWindow.level = .screenSaver
-            dashWindow.ignoresMouseEvents = true
-            dashWindow.isReleasedWhenClosed = false
-            dashWindow.title = "Area Overlayer".local
-            dashWindow.backgroundColor = NSColor.clear
-            dashWindow.contentView = NSHostingView(rootView: DashWindow())
-            dashWindow.orderFront(self)
-            appDelegate.createCountdownPanel(screen: screen) {
-                SCContext.autoStop = autoStop
-                appDelegate.prepRecord(type: "area", screens: display, windows: nil, applications: nil)
-            }
+            appDelegate.showAreaOutline(area, margin: 3)
+            appDelegate.countdownAndRecord(type: "area", screen: screen, autoStop: autoStop)
         default:
             if let d = display, let w = window {
-                appDelegate.createCountdownPanel(screen: d) {
-                    SCContext.autoStop = autoStop
-                    appDelegate.prepRecord(type: "window" , screens: d, windows: [w], applications: nil)
-                }
+                appDelegate.countdownAndRecord(type: "window", screen: d, windows: [w], autoStop: autoStop)
             }
         }
     }
@@ -285,17 +220,6 @@ class WindowHighlighter {
             height: boundsDict["Height"] ?? 0
         )
         return bounds
-    }
-    
-    func CGRectTransform(cgRect: CGRect) -> NSRect {
-        let x = cgRect.origin.x
-        let y = cgRect.origin.y
-        let w = cgRect.width
-        let h = cgRect.height
-        if let main = NSScreen.screens.first(where: { $0.isMainScreen }) {
-            return NSRect(x: x, y: main.frame.height - y - h, width: w, height: h)
-        }
-        return cgRect
     }
 }
 
