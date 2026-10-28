@@ -39,6 +39,8 @@ struct StartControls: View {
     let start: (_ autoStop: TimeInterval) -> Void
     @State private var autoStop = AutoStop()
     @State private var isTimerShowing = false
+    /// Bumped to redraw the fields: one showing a number just set back to 0 that was 0 before keeps the number otherwise
+    @State private var fieldsVersion = 0
 
     var body: some View {
         Button(action: {
@@ -59,7 +61,18 @@ struct StartControls: View {
                 Text("min".local)
                 field($autoStop.seconds, in: AutoStop.secondRange)
                 Text("sec".local)
+                Button(action: {
+                    autoStop = AutoStop()
+                    fieldsVersion += 1
+                }, label: {
+                    Label("Reset", systemImage: "arrow.counterclockwise")
+                        .labelStyle(.iconOnly)
+                })
+                .buttonStyle(.borderless)
+                .help("Reset")
+                .disabled(autoStop == AutoStop())
             }
+            .id(fieldsVersion)
             .fixedSize()
             .padding()
         })
@@ -67,19 +80,21 @@ struct StartControls: View {
             .disabled(!canStart)
     }
 
-    /// A number with its stepper. Neither goes past the range: the stepper used to go down to -1 (#86)
+    /// A number with its stepper. The stepper stops at the range's ends (it used to go down to -1, #86); a number typed
+    /// outside the range goes back to 0
     private func field(_ value: Binding<Int>, in range: ClosedRange<Int>) -> some View {
         let formatter = NumberFormatter()
-        formatter.minimum = range.lowerBound as NSNumber
-        formatter.maximum = range.upperBound as NSNumber
         formatter.allowsFloats = false
-        let clamped = Binding(get: { value.wrappedValue }, set: { value.wrappedValue = range.clamp($0) })
+        let checked = Binding(get: { value.wrappedValue }, set: {
+            value.wrappedValue = range.orZero($0)
+            if value.wrappedValue != $0 { fieldsVersion += 1 }
+        })
         return HStack(spacing: 0) {
-            TextField("", value: clamped, formatter: formatter)
+            TextField("", value: checked, formatter: formatter)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .multilineTextAlignment(.trailing)
                 .frame(width: 34)
-            Stepper("", value: clamped, in: range)
+            Stepper("", value: checked, in: range)
                 .labelsHidden()
         }
     }

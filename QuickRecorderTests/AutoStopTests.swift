@@ -30,11 +30,18 @@ struct AutoStopTests {
         #expect(!AutoStop.isDue(limit: limit, elapsed: 3600))
     }
 
-    @Test("Each field stays in its range: stepping below 0 gives 0, typing past the top gives the top")
-    func ranges() {
-        #expect(AutoStop.minuteRange.clamp(-1) == 0)
-        #expect(AutoStop.secondRange.clamp(75) == 59)
-        #expect(AutoStop.hourRange.clamp(30) == 23)
-        #expect(AutoStop.hourRange.clamp(5) == 5)
+    @Test("A number outside its field's range goes back to 0, whichever side it's on")
+    func outOfRange() {
+        #expect(AutoStop.minuteRange.orZero(-1) == 0)
+        #expect(AutoStop.secondRange.orZero(75) == 0)
+        #expect(AutoStop.hourRange.orZero(100) == 0)
+    }
+
+    @Test("A number inside its range stays, up to the top: hours go well past a day")
+    func inRange() {
+        #expect(AutoStop.hourRange.orZero(5) == 5)
+        #expect(AutoStop.hourRange.orZero(24) == 24)
+        #expect(AutoStop.hourRange.orZero(99) == 99)
+        #expect(AutoStop.secondRange.orZero(59) == 59)
     }
 }

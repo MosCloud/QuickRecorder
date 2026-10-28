@@ -7,7 +7,7 @@ import Foundation
 
 /// The timer on the selectors' bars that stops a recording after a set time (#86)
 struct AutoStop: Equatable {
-    static let hourRange = 0...23
+    static let hourRange = 0...99
     static let minuteRange = 0...59
     static let secondRange = 0...59
 
@@ -25,6 +25,6 @@ struct AutoStop: Equatable {
 }
 
 extension ClosedRange where Bound == Int {
-    /// The nearest value in the range
-    func clamp(_ value: Int) -> Int { Swift.min(Swift.max(value, lowerBound), upperBound) }
+    /// The value if it's in the range, else 0: what a timer field does with a number typed past its ends
+    func orZero(_ value: Int) -> Int { contains(value) ? value : 0 }
 }
