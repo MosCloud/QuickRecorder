@@ -6,6 +6,8 @@ Personal-use maintenance fork of `lihaoyun6/QuickRecorder`, whose upstream went 
 
 Every change reaches `main` through a PR on `MosCloud/QuickRecorder`, one branch per issue. The PR body links its issue and carries the test plan with results; the owner merges.
 
+A PR that changes what the user sees or can do adds its entry to the 未发布 section of `CHANGELOG.md`, the source for the README and release notes.
+
 ## Build and install
 
 `xcode-select` points at the Command Line Tools, so set `DEVELOPER_DIR` for every Xcode command. Keep DerivedData out of iCloud-synced folders: iCloud's Finder xattrs make codesign fail with "resource fork, Finder information, or similar detritus not allowed". Its name ends in `.noindex` so Spotlight skips the build products: otherwise searching for QuickRecorder also offers the Release and Debug builds next to the installed app.
