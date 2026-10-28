@@ -14,104 +14,56 @@ struct WinSelector: View {
     @StateObject var viewModel = WindowSelectorViewModel()
     @State private var selected = [SCWindow]()
     @State private var display: SCDisplay!
-    @State private var isPopoverShowing2 = false
     @State private var disableFilter = false
     @State private var donotCapture = false
     var appDelegate = AppDelegate.shared
 
     var body: some View {
-        ZStack {
-            VStack(spacing: 15) {
-                Text("Please select the window(s) to record").offset(y: 12)
-                DisplayTabs(items: { viewModel.windowThumbnails }, isReady: viewModel.$isReady, windowTitle: "Window Selector".local,
-                            onShow: { display = $0 }, onSwitch: { selected.removeAll() }) { screen, thumbnails in
-                    ScrollView(.vertical) {
-                        VStack(spacing: 0) {
-                            ForEach(0..<thumbnails.count/4 + 1, id: \.self) { rowIndex in
-                                HStack(spacing: 16.5) {
-                                    ForEach(0..<4, id: \.self) { columnIndex in
-                                        let index = 4 * rowIndex + columnIndex
-                                        if index <= thumbnails.count - 1 {
-                                            let item = thumbnails[index]
-                                            Button(action: {
-                                                if !selected.contains(item.window) {
-                                                    selected.append(item.window)
-                                                } else {
-                                                    selected.removeAll{ $0 == item.window }
+        VStack(spacing: 15) {
+            Text("Please select the window(s) to record").offset(y: 12)
+            DisplayTabs(items: { viewModel.windowThumbnails }, isReady: viewModel.$isReady, windowTitle: "Window Selector".local,
+                        onShow: { display = $0 }, onSwitch: { selected.removeAll() }) { screen, thumbnails in
+                ScrollView(.vertical) {
+                    VStack(spacing: 0) {
+                        ForEach(0..<thumbnails.count/4 + 1, id: \.self) { rowIndex in
+                            HStack(spacing: 8) {
+                                ForEach(0..<4, id: \.self) { columnIndex in
+                                    let index = 4 * rowIndex + columnIndex
+                                    if index <= thumbnails.count - 1 {
+                                        let item = thumbnails[index]
+                                        SelectableCard(title: item.window.title!, titleWidth: 160, chosen: selected.contains(item.window), action: {
+                                            if !selected.contains(item.window) { selected.append(item.window) } else { selected.removeAll { $0 == item.window } }
+                                        }) {
+                                            ShadowedThumbnail(image: item.image)
+                                                .frame(width: 160, height: 90, alignment: .center)
+                                                .overlay(alignment: .bottom) {
+                                                    Image(nsImage: SCContext.getAppIcon(item.window.owningApplication!)!)
+                                                        .resizable()
+                                                        .aspectRatio(contentMode: .fit)
+                                                        .frame(width: 40, height: 40)
+                                                        .offset(y: 10)
                                                 }
-                                            }, label: {
-                                                VStack(spacing: 1){
-                                                    ZStack{
-                                                        ShadowedThumbnail(image: item.image)
-                                                            .frame(width: 160, height: 90, alignment: .center)
-                                                        SelectionMark(selected: selected.contains(item.window))
-                                                            .offset(x: 55, y: 25)
-                                                        Image(nsImage: SCContext.getAppIcon(item.window.owningApplication!)!)
-                                                            .resizable()
-                                                            .aspectRatio(contentMode: .fit)
-                                                            .frame(width: 40, height: 40, alignment: .center)
-                                                            .offset(y: 35)
-                                                    }
-                                                    .padding(5)
-                                                    .padding(.vertical, 5)
-                                                    .background(SelectionBackground(selected: selected.contains(item.window), idle: 0.0001))
-                                                    Text(item.window.title!)
-                                                        .font(.system(size: 12))
-                                                        .foregroundStyle(.secondary)
-                                                        .lineLimit(1)
-                                                        .truncationMode(.tail)
-                                                        .frame(width: 160)
-                                                }
-                                            }).buttonStyle(.plain)
                                         }
                                     }
                                 }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.leading, 12).padding(.top, 5)
                             }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.leading, 12).padding(.top, 5)
                         }
                     }
+                    // Room for the ring and the tick of a chosen card
+                    .padding(.top, 8)
                 }
-                HStack(spacing: 4) {
-                    BarButton(icon: "arrow.clockwise.circle.fill", style: .blue, title: "Refresh") {
-                        self.viewModel.setupStreams(filter: !disableFilter, capture: !donotCapture)
-                        self.selected.removeAll()
-                    }
-                    Button(action: {
-                        isPopoverShowing2 = true
-                    }, label: {
-                        Image(systemName: "chevron.down")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundStyle(.blue)
-                    })
-                    .buttonStyle(.plain)
-                    .padding(.top, 42.5)
-                    .popover(isPresented: $isPopoverShowing2, arrowEdge: .bottom, content: {
-                        VStack(alignment: .leading) {
-                            Toggle(isOn: $disableFilter) { Text("Show Windows with No Title") }
-                                .toggleStyle(.checkbox)
-                                .onChange(of: disableFilter) {
-                                    self.viewModel.setupStreams(filter: !disableFilter, capture: !donotCapture)
-                                    self.selected.removeAll()
-                                }
-                            Toggle(isOn: $donotCapture) { Text("Don't Create Thumbnails") }
-                                .toggleStyle(.checkbox)
-                                .onChange(of: donotCapture) {
-                                    self.viewModel.setupStreams(filter: !disableFilter, capture: !donotCapture)
-                                    self.selected.removeAll()
-                                }
-                        }
-                        .fixedSize()
-                        .padding()
-                    })
-                    Spacer()
-                    OptionsView()
-                    Spacer()
-                    StartControls(canStart: selected.count >= 1) { autoStop in startRecording(autoStop: autoStop) }
-                }.padding(.horizontal, 40)
-                Spacer()
-            }.padding(.top, -5)
+            }
+            // Refresh's own settings, as a right-click opens the microphone's and the timer's
+            SelectorCapsule(leading: [CapsuleLeading(symbol: "arrow.clockwise", label: "Refresh".local, spins: true, action: refresh,
+                                                     bubble: AnyView(listSettings))],
+                            screen: display?.nsScreen ?? NSScreen.main, canStart: selected.count >= 1) {
+                startRecording(autoStop: $0)
+            }
+            Spacer()
         }
+        .padding(.top, -5)
         .frame(width: 780, height:555)
         .toolbar {
             ToolbarItem(placement: .automatic) {
@@ -129,6 +81,20 @@ struct WinSelector: View {
     func startRecording(autoStop: TimeInterval) {
         closeAllWindow()
         appDelegate.countdownAndRecord(type: selected.count < 2 ? "window" : "windows", screen: display, windows: selected, autoStop: autoStop)
+    }
+
+    private func refresh() {
+        viewModel.setupStreams(filter: !disableFilter, capture: !donotCapture)
+        selected.removeAll()
+    }
+
+    /// Which windows the list shows, and whether it makes their thumbnails
+    private var listSettings: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            BubbleRow(title: "Show Windows with No Title".local, checked: disableFilter) { disableFilter.toggle(); refresh() }
+            BubbleRow(title: "Don't Create Thumbnails".local, checked: donotCapture) { donotCapture.toggle(); refresh() }
+        }
+        .frame(width: 200)
     }
 }
 

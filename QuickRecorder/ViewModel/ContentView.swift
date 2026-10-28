@@ -284,24 +284,11 @@ extension AppDelegate {
         //screenshotWindow.orderFront(self)
         screenshotWindow.orderFrontRegardless()
         if !noPanel {
-            let wX = (screen.frame.width - 790) / 2 + screen.frame.minX
-            let wY = screen.visibleFrame.minY + 80
-            let contentView = NSHostingView(rootView: AreaSelector(screen: scDisplay))
-            contentView.frame = NSRect(x: wX, y: wY, width: 790, height: 90)
-            contentView.focusRingType = .none
-            let areaPanel = NSPanel(contentRect: contentView.frame, styleMask: [.fullSizeContentView, .nonactivatingPanel], backing: .buffered, defer: false)
-            areaPanel.collectionBehavior = [.canJoinAllSpaces]
-            areaPanel.setFrame(contentView.frame, display: true)
-            areaPanel.level = .screenSaver
-            areaPanel.title = "Start Recording".local
-            areaPanel.contentView = contentView
-            areaPanel.backgroundColor = .clear
-            areaPanel.titleVisibility = .hidden
-            areaPanel.isReleasedWhenClosed = false
-            areaPanel.titlebarAppearsTransparent = true
-            areaPanel.isMovableByWindowBackground = true
-            //areaPanel.setFrameOrigin(NSPoint(x: wX, y: wY))
-            areaPanel.orderFront(self)
+            MainActor.assumeIsolated {
+                let panel = FloatingCapsulePanel.show(AreaSelector(screen: scDisplay), title: "Start Recording".local,
+                                                      centerX: screen.frame.midX, bottom: screen.visibleFrame.minY + 60)
+                panel.onCancel = { [weak panel] in panel?.close() }
+            }
         }
     }
     

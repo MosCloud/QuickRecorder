@@ -128,6 +128,11 @@ extension AppDelegate {
         Task { await record(filter: SCContext.filter!) }
     }
 
+    /// The frame rate this recording gets: the setting, or the recorded display's top rate below it (#79)
+    var recordingFrameRate: Int {
+        FrameRates.effective(frameRate, maxFPS: SCContext.screen?.nsScreen?.maximumFramesPerSecond ?? 0)
+    }
+
     func record(filter: SCContentFilter) async {
         SCContext.timeOffset = CMTimeMake(value: 0, timescale: 0)
         SCContext.isPaused = false
@@ -173,7 +178,7 @@ extension AppDelegate {
         conf.channelCount = 2
         
 
-        conf.minimumFrameInterval = CMTime(value: 1, timescale: audioOnly ? CMTimeScale.max : CMTimeScale(frameRate))
+        conf.minimumFrameInterval = CMTime(value: 1, timescale: audioOnly ? CMTimeScale.max : CMTimeScale(recordingFrameRate))
 
 //        CMTimeScale is the denominator in the fraction
 //        conf.minimumFrameInterval = CMTime(seconds: audioOnly ? Double(CMTimeScale.max) : Double(1)/Double(frameRate), preferredTimescale: 10000)
@@ -317,12 +322,12 @@ extension AppDelegate {
         }
         SCContext.vW = try? AVAssetWriter.init(outputURL: SCContext.filePath.url, fileType: fileType!)
         let encoderIsH265 = (encoder.rawValue == Encoder.h265.rawValue) || recordHDR
-        let targetBitrate = VideoBitrate.target(width: conf.width, height: conf.height, frameRate: frameRate,
+        let targetBitrate = VideoBitrate.target(width: conf.width, height: conf.height, frameRate: recordingFrameRate,
                                                 isHEVC: encoderIsH265, quality: videoQuality, isHDR: recordHDR)
         let h264Level = AVVideoProfileLevelH264HighAutoLevel
         let h265Level = recordHDR ? kVTProfileLevel_HEVC_Main10_AutoLevel : kVTProfileLevel_HEVC_Main_AutoLevel
 
-        print("framerate set in app: \(frameRate)")
+        print("framerate set in app: \(frameRate), recording at \(recordingFrameRate)")
         print("target bitrate: \(Double(targetBitrate)/1000000)")
 
         var videoSettings: [String: Any] = [
@@ -333,7 +338,7 @@ extension AppDelegate {
             AVVideoCompressionPropertiesKey: [
                 AVVideoProfileLevelKey: encoderIsH265 ? h265Level : h264Level,
                 AVVideoAverageBitRateKey: targetBitrate,
-                AVVideoExpectedSourceFrameRateKey: frameRate,
+                AVVideoExpectedSourceFrameRateKey: recordingFrameRate,
             ] as [String : Any]
         ]
         
