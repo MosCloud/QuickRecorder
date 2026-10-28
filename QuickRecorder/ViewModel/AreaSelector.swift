@@ -148,7 +148,7 @@ struct AreaSelector: View {
                         }.padding()
                     })
                     Spacer()
-                    OptionsView().padding(.horizontal, 10)
+                    OptionsView(showsBackground: false).padding(.horizontal, 10)
                     Spacer()
                     Button(action: {
                         isPopoverShowing = true
