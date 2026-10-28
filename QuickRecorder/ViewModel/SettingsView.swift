@@ -73,6 +73,30 @@ private struct SettingsInfo: View {
     }
 }
 
+/// A setting's row: its name on the left, its control on the right, both centred on one line whatever the
+/// control's own height (a shortcut field is taller than a switch)
+private struct SettingsRow<Content: View>: View {
+    let title: LocalizedStringKey
+    let content: Content
+
+    init(_ title: LocalizedStringKey, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.content = content()
+    }
+
+    var body: some View {
+        // The name sits a touch lower so it lines up with the middle of a control taller than text, such as a
+        // shortcut field; an offset leaves the row's height alone, the way a padding wouldn't
+        LabeledContent {
+            content
+        } label: {
+            Text(title).offset(y: 2)
+        }
+        // A shortcut field is a little taller than a switch; trimming the row keeps every page's rows the same
+        .padding(.vertical, -2)
+    }
+}
+
 /// A switch whose label can carry its explanation
 private struct InfoToggle: View {
     let title: LocalizedStringKey
@@ -130,7 +154,7 @@ struct GeneralSettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 560, height: 490)
+        .frame(width: 560, height: 385)
         .onAppear { launchAtLogin = (SMAppService.mainApp.status == .enabled) }
         .onChange(of: launchAtLogin) { _, on in
             do {
@@ -174,7 +198,7 @@ struct RecorderSettingsView: View {
     var body: some View {
         Form {
             Section("Recorder") {
-                LabeledContent("Delay Before Recording") {
+                SettingsRow("Delay Before Recording") {
                     HStack(spacing: 8) {
                         Text("\(countdown)").monospacedDigit()
                         Stepper("", value: $countdown, in: 0...99).labelsHidden()
@@ -189,7 +213,7 @@ struct RecorderSettingsView: View {
                            info: "At least one of them stays on. The capsule hangs below the notch and never appears in recordings.",
                            isOn: $controlsCapsule)
                     .disabled(controlsCapsule && !controlsMenuBar)
-                LabeledContent("Opacity When Idle") {
+                SettingsRow("Opacity When Idle") {
                     HStack(spacing: 8) {
                         Slider(value: $capsuleIdleOpacity, in: 0.1...1, step: 0.05).frame(width: 150)
                         Text("\(Int((capsuleIdleOpacity * 100).rounded()))%").monospacedDigit().frame(width: 36, alignment: .trailing)
@@ -217,7 +241,7 @@ struct RecorderSettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 560, height: 670)
+        .frame(width: 560, height: 685)
     }
 }
 
@@ -268,7 +292,7 @@ struct OutputSettingsView: View {
                            isOn: $withAlpha)
             }
             Section("Save") {
-                LabeledContent("Output Folder") {
+                SettingsRow("Output Folder") {
                     HStack(spacing: 8) {
                         Text(saveDirectory?.lastPathComponent ?? "")
                             .lineLimit(1).truncationMode(.tail).foregroundStyle(.secondary)
@@ -278,7 +302,7 @@ struct OutputSettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 560, height: 435)
+        .frame(width: 560, height: 444)
         .onChange(of: withAlpha) { _, alpha in
             if alpha {
                 encoder = .h265
@@ -304,23 +328,24 @@ struct OutputSettingsView: View {
 struct HotkeySettingsView: View {
     var body: some View {
         Form {
-            Section {
-                LabeledContent("Open Main Panel") { HotkeyRecorder(name: .showPanel) }
+            Section("Main Panel") {
+                SettingsRow("Open Main Panel") { HotkeyRecorder(name: .showPanel) }
             }
             Section("Recording") {
-                LabeledContent("Stop Recording") { HotkeyRecorder(name: .stop) }
-                LabeledContent("Pause / Resume") { HotkeyRecorder(name: .pauseResume) }
-            }
-            Section("Start Recording") {
-                LabeledContent("Record System Audio") { HotkeyRecorder(name: .startWithAudio) }
-                LabeledContent("Record Current Screen") { HotkeyRecorder(name: .startWithScreen) }
-                LabeledContent("Record Topmost Window") { HotkeyRecorder(name: .startWithWindow) }
-                LabeledContent("Select Area to Record") { HotkeyRecorder(name: .startWithArea) }
+                SettingsRow("Stop Recording") { HotkeyRecorder(name: .stop) }
+                SettingsRow("Pause / Resume") { HotkeyRecorder(name: .pauseResume) }
+                SettingsRow("Save Current Frame") { HotkeyRecorder(name: .saveFrame) }
             }
             Section {
-                LabeledContent("Save Current Frame") { HotkeyRecorder(name: .saveFrame) }
-            }
-            Section {
+                SettingsRow("Record System Audio") { HotkeyRecorder(name: .startWithAudio) }
+                SettingsRow("Record Current Screen") { HotkeyRecorder(name: .startWithScreen) }
+                SettingsRow("Record Topmost Window") { HotkeyRecorder(name: .startWithWindow) }
+                SettingsRow("Select Area to Record") { HotkeyRecorder(name: .startWithArea) }
+            } header: {
+                Text("Start Recording")
+            } footer: {
+                // Under the last row rather than in a section of its own: the form sets a headerless section
+                // right against the one above it, out of step with the page's other sections (#81)
                 HStack {
                     Spacer()
                     Button("Restore Defaults") { KeyboardShortcuts.reset(KeyboardShortcuts.Name.labelled.map(\.name)) }
@@ -328,7 +353,7 @@ struct HotkeySettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 560, height: 585)
+        .frame(width: 560, height: 505)
     }
 }
 
@@ -341,13 +366,15 @@ struct BlocklistSettingsView: View {
                 BundleSelector()
                     .frame(height: 280)
             } header: {
-                Text("Blocklist")
-            } footer: {
-                Text("These apps will be excluded when recording \"Screen\" or \"Screen Area\"\nBut if the app is launched after the recording starts, it cannot be excluded.")
+                // The explanation sits behind an ⓘ beside the title instead of under the list (#81)
+                HStack(spacing: 5) {
+                    Text("Blocklist")
+                    SettingsInfo(text: "These apps will be excluded when recording \"Screen\" or \"Screen Area\"\nBut if the app is launched after the recording starts, it cannot be excluded.")
+                }
             }
         }
         .formStyle(.grouped)
-        .frame(width: 560, height: 410)
+        .frame(width: 560, height: 376)
     }
 }
 
@@ -433,6 +460,8 @@ private struct HotkeyRecorder: View {
                     return .disallow(reason: "⌘ (or ⇧⌘) with a letter or number is a shortcut other apps use, such as ⌘S to save. As a global shortcut it would stop working in every app while QuickRecorder runs. Add ⌃ or ⌥ to it.".local)
                 }
             }
+            // The recorder's empty label would otherwise keep a text line's height in every row (#81)
+            .labelsHidden()
     }
 }
 
