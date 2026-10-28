@@ -160,9 +160,13 @@
 "No such window!" = "未找到此窗口!";
 "Duplicate window exists, please select it manually!" = "存在多个同名窗口, 请手动选择!";
 "Unable to find the screen this window belongs to!" = "无法确认此窗口所属的屏幕!";
-"General" = "一般设置";
-"Recorder" = "录制设置";
-"Output" = "输出设置";
+"General" = "通用";
+"Recorder" = "录制";
+"Output" = "输出";
+"Main Panel" = "主面板";
+"More Info" = "更多信息";
+"Keep Main Panel on Top" = "主面板置顶";
+"The main panel floats above other windows. Turn it off to let other windows cover it; the Dock icon, the hotkey or the menu bar brings it back to the front." = "主面板会浮在其他窗口上面。关掉后，其他窗口可以盖住它；点 Dock 图标、按快捷键或点菜单栏，它会回到最前。";
 "Hotkey" = "快捷键";
 "Blocklist" = "屏蔽列表";
 "Select..." = "选择...";

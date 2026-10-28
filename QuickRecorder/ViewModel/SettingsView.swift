@@ -10,94 +10,132 @@ import ServiceManagement
 import KeyboardShortcuts
 import Carbon.HIToolbox
 
+/// The five pages as tabs in the settings window's toolbar, in macOS 26's design language (#81)
 struct SettingsView: View {
-    @State private var selectedItem: String? = "General"
-    
     var body: some View {
-        NavigationView {
-            List(selection: $selectedItem) {
-                Label("General", image: "gear").tag("General")
-                Label("Recorder", image: "record").tag("Recorder")
-                Label("Output", image: "film").tag("Output")
-                Label("Hotkey", image: "hotkey").tag("Hotkey")
-                Label("Blocklist", image: "blacklist").tag("Blocklist")
-            }
-            .listStyle(.sidebar)
-            .padding(.top, 9)
-            detail
-        }.frame(width: 600, height: 512)
-    }
-
-    @ViewBuilder private var detail: some View {
-        switch selectedItem {
-        case "Recorder": ScrollView { RecorderView() } // Taller than the window since the recording controls group
-        case "Output": OutputView()
-        case "Hotkey": HotkeyView()
-        case "Blocklist": BlocklistView()
-        default: GeneralView()
+        TabView {
+            GeneralSettingsView()
+                .tabItem { Label("General", systemImage: "gearshape") }
+            RecorderSettingsView()
+                .tabItem { Label("Recorder", systemImage: "record.circle") }
+            OutputSettingsView()
+                .tabItem { Label("Output", systemImage: "film") }
+            HotkeySettingsView()
+                .tabItem { Label("Hotkey", systemImage: "command") }
+            BlocklistSettingsView()
+                .tabItem { Label("Blocklist", systemImage: "hand.raised") }
         }
     }
 }
 
-struct GeneralView: View {
-    @AppStorage("countdown") private var countdown: Int = 0
-    @AppStorage("showOnDock") private var showOnDock: Bool = true
-    @AppStorage("showMenubar") private var showMenubar: Bool = false
+// MARK: - Rows
+
+/// The explanation belongs to its setting: an ⓘ beside the label, opened over the page
+private struct SettingsInfo: View {
+    let text: String
+    @State private var shown = false
+
+    var body: some View {
+        Button { shown.toggle() } label: {
+            Image(systemName: "info.circle").foregroundStyle(.secondary)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("More Info".local)
+        .popover(isPresented: $shown, arrowEdge: .bottom) {
+            Text(text.local).font(.callout).padding(12)
+                .frame(width: 300, alignment: .leading)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+}
+
+/// A switch whose label can carry its explanation
+private struct InfoToggle: View {
+    let title: LocalizedStringKey
+    var info: String?
+    @Binding var isOn: Bool
+
+    init(_ title: LocalizedStringKey, info: String? = nil, isOn: Binding<Bool>) {
+        self.title = title
+        self.info = info
+        self._isOn = isOn
+    }
+
+    var body: some View {
+        Toggle(isOn: $isOn) {
+            HStack(spacing: 5) {
+                Text(title)
+                if let info { SettingsInfo(text: info) }
+            }
+        }
+    }
+}
+
+// MARK: - General
+
+struct GeneralSettingsView: View {
+    @AppStorage("showOnDock")    private var showOnDock: Bool = true
+    @AppStorage("showMenubar")   private var showMenubar: Bool = false
     @AppStorage("capsuleMaterial") private var material: PanelMaterial = .glass
-    
+    @AppStorage("mainPanelOnTop") private var mainPanelOnTop: Bool = true
+
     @State private var launchAtLogin = false
 
     var body: some View {
-        SForm {
-            SGroupBox(label: "Startup") {
-                SToggle("Launch at Login", isOn: $launchAtLogin)
-                    .onChange(of: launchAtLogin) { _, newValue in
-                        do {
-                            if newValue {
-                                try SMAppService.mainApp.register()
-                            } else {
-                                try SMAppService.mainApp.unregister()
-                            }
-                        }catch{
-                            print("Failed to \(newValue ? "enable" : "disable") launch at login: \(error.localizedDescription)")
-                        }
-                    }
-                SDivider()
-                SToggle("Show QuickRecorder on Dock", isOn: $showOnDock)
-                    //.disabled(!showMenubar)
-                SDivider()
-                SToggle("Show QuickRecorder on Menu Bar", isOn: $showMenubar)
-                    //.disabled(!showOnDock)
+        Form {
+            Section("Startup") {
+                Toggle("Launch at Login", isOn: $launchAtLogin)
+                Toggle("Show QuickRecorder on Dock", isOn: $showOnDock)
+                Toggle("Show QuickRecorder on Menu Bar", isOn: $showMenubar)
             }
-            SGroupBox(label: "Appearance") {
-                SPicker("Panel and Capsule Material", selection: $material) {
+            Section("Appearance") {
+                Picker("Panel and Capsule Material", selection: $material) {
                     Text("Liquid Glass").tag(PanelMaterial.glass)
                     Text("Frosted Glass").tag(PanelMaterial.blur)
                     Text("Black").tag(PanelMaterial.black)
                 }
             }
-            VStack(spacing: 8) {
-                if let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
-                    Text("QuickRecorder v\(appVersion)")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
+            Section("Main Panel") {
+                InfoToggle("Keep Main Panel on Top",
+                           info: "The main panel floats above other windows. Turn it off to let other windows cover it; the Dock icon, the hotkey or the menu bar brings it back to the front.",
+                           isOn: $mainPanelOnTop)
+            }
+            Section {
+            } footer: {
+                if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
+                    Text("QuickRecorder v\(version)").frame(maxWidth: .infinity).foregroundStyle(.secondary)
                 }
             }
         }
-        .onAppear{ launchAtLogin = (SMAppService.mainApp.status == .enabled) }
+        .formStyle(.grouped)
+        .frame(width: 560, height: 390)
+        .onAppear { launchAtLogin = (SMAppService.mainApp.status == .enabled) }
+        .onChange(of: launchAtLogin) { _, on in
+            do {
+                if on { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
+            } catch {
+                print("Failed to \(on ? "enable" : "disable") launch at login: \(error.localizedDescription)")
+            }
+        }
         .onChange(of: showMenubar) { updateStatusBar() }
-        .onChange(of: showOnDock) { _, newValue in
-            if !newValue {
+        .onChange(of: showOnDock) { _, on in
+            if !on {
                 NSApp.setActivationPolicy(.accessory)
                 NSApp.activate(ignoringOtherApps: true)
             } else {
                 NSApp.setActivationPolicy(.regular)
             }
         }
+        // The switch changes a panel that may already be up, without closing and opening it (#111)
+        .onChange(of: mainPanelOnTop) { _, on in
+            AppDelegate.shared.mainPanelWindow?.level = on ? .floating : .normal
+        }
     }
 }
 
-struct RecorderView: View {
+// MARK: - Recorder
+
+struct RecorderSettingsView: View {
     @AppStorage("countdown")        private var countdown: Int = 0
     @AppStorage("highlightMouse")   private var highlightMouse: Bool = false
     @AppStorage("includeMenuBar")   private var includeMenuBar: Bool = true
@@ -112,52 +150,58 @@ struct RecorderView: View {
     @AppStorage("hideCCenter")      private var hideCCenter: Bool = false
 
     var body: some View {
-        SForm(spacing: 10) {
-            SGroupBox(label: "Recorder") {
-                // The custom background colour is chosen in the selectors' Options now (#92)
-                SSteper("Delay Before Recording", value: $countdown, min: 0, max: 99)
+        Form {
+            Section("Recorder") {
+                LabeledContent("Delay Before Recording") {
+                    HStack(spacing: 8) {
+                        Text("\(countdown)").monospacedDigit()
+                        Stepper("", value: $countdown, in: 0...99).labelsHidden()
+                    }
+                }
             }
-            SGroupBox(label: "Recording Controls") {
+            Section("Recording Controls") {
                 // At least one stays on: the one left on can't be switched off
-                SToggle("Menu Bar Timer and Menu", isOn: $controlsMenuBar)
+                InfoToggle("Menu Bar Timer and Menu", isOn: $controlsMenuBar)
                     .disabled(controlsMenuBar && !controlsCapsule)
-                SDivider()
-                SToggle("Floating Capsule", isOn: $controlsCapsule,
-                        tips: "At least one of them stays on. The capsule hangs below the notch and never appears in recordings.")
+                InfoToggle("Floating Capsule",
+                           info: "At least one of them stays on. The capsule hangs below the notch and never appears in recordings.",
+                           isOn: $controlsCapsule)
                     .disabled(controlsCapsule && !controlsMenuBar)
-                SDivider()
-                SItem(label: "Opacity When Idle") {
-                    Slider(value: $capsuleIdleOpacity, in: 0.1...1, step: 0.05).frame(width: 150)
-                    Text("\(Int((capsuleIdleOpacity * 100).rounded()))%")
-                        .monospacedDigit()
-                        .frame(width: 36, alignment: .trailing)
-                }.disabled(!controlsCapsule)
+                LabeledContent("Opacity When Idle") {
+                    HStack(spacing: 8) {
+                        Slider(value: $capsuleIdleOpacity, in: 0.1...1, step: 0.05).frame(width: 150)
+                        Text("\(Int((capsuleIdleOpacity * 100).rounded()))%").monospacedDigit().frame(width: 36, alignment: .trailing)
+                    }
+                }
+                .disabled(!controlsCapsule)
             }
             .onChange(of: controlsMenuBar) { updateStatusBar() }
             .onChange(of: controlsCapsule) { updateStatusBar() }
-            SGroupBox(label: "Recording Behavior") {
-                SToggle("Prevent Mac from sleeping while recording", isOn: $preventSleep)
-                SDivider()
-                SToggle("Show floating preview after recording", isOn: $showPreview)
-                SDivider()
-                SToggle("Open video trimmer after recording", isOn: $trimAfterRecord)
+            Section("Recording Behavior") {
+                InfoToggle("Prevent Mac from sleeping while recording", isOn: $preventSleep)
+                InfoToggle("Show floating preview after recording", isOn: $showPreview)
+                InfoToggle("Open video trimmer after recording", isOn: $trimAfterRecord)
             }
-            SGroupBox(label: "Captured Content") {
-                SToggle("Exclude QuickRecorder itself", isOn: $hideSelf)
-                SDivider()
-                SToggle("Include Menu Bar in Recording", isOn: $includeMenuBar)
-                SDivider()
-                SToggle("Hide Control Center Icons", isOn: $hideCCenter, tips: "Hide the clock, Wi-Fi, bluetooth, volume and other system icons in the menu bar.")
-                SDivider()
-                SToggle("Highlight the Mouse Cursor", isOn: $highlightMouse, tips: "Not available for \"Single Window Capture\"")
-                SDivider()
-                SToggle("Exclude Files on Desktop", isOn: $hideDesktopFiles, tips: "If enabled, all files on the Desktop will be hidden from the video when recording.")
+            Section("Captured Content") {
+                InfoToggle("Exclude QuickRecorder itself", isOn: $hideSelf)
+                InfoToggle("Include Menu Bar in Recording", isOn: $includeMenuBar)
+                InfoToggle("Hide Control Center Icons",
+                           info: "Hide the clock, Wi-Fi, bluetooth, volume and other system icons in the menu bar.",
+                           isOn: $hideCCenter)
+                InfoToggle("Highlight the Mouse Cursor", info: "Not available for \"Single Window Capture\"", isOn: $highlightMouse)
+                InfoToggle("Exclude Files on Desktop",
+                           info: "If enabled, all files on the Desktop will be hidden from the video when recording.",
+                           isOn: $hideDesktopFiles)
             }
         }
+        .formStyle(.grouped)
+        .frame(width: 560, height: 670)
     }
 }
 
-struct OutputView: View {
+// MARK: - Output
+
+struct OutputSettingsView: View {
     @AppStorage("encoder")          private var encoder: Encoder = .h265
     @AppStorage("videoFormat")      private var videoFormat: VideoFormat = .mp4
     @AppStorage("audioFormat")      private var audioFormat: AudioFormat = .aac
@@ -168,9 +212,9 @@ struct OutputView: View {
     @AppStorage("saveDirectory")    private var saveDirectory: String?
 
     var body: some View {
-        SForm(spacing: 30) {
-            SGroupBox(label: "Audio") {
-                SPicker("Quality", selection: $audioQuality) {
+        Form {
+            Section("Audio") {
+                Picker("Quality", selection: $audioQuality) {
                     if audioFormat == .alac {
                         Text("Lossless").tag(audioQuality)
                     }
@@ -178,102 +222,110 @@ struct OutputView: View {
                     Text("Good - 192Kbps").tag(AudioQuality.good)
                     Text("High - 256Kbps").tag(AudioQuality.high)
                     Text("Extreme - 320Kbps").tag(AudioQuality.extreme)
-                }.disabled(audioFormat == .alac)
-                SDivider()
-                SPicker("Format", selection: $audioFormat) {
+                }
+                .disabled(audioFormat == .alac)
+                Picker("Format", selection: $audioFormat) {
                     Text("AAC").tag(AudioFormat.aac)
                     Text("ALAC (Lossless)").tag(AudioFormat.alac)
                 }
-                SDivider()
-                SToggle("Record Microphone to Main Track", isOn: $remuxAudio)
+                InfoToggle("Record Microphone to Main Track", isOn: $remuxAudio)
             }
-            SGroupBox(label: "Video") {
-                SPicker("Format", selection: $videoFormat) {
+            Section("Video") {
+                Picker("Format", selection: $videoFormat) {
                     Text("MOV").tag(VideoFormat.mov)
                     Text("MP4").tag(VideoFormat.mp4)
-                }.disabled(withAlpha)
-                SDivider()
-                SPicker("Encoder", selection: $encoder) {
+                }
+                .disabled(withAlpha)
+                Picker("Encoder", selection: $encoder) {
                     Text("H.264").tag(Encoder.h264)
                     Text("H.265").tag(Encoder.h265)
-                }.disabled(withAlpha)
-                SDivider()
-                SToggle("Recording with Alpha Channel", isOn: $withAlpha,
-                        tips: "Records with HEVC with Alpha, so transparent areas stay transparent in the video.\n\n• Turning it on fixes the encoder to H.265 and the format to MOV.\n• When recording an application, the Background menu then offers \"Transparent\": everything outside the selected apps' windows is transparent.\n• A full screen or screen area recording has no transparent areas, so it makes no difference there.\n• The transparency shows in apps that support transparent video, such as Final Cut Pro, Motion and Keynote. Most players and video sites don't.")
+                }
+                .disabled(withAlpha)
+                InfoToggle("Recording with Alpha Channel",
+                           info: "Records with HEVC with Alpha, so transparent areas stay transparent in the video.\n\n• Turning it on fixes the encoder to H.265 and the format to MOV.\n• When recording an application, the Background menu then offers \"Transparent\": everything outside the selected apps' windows is transparent.\n• A full screen or screen area recording has no transparent areas, so it makes no difference there.\n• The transparency shows in apps that support transparent video, such as Final Cut Pro, Motion and Keynote. Most players and video sites don't.",
+                           isOn: $withAlpha)
             }
-            SGroupBox(label: "Save") {
-                SItem(label: "Output Folder") {
-                    Text(String(format: "Currently set to \"%@\"".local, saveDirectory!.lastPathComponent))
-                        .font(.footnote)
-                        .foregroundColor(Color.secondary)
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                    Button("Select...", action: { updateOutputDirectory() })
+            Section("Save") {
+                LabeledContent("Output Folder") {
+                    HStack(spacing: 8) {
+                        Text(saveDirectory?.lastPathComponent ?? "")
+                            .lineLimit(1).truncationMode(.tail).foregroundStyle(.secondary)
+                        Button("Select...") { updateOutputDirectory() }
+                    }
                 }
             }
-        }.onChange(of: withAlpha) { _, alpha in
+        }
+        .formStyle(.grouped)
+        .frame(width: 560, height: 435)
+        .onChange(of: withAlpha) { _, alpha in
             if alpha {
-                encoder = Encoder.h265; videoFormat = VideoFormat.mov
-            } else {
-                if background == .clear { background = .wallpaper }
+                encoder = .h265
+                videoFormat = .mov
+            } else if background == .clear {
+                background = .wallpaper
             }
         }
     }
-    
-    func updateOutputDirectory() { // todo: re-sandbox
+
+    private func updateOutputDirectory() {
         let openPanel = NSOpenPanel()
         openPanel.canChooseFiles = false
         openPanel.canChooseDirectories = true
         openPanel.allowedContentTypes = []
         openPanel.allowsOtherFileTypes = false
-        if openPanel.runModal() == NSApplication.ModalResponse.OK {
-            if let path = openPanel.urls.first?.path { saveDirectory = path }
-        }
+        if openPanel.runModal() == .OK, let path = openPanel.urls.first?.path { saveDirectory = path }
     }
 }
 
-struct HotkeyView: View {
+// MARK: - Hotkeys
+
+struct HotkeySettingsView: View {
     var body: some View {
-        SForm(spacing: 10) {
-            SGroupBox(label: "Hotkey") {
-                SItem(label: "Open Main Panel") { HotkeyRecorder(name: .showPanel) }
+        Form {
+            Section {
+                LabeledContent("Open Main Panel") { HotkeyRecorder(name: .showPanel) }
             }
-            SGroupBox {
-                SItem(label: "Stop Recording") { HotkeyRecorder(name: .stop) }
-                SDivider()
-                SItem(label: "Pause / Resume") { HotkeyRecorder(name: .pauseResume) }
+            Section("Recording") {
+                LabeledContent("Stop Recording") { HotkeyRecorder(name: .stop) }
+                LabeledContent("Pause / Resume") { HotkeyRecorder(name: .pauseResume) }
             }
-            SGroupBox {
-                SItem(label: "Record System Audio") { HotkeyRecorder(name: .startWithAudio) }
-                SDivider()
-                SItem(label: "Record Current Screen") { HotkeyRecorder(name: .startWithScreen) }
-                SDivider()
-                SItem(label: "Record Topmost Window") { HotkeyRecorder(name: .startWithWindow) }
-                SDivider()
-                SItem(label: "Select Area to Record") { HotkeyRecorder(name: .startWithArea) }
+            Section("Start Recording") {
+                LabeledContent("Record System Audio") { HotkeyRecorder(name: .startWithAudio) }
+                LabeledContent("Record Current Screen") { HotkeyRecorder(name: .startWithScreen) }
+                LabeledContent("Record Topmost Window") { HotkeyRecorder(name: .startWithWindow) }
+                LabeledContent("Select Area to Record") { HotkeyRecorder(name: .startWithArea) }
             }
-            SGroupBox {
-                SItem(label: "Save Current Frame") { HotkeyRecorder(name: .saveFrame) }
+            Section {
+                LabeledContent("Save Current Frame") { HotkeyRecorder(name: .saveFrame) }
             }
-            HStack {
-                Spacer()
-                Button("Restore Defaults") { KeyboardShortcuts.reset(KeyboardShortcuts.Name.labelled.map(\.name)) }
+            Section {
+                HStack {
+                    Spacer()
+                    Button("Restore Defaults") { KeyboardShortcuts.reset(KeyboardShortcuts.Name.labelled.map(\.name)) }
+                }
             }
         }
+        .formStyle(.grouped)
+        .frame(width: 560, height: 585)
     }
 }
 
-struct BlocklistView: View {
+// MARK: - Blocklist
+
+struct BlocklistSettingsView: View {
     var body: some View {
-        SForm(spacing: 0, noSpacer: true) {
-            SGroupBox(label: "Blocklist") {
-                    BundleSelector()
-                    Text("These apps will be excluded when recording \"Screen\" or \"Screen Area\"\nBut if the app is launched after the recording starts, it cannot be excluded.")
-                        .font(.footnote)
-                        .multilineTextAlignment(.center)
-                        .foregroundColor(Color.secondary)
+        Form {
+            Section {
+                BundleSelector()
+                    .frame(height: 280)
+            } header: {
+                Text("Blocklist")
+            } footer: {
+                Text("These apps will be excluded when recording \"Screen\" or \"Screen Area\"\nBut if the app is launched after the recording starts, it cannot be excluded.")
             }
         }
+        .formStyle(.grouped)
+        .frame(width: 560, height: 410)
     }
 }
 

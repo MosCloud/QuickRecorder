@@ -34,21 +34,6 @@ struct QuickRecorderApp: App {
     var body: some Scene {
         Settings {
             SettingsView()
-                .background(
-                    WindowAccessor(
-                        onWindowOpen: { w in
-                            if let w = w {
-                                //w.level = .floating
-                                w.titlebarSeparatorStyle = .none
-                                guard let nsSplitView = findNSSplitVIew(view: w.contentView),
-                                      let controller = nsSplitView.delegate as? NSSplitViewController else { return }
-                                controller.splitViewItems.first?.canCollapse = false
-                                controller.splitViewItems.first?.minimumThickness = 140
-                                controller.splitViewItems.first?.maximumThickness = 140
-                                w.orderFront(nil)
-                            }
-                        })
-                )
         }
         .handlesExternalEvents(matching: [])
         .commands {
@@ -293,14 +278,30 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
     }
     
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        // The Dock icon calls an open panel back to the front, even when another app covers it and no other
+        // QuickRecorder window is up (#111)
+        if mainPanelWindow != nil { showMainPanel(); return false }
         let visible = NSApp.windows.filter({ !$0.title.contains("Item-0") && !$0.title.isEmpty && $0.isVisible })
         if visible.isEmpty { showMainPanel() }
         return false
     }
 
-    /// Shows the main panel in the middle of the screen, unless it's already there or a recording is running.
+    /// The main panel floats above other windows unless the setting says otherwise (#111)
+    var mainPanelOnTop: Bool { ud.object(forKey: "mainPanelOnTop") == nil || ud.bool(forKey: "mainPanelOnTop") }
+
+    /// The main panel, when it's up
+    var mainPanelWindow: NSWindow? { NSApp.windows.first { $0.title == "QuickRecorder".local && $0.isVisible } }
+
+    /// Shows the main panel in the middle of the screen, unless a recording is running; an open one comes to the front
     @MainActor func showMainPanel() {
-        guard SCContext.stream == nil, !NSApp.windows.contains(where: { $0.title == "QuickRecorder".local && $0.isVisible }) else { return }
+        guard SCContext.stream == nil else { return }
+        // With the panel set to stay below other windows it can be covered: calling it up brings it back (#111)
+        if let panel = mainPanelWindow {
+            panel.level = mainPanelOnTop ? .floating : .normal
+            panel.makeKeyAndOrderFront(self)
+            RecordingControls.shared.closeMenuBarPanel()
+            return
+        }
         let content = NSHostingView(rootView: ContentView())
         let mainPanel = EscPanel(contentRect: NSRect(origin: .zero, size: content.fittingSize), styleMask: [.fullSizeContentView, .nonactivatingPanel], backing: .buffered, defer: false)
         mainPanel.contentView = content
@@ -308,7 +309,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
         mainPanel.hasShadow = ud.string(forKey: "capsuleMaterial") != PanelMaterial.glass.rawValue
         mainPanel.title = "QuickRecorder".local
         mainPanel.isOpaque = false
-        mainPanel.level = .floating
+        mainPanel.level = mainPanelOnTop ? .floating : .normal
         mainPanel.isRestorable = false
         mainPanel.backgroundColor = .clear
         mainPanel.isReleasedWhenClosed = false
@@ -360,17 +361,6 @@ func closeAllWindow(except: String = "") {
         && !$0.title.contains(except) }) { w.close() }
 }
 
-func findNSSplitVIew(view: NSView?) -> NSSplitView? {
-    var queue = [NSView]()
-    if let root = view { queue.append(root) }
-    
-    while !queue.isEmpty {
-        let current = queue.removeFirst()
-        if current is NSSplitView { return current as? NSSplitView }
-        for subview in current.subviews { queue.append(subview) }
-    }
-    return nil
-}
 
 func process(path: String, arguments: [String]) -> String? {
     let task = Process()
