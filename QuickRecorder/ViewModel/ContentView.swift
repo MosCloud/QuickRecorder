@@ -264,9 +264,14 @@ extension AppDelegate {
         guard let screen = scDisplay.nsScreen else { return }
         let screenshotWindow = ScreenshotWindow(contentRect: screen.frame, backing: .buffered, defer: false, size: size, force: noPanel)
         screenshotWindow.title = "Area Selector".local
-        //screenshotWindow.orderFront(self)
+        // The frost fades in as the selector opens, not when it's only remade at a new size (#97)
+        if !noPanel { screenshotWindow.alphaValue = 0 }
         screenshotWindow.orderFrontRegardless()
         if !noPanel {
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.2
+                screenshotWindow.animator().alphaValue = 1
+            }
             MainActor.assumeIsolated {
                 let panel = FloatingCapsulePanel.show(AreaSelector(screen: scDisplay), title: "Start Recording".local,
                                                       centerX: screen.frame.midX, bottom: screen.visibleFrame.minY + 60)

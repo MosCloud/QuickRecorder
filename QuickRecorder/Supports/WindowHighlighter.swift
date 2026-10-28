@@ -81,7 +81,7 @@ class WindowHighlighter {
             guard let nsScreen = display.nsScreen else { return }
             let area = CGRectTransform(cgRect: window.frame)
             SCContext.screenArea = NSRect(x: area.origin.x - nsScreen.frame.minX, y: area.origin.y - nsScreen.frame.minY, width:area.width, height: area.height)
-            appDelegate.showAreaOutline(area, margin: 3)
+            appDelegate.showAreaOutline(area)
             appDelegate.countdownAndRecord(type: "area", screen: display, autoStop: autoStop)
         default:
             appDelegate.countdownAndRecord(type: "window", screen: display, windows: [window], autoStop: autoStop)

@@ -9,19 +9,141 @@ import SwiftUI
 import ScreenCaptureKit
 import Quartz
 
-struct DashWindow: View {
-    var body: some View {
-        ZStack {
-            Rectangle()
-                .fill(Color.clear)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 4)
-                        .stroke(style: StrokeStyle(lineWidth: 2, dash: [5]))
-                        .padding(2)
-                        .foregroundColor(.blue.opacity(0.5))
-                )
-        }
+/// The marks around an area (#97): thin square corners just outside it, white in dark mode and near-black in light
+enum AreaMarkStyle {
+    /// The marks' line width; they sit just outside the area, their inner side on its edge
+    static let width: CGFloat = 3
+    static let corners: [ResizeHandle] = [.topLeft, .topRight, .bottomRight, .bottomLeft]
+    static let edges: [ResizeHandle] = [.top, .right, .bottom, .left]
+    static func color(_ scheme: ColorScheme) -> Color { scheme == .dark ? .white : Color(white: 0.15) }
+    static func shadow(_ scheme: ColorScheme) -> Color { .black.opacity(scheme == .dark ? 0.4 : 0.1) }
+}
+
+/// One corner's L along `rect`'s sides, in flipped coordinates
+struct CornerMark: Shape {
+    let rect: CGRect
+    let corner: ResizeHandle
+    var length: CGFloat
+
+    var animatableData: CGFloat {
+        get { length }
+        set { length = newValue }
     }
+
+    func path(in _: CGRect) -> Path {
+        let c = corner.point(inFlipped: rect)
+        let dx: CGFloat = corner == .topLeft || corner == .bottomLeft ? 1 : -1
+        let dy: CGFloat = corner == .topLeft || corner == .topRight ? 1 : -1
+        let l = min(length, rect.width / 3, rect.height / 3)
+        var p = Path()
+        p.move(to: CGPoint(x: c.x, y: c.y + dy * l))
+        p.addLine(to: c)
+        p.addLine(to: CGPoint(x: c.x + dx * l, y: c.y))
+        return p
+    }
+}
+
+/// What stays around an area while it records: the area selector's corners, in a window just bigger than the area
+/// so they stay out of the recording (#97)
+struct AreaOutline: View {
+    @Environment(\.colorScheme) private var scheme
+
+    var body: some View {
+        GeometryReader { g in
+            let line = CGRect(origin: .zero, size: g.size).insetBy(dx: AreaMarkStyle.width / 2, dy: AreaMarkStyle.width / 2)
+            ZStack {
+                ForEach(AreaMarkStyle.corners, id: \.self) { c in
+                    CornerMark(rect: line, corner: c, length: 18)
+                        .stroke(AreaMarkStyle.color(scheme), style: StrokeStyle(lineWidth: AreaMarkStyle.width, lineCap: .round, lineJoin: .round))
+                        .shadow(color: AreaMarkStyle.shadow(scheme), radius: 1.5, y: 0.5)
+                }
+            }
+        }
+        .ignoresSafeArea()
+    }
+}
+
+/// The area and the handle under the pointer or being dragged, for the marks over the frost
+@MainActor
+final class AreaMarksModel: ObservableObject {
+    /// In the overlay's flipped coordinates
+    @Published var rect = CGRect.zero
+    @Published var handle = ResizeHandle.none
+}
+
+/// Over the frost (#97): its cut edge catching the light, the corners, a bar on the edge under the pointer, and the size
+struct AreaMarks: View {
+    @ObservedObject var model: AreaMarksModel
+    @AppStorage("capsuleMaterial") private var material: PanelMaterial = .glass
+    @Environment(\.colorScheme) private var scheme
+
+    var body: some View {
+        GeometryReader { g in
+            let r = model.rect
+            let line = r.insetBy(dx: -AreaMarkStyle.width / 2, dy: -AreaMarkStyle.width / 2)
+            let mark = AreaMarkStyle.color(scheme), shadow = AreaMarkStyle.shadow(scheme)
+            ZStack(alignment: .topLeading) {
+                // A hairline inside keeps the lit edge apart from light content
+                Path(r.insetBy(dx: 0.5, dy: 0.5)).stroke(Color.black.opacity(0.2), lineWidth: 1)
+                Path(r.insetBy(dx: -0.5, dy: -0.5)).stroke(Color.white.opacity(0.75), lineWidth: 1)
+                ForEach(AreaMarkStyle.corners, id: \.self) { c in
+                    let near = model.handle == c
+                    CornerMark(rect: line, corner: c, length: near ? 24 : 18)
+                        .stroke(mark, style: StrokeStyle(lineWidth: AreaMarkStyle.width, lineCap: .round, lineJoin: .round))
+                        .shadow(color: shadow, radius: 1.5, y: 0.5)
+                        .animation(.easeOut(duration: 0.15), value: near)
+                }
+                // The whole edge resizes; the bar only says so
+                ForEach(AreaMarkStyle.edges, id: \.self) { e in
+                    let shown = model.handle == e, across = e == .top || e == .bottom
+                    Capsule().fill(mark)
+                        .frame(width: across ? (shown ? 24 : 6) : AreaMarkStyle.width, height: across ? AreaMarkStyle.width : (shown ? 24 : 6))
+                        .shadow(color: shadow, radius: 1.5, y: 0.5)
+                        .opacity(shown ? 1 : 0)
+                        .position(e.point(inFlipped: line))
+                        .animation(.spring(duration: 0.25, bounce: 0.3), value: shown)
+                }
+                sizeTag(r, in: g.size)
+            }
+        }
+        .ignoresSafeArea()
+        .allowsHitTesting(false)
+    }
+
+    private func sizeTag(_ r: CGRect, in size: CGSize) -> some View {
+        Text(verbatim: "\(Int(r.width)) × \(Int(r.height))")
+            .font(.system(size: 12, weight: .medium).monospacedDigit())
+            .padding(.horizontal, 10).padding(.vertical, 4)
+            .background {
+                // Not glass: the overlay isn't the key window, and glass there draws a dark rim
+                if material == .black {
+                    Capsule().fill(.black)
+                } else {
+                    Capsule().fill(.regularMaterial).environment(\.controlActiveState, .active)
+                }
+            }
+            .environment(\.colorScheme, material == .black ? .dark : scheme)
+            .fixedSize()
+            // Above the middle of the area, or just inside its top when there's no room above
+            .position(x: min(max(r.midX, 60), size.width - 60), y: r.minY >= 44 ? r.minY - 24 : r.minY + 24)
+    }
+}
+
+/// The frost around the area: a live blur of whatever is on screen behind the overlay (#97)
+private final class FrostView: NSVisualEffectView {
+    override init(frame: NSRect) {
+        super.init(frame: frame)
+        material = .fullScreenUI
+        blendingMode = .behindWindow
+        state = .active
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    // The overlay takes the mouse
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
 }
 
 /// The area's size in a bubble of the capsule: width × height, then what the recording comes out at
@@ -108,7 +230,7 @@ struct AreaSelector: View {
         appDelegate.stopGlobalMouseMonitor()
         let area = SCContext.screenArea!
         guard let nsScreen = screen.nsScreen else { return }
-        appDelegate.showAreaOutline(area.offsetBy(dx: nsScreen.frame.minX, dy: nsScreen.frame.minY), margin: 4)
+        appDelegate.showAreaOutline(area.offsetBy(dx: nsScreen.frame.minX, dy: nsScreen.frame.minY))
         appDelegate.countdownAndRecord(type: "area", screen: screen, autoStop: autoStop)
     }
 }
@@ -118,10 +240,7 @@ class ScreenshotOverlayView: NSView {
     @AppStorage("areaHeight") private var areaHeight: Int = 450
     
     var selectionRect: NSRect? {
-        didSet {
-            updateMaskLayer()
-            updateSelectionLayer()
-        }
+        didSet { layoutMarks() }
     }
     var initialLocation: NSPoint?
     var dragIng: Bool = false
@@ -131,18 +250,22 @@ class ScreenshotOverlayView: NSView {
     var size: NSSize
     var force: Bool
 
-    let controlPointSize: CGFloat = 10.0
-    let controlPointColor: NSColor = NSColor.systemYellow
-
-    private var maskLayer: CAShapeLayer?
-    private var selectionLayer: CAShapeLayer?
-    private var controlPointLayers: [CAShapeLayer] = []
+    /// The frost on the four sides of the area, and over it the marks (#97)
+    private let frost = (0..<4).map { _ in FrostView(frame: .zero) }
+    private let marks = AreaMarksModel()
+    private var eased = false
 
     init(frame: CGRect, size: NSSize, force: Bool) {
         self.size = size
         self.force = force
         super.init(frame: frame)
         wantsLayer = true
+        frost.forEach(addSubview)
+        let host = NSHostingView(rootView: AreaMarks(model: marks))
+        host.safeAreaRegions = []
+        host.frame = bounds
+        host.autoresizingMask = [.width, .height]
+        addSubview(host)
     }
 
     required init?(coder: NSCoder) {
@@ -165,9 +288,6 @@ class ScreenshotOverlayView: NSView {
             areaHeight = Int(selectionRect!.height)
             SCContext.screenArea = selectionRect
         }
-        updateMaskLayer()
-        updateSelectionLayer()
-        setupControlPoints()
     }
 
     override func draw(_ dirtyRect: NSRect) {
@@ -175,97 +295,88 @@ class ScreenshotOverlayView: NSView {
         maxFrame = dirtyRect
     }
 
-     private func updateMaskLayer() {
-        maskLayer?.removeFromSuperlayer()
+    // The frost and the marks only show: every click is the overlay's
+    override func hitTest(_ point: NSPoint) -> NSView? { super.hitTest(point) == nil ? nil : self }
 
-        guard let rect = selectionRect else { return }
-         
-         let path = CGMutablePath()
-         path.addRect(bounds)
-         path.addRect(rect)
-
-         let mask = CAShapeLayer()
-         mask.path = path
-         mask.fillRule = .evenOdd
-         mask.fillColor = NSColor.black.withAlphaComponent(0.5).cgColor
-         self.layer?.addSublayer(mask)
-         maskLayer = mask
-     }
-
-
-    private func updateSelectionLayer() {
-        selectionLayer?.removeFromSuperlayer()
-        controlPointLayers.forEach{
-           $0.removeFromSuperlayer()
+    /// Frost everywhere but the area, and the marks around it
+    private func layoutMarks() {
+        guard let r = selectionRect else { return }
+        let b = bounds
+        let sides = [NSRect(x: 0, y: 0, width: b.width, height: r.minY),
+                     NSRect(x: 0, y: r.maxY, width: b.width, height: b.height - r.maxY),
+                     NSRect(x: 0, y: r.minY, width: r.minX, height: r.height),
+                     NSRect(x: r.maxX, y: r.minY, width: b.width - r.maxX, height: r.height)]
+        for (view, side) in zip(frost, sides) {
+            view.frame = NSRect(x: side.minX, y: side.minY, width: max(side.width, 0), height: max(side.height, 0))
         }
-        controlPointLayers.removeAll()
-        
-        guard let rect = selectionRect else { return }
-    
-        let path = CGPath(rect: rect, transform: nil)
-    
-        let shapeLayer = CAShapeLayer()
-        shapeLayer.path = path
-        shapeLayer.fillColor = NSColor.init(white: 1, alpha: 0.01).cgColor
-        shapeLayer.strokeColor = NSColor.white.cgColor
-        shapeLayer.lineWidth = 4.0
-        shapeLayer.lineDashPattern = [4,4]
-    
-        self.layer?.addSublayer(shapeLayer)
-        self.selectionLayer = shapeLayer
-    
-        setupControlPoints()
+        marks.rect = CGRect(x: r.minX, y: b.height - r.maxY, width: r.width, height: r.height)
     }
-    
-    private func setupControlPoints() {
-      guard let rect = selectionRect else { return }
-        
-      for handle in ResizeHandle.allCases {
-        if let point = controlPointForHandle(handle, inRect: rect) {
-             let controlPointRect = NSRect(origin: point, size: CGSize(width: controlPointSize, height: controlPointSize))
-              let controlPointPath = CGPath(ellipseIn: controlPointRect, transform: nil)
-              
-              let controlLayer = CAShapeLayer()
-              controlLayer.path = controlPointPath
-              controlLayer.fillColor = controlPointColor.cgColor
-            
-             layer?.addSublayer(controlLayer)
-             controlPointLayers.append(controlLayer)
+
+    /// While the area moves or changes size the frost thins, so what's around it shows to line it up against
+    private func ease(_ on: Bool) {
+        guard on != eased else { return }
+        eased = on
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.2
+            frost.forEach { $0.animator().alphaValue = on ? 0.25 : 1 }
         }
-      }
+    }
+
+    /// Where each handle takes the pointer: a square at a corner, the rest of the edge between them
+    private func zone(_ handle: ResizeHandle, of r: NSRect) -> NSRect {
+        let corner: CGFloat = 28, edge: CGFloat = 14
+        func square(_ x: CGFloat, _ y: CGFloat) -> NSRect { NSRect(x: x - corner / 2, y: y - corner / 2, width: corner, height: corner) }
+        let across = NSRect(x: r.minX + corner / 2, y: 0, width: max(r.width - corner, 0), height: edge)
+        let along = NSRect(x: 0, y: r.minY + corner / 2, width: edge, height: max(r.height - corner, 0))
+        switch handle {
+        case .topLeft: return square(r.minX, r.maxY)
+        case .topRight: return square(r.maxX, r.maxY)
+        case .bottomRight: return square(r.maxX, r.minY)
+        case .bottomLeft: return square(r.minX, r.minY)
+        case .top: return across.offsetBy(dx: 0, dy: r.maxY - edge / 2)
+        case .bottom: return across.offsetBy(dx: 0, dy: r.minY - edge / 2)
+        case .left: return along.offsetBy(dx: r.minX - edge / 2, dy: 0)
+        case .right: return along.offsetBy(dx: r.maxX - edge / 2, dy: 0)
+        case .none: return .zero
+        }
     }
 
     func handleForPoint(_ point: NSPoint) -> ResizeHandle {
         guard let rect = selectionRect else { return .none }
-
-        for handle in ResizeHandle.allCases {
-            if let controlPoint = controlPointForHandle(handle, inRect: rect), NSRect(origin: controlPoint, size: CGSize(width: controlPointSize, height: controlPointSize)).contains(point) {
-                return handle
-            }
-        }
-        return .none
+        return ResizeHandle.allCases.first { $0 != .none && zone($0, of: rect).contains(point) } ?? .none
     }
 
-    func controlPointForHandle(_ handle: ResizeHandle, inRect rect: NSRect) -> NSPoint? {
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        trackingAreas.forEach(removeTrackingArea)
+        // Always: the capsule's panel is the key window, not this one
+        addTrackingArea(NSTrackingArea(rect: .zero, options: [.mouseMoved, .cursorUpdate, .activeAlways, .inVisibleRect], owner: self))
+    }
+
+    override func mouseMoved(with event: NSEvent) { pointerMoved(event) }
+    override func cursorUpdate(with event: NSEvent) { pointerMoved(event) }
+
+    private func pointerMoved(_ event: NSEvent) {
+        let point = convert(event.locationInWindow, from: nil)
+        let handle = handleForPoint(point)
+        if marks.handle != handle { marks.handle = handle }
+        cursor(for: handle, at: point).set()
+    }
+
+    /// Resizing at the edges and corners, a hand inside the area, a crosshair to draw a new one outside it
+    private func cursor(for handle: ResizeHandle, at point: NSPoint) -> NSCursor {
         switch handle {
-        case .topLeft:
-            return NSPoint(x: rect.minX - controlPointSize / 2 - 1, y: rect.maxY - controlPointSize / 2 + 1)
-        case .top:
-            return NSPoint(x: rect.midX - controlPointSize / 2, y: rect.maxY - controlPointSize / 2 + 1)
-        case .topRight:
-            return NSPoint(x: rect.maxX - controlPointSize / 2 + 1, y: rect.maxY - controlPointSize / 2 + 1)
-        case .right:
-            return NSPoint(x: rect.maxX - controlPointSize / 2 + 1, y: rect.midY - controlPointSize / 2)
-        case .bottomRight:
-            return NSPoint(x: rect.maxX - controlPointSize / 2 + 1, y: rect.minY - controlPointSize / 2 - 1)
-        case .bottom:
-            return NSPoint(x: rect.midX - controlPointSize / 2, y: rect.minY - controlPointSize / 2 - 1)
-        case .bottomLeft:
-            return NSPoint(x: rect.minX - controlPointSize / 2 - 1, y: rect.minY - controlPointSize / 2 - 1)
-        case .left:
-            return NSPoint(x: rect.minX - controlPointSize / 2 - 1, y: rect.midY - controlPointSize / 2)
         case .none:
-            return nil
+            guard let r = selectionRect, r.contains(point) else { return .crosshair }
+            return dragIng ? .closedHand : .openHand
+        case .topLeft: return .frameResize(position: .topLeft, directions: .all)
+        case .top: return .frameResize(position: .top, directions: .all)
+        case .topRight: return .frameResize(position: .topRight, directions: .all)
+        case .right: return .frameResize(position: .right, directions: .all)
+        case .bottomRight: return .frameResize(position: .bottomRight, directions: .all)
+        case .bottom: return .frameResize(position: .bottom, directions: .all)
+        case .bottomLeft: return .frameResize(position: .bottomLeft, directions: .all)
+        case .left: return .frameResize(position: .left, directions: .all)
         }
     }
 
@@ -276,11 +387,14 @@ class ScreenshotOverlayView: NSView {
         activeHandle = handleForPoint(location)
         if let rect = selectionRect, NSPointInRect(location, rect) { dragIng = true }
         AppDelegate.shared.isResizing = true
+        marks.handle = activeHandle
+        cursor(for: activeHandle, at: location).set()
     }
 
     override func mouseDragged(with event: NSEvent) {
         guard var initialLocation = initialLocation else { return }
         let currentLocation = convert(event.locationInWindow, from: nil)
+        ease(true)
         if activeHandle != .none {
 
             // Calculate new rectangle size and position
@@ -370,6 +484,8 @@ class ScreenshotOverlayView: NSView {
         if let rect = selectionRect {
             SCContext.screenArea = rect
         }
+        ease(false)
+        pointerMoved(event)
     }
 }
 
@@ -408,6 +524,23 @@ class ScreenshotWindow: NSPanel {
             return nil
         }
         return event
+    }
+}
+
+extension ResizeHandle {
+    /// Where the handle sits on `r` in flipped coordinates, where the top is minY
+    func point(inFlipped r: CGRect) -> CGPoint {
+        switch self {
+        case .topLeft: CGPoint(x: r.minX, y: r.minY)
+        case .top: CGPoint(x: r.midX, y: r.minY)
+        case .topRight: CGPoint(x: r.maxX, y: r.minY)
+        case .right: CGPoint(x: r.maxX, y: r.midY)
+        case .bottomRight: CGPoint(x: r.maxX, y: r.maxY)
+        case .bottom: CGPoint(x: r.midX, y: r.maxY)
+        case .bottomLeft: CGPoint(x: r.minX, y: r.maxY)
+        case .left: CGPoint(x: r.minX, y: r.midY)
+        case .none: CGPoint(x: r.midX, y: r.midY)
+        }
     }
 }
 
