@@ -70,6 +70,8 @@ final class AreaMarksModel: ObservableObject {
     /// In the overlay's flipped coordinates
     @Published var rect = CGRect.zero
     @Published var handle = ResizeHandle.none
+    /// The camera housing on the overlay's screen, kept clear by the size (#110)
+    @Published var notch: CGRect?
 }
 
 /// Over the frost (#97): its cut edge catching the light, the corners, a bar on the edge under the pointer, and the size
@@ -79,7 +81,7 @@ struct AreaMarks: View {
     @Environment(\.colorScheme) private var scheme
 
     var body: some View {
-        GeometryReader { g in
+        GeometryReader { _ in
             let r = model.rect
             let line = r.insetBy(dx: -AreaMarkStyle.width / 2, dy: -AreaMarkStyle.width / 2)
             let mark = AreaMarkStyle.color(scheme), shadow = AreaMarkStyle.shadow(scheme)
@@ -104,29 +106,44 @@ struct AreaMarks: View {
                         .position(e.point(inFlipped: line))
                         .animation(.spring(duration: 0.25, bounce: 0.3), value: shown)
                 }
-                sizeTag(r, in: g.size)
+                sizeTag(r)
             }
         }
         .ignoresSafeArea()
         .allowsHitTesting(false)
     }
 
-    private func sizeTag(_ r: CGRect, in size: CGSize) -> some View {
-        Text(verbatim: "\(Int(r.width)) × \(Int(r.height))")
-            .font(.system(size: 12, weight: .medium).monospacedDigit())
-            .padding(.horizontal, 10).padding(.vertical, 4)
-            .background {
-                // Not glass: the overlay isn't the key window, and glass there draws a dark rim
-                if material == .black {
-                    Capsule().fill(.black)
-                } else {
-                    Capsule().fill(.regularMaterial).environment(\.controlActiveState, .active)
+    private func sizeTag(_ r: CGRect) -> some View {
+        SizeTagSpot(area: r, notch: model.notch) {
+            Text(verbatim: "\(Int(r.width)) × \(Int(r.height))")
+                .font(.system(size: 12, weight: .medium).monospacedDigit())
+                .padding(.horizontal, 10).padding(.vertical, 4)
+                .background {
+                    // Not glass: the overlay isn't the key window, and glass there draws a dark rim
+                    if material == .black {
+                        Capsule().fill(.black)
+                    } else {
+                        Capsule().fill(.regularMaterial).environment(\.controlActiveState, .active)
+                    }
                 }
-            }
-            .environment(\.colorScheme, material == .black ? .dark : scheme)
-            .fixedSize()
-            // Above the middle of the area, or just inside its top when there's no room above
-            .position(x: min(max(r.midX, 60), size.width - 60), y: r.minY >= 44 ? r.minY - 24 : r.minY + 24)
+                .environment(\.colorScheme, material == .black ? .dark : scheme)
+        }
+    }
+}
+
+/// Puts the size where `SizeTag` says, measured as it's drawn
+private struct SizeTagSpot: Layout {
+    let area: CGRect
+    let notch: CGRect?
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        proposal.replacingUnspecifiedDimensions()
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        guard let tag = subviews.first else { return }
+        let center = SizeTag.center(area: area, tag: tag.sizeThatFits(.unspecified), screen: bounds.size, notch: notch)
+        tag.place(at: CGPoint(x: bounds.minX + center.x, y: bounds.minY + center.y), anchor: .center, proposal: .unspecified)
     }
 }
 
@@ -321,6 +338,8 @@ class ScreenshotOverlayView: NSView {
             areaHeight = Int(selectionRect!.height)
             SCContext.screenArea = selectionRect
         }
+        // The overlay covers its screen, so the screen's notch is where it is on the overlay
+        marks.notch = window?.screen?.notch
     }
 
     override func draw(_ dirtyRect: NSRect) {

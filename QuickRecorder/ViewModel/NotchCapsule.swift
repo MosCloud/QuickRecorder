@@ -311,13 +311,9 @@ final class NotchCapsule {
     /// The screen with the notch; without one, the screen that holds the menu bar.
     private static func layout() -> CapsuleLayout? {
         guard let screen = NSScreen.screens.first(where: { $0.safeAreaInsets.top > 0 }) ?? NSScreen.screens.first else { return nil }
-        var notch: CGSize?
-        if screen.safeAreaInsets.top > 0, let left = screen.auxiliaryTopLeftArea, let right = screen.auxiliaryTopRightArea {
-            notch = CGSize(width: screen.frame.width - left.width - right.width, height: screen.safeAreaInsets.top)
-        }
         // The menu bar may be hidden (full screen, or set to hide automatically): fall back to its usual height
         let menuBarHeight = max(screen.frame.maxY - screen.visibleFrame.maxY, screen.safeAreaInsets.top, NSStatusBar.system.thickness)
-        return CapsuleLayout.make(screenFrame: screen.frame, menuBarHeight: menuBarHeight, notch: notch, capsule: size)
+        return CapsuleLayout.make(screenFrame: screen.frame, menuBarHeight: menuBarHeight, notch: screen.notch?.size, capsule: size)
     }
 
     private static var now: TimeInterval { ProcessInfo.processInfo.systemUptime }
