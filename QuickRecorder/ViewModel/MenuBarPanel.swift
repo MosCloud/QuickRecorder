@@ -50,7 +50,7 @@ struct MenuBarPanel: View {
                     close()
                     appDelegate.openSettingPanel()
                 }
-                IconButton(symbol: "xmark.circle", help: "Quit".local, hoverTint: .darkMyRed) { NSApp.terminate(nil) }
+                IconButton(symbol: "power", help: "Quit".local, hoverTint: .darkMyRed) { NSApp.terminate(nil) }
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 6)

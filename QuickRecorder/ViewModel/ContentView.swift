@@ -10,11 +10,10 @@ import AVFoundation
 import ScreenCaptureKit
 import KeyboardShortcuts
 
-/// The main panel (#48): the recording tiles at 90% of their original size, then Preferences and Quit,
+/// The main panel (#48): the recording tiles at 90% of their original size, then Close over Preferences,
 /// on the material the floating capsule uses.
 struct ContentView: View {
     @State private var isDevicePopoverShowing = false
-    @State private var closeHovering = false
     @AppStorage("showOnDock") private var showOnDock: Bool = true
     @AppStorage("showMenubar") private var showMenubar: Bool = false
     @AppStorage("capsuleMaterial") private var material: PanelMaterial = .glass
@@ -27,43 +26,30 @@ struct ContentView: View {
 
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: 14 * k, style: .continuous)
-        ZStack(alignment: .topLeading) {
-            HStack {
-                tile("System Audio", "waveform", hotkey: .startWithAudio) { appDelegate.recordSystemAudio() }
-                separator
-                tile("Screen", "tv.inset.filled", hotkey: .startWithScreen) { appDelegate.chooseScreen() }
-                separator
-                tile("Screen Area", "viewfinder", hotkey: .startWithArea) { appDelegate.chooseArea() }
-                separator
-                tile("Application", "app", symbolSize: 38, overlayer: "App", hotkey: nil) { appDelegate.chooseApps() }
-                separator
-                tile("Window", "macwindow", hotkey: .startWithWindow) { appDelegate.chooseWindow() }
-                separator
-                tile("Mobile Device", "apps.ipad", hotkey: nil) { isDevicePopoverShowing = true }
-                    .popover(isPresented: $isDevicePopoverShowing, arrowEdge: .bottom) {
-                        iDevicePopoverView(closePopover: {
-                            // A device was chosen: its recording starts right away
-                            isDevicePopoverShowing = false
-                            MainPanelReturn.shared.startPressed()
-                        })
-                    }
-                separator
-                appButtons
-            }
-            .padding(.vertical, 10 * k)
-            .padding(.horizontal, 20 * k)
-            Button {
-                closeMainWindow()
-            } label: {
-                Image(systemName: "x.circle")
-                    .font(.system(size: 13 * k, weight: .bold))
-                    .opacity(closeHovering ? 1 : 0.4)
-                    .foregroundStyle(.secondary)
-            }
-            .buttonStyle(.plain)
-            .onHover { closeHovering = $0 }
-            .padding([.horizontal, .top], 7 * k)
+        HStack {
+            tile("System Audio", "waveform", hotkey: .startWithAudio) { appDelegate.recordSystemAudio() }
+            separator
+            tile("Screen", "tv.inset.filled", hotkey: .startWithScreen) { appDelegate.chooseScreen() }
+            separator
+            tile("Screen Area", "viewfinder", hotkey: .startWithArea) { appDelegate.chooseArea() }
+            separator
+            tile("Application", "app", symbolSize: 38, overlayer: "App", hotkey: nil) { appDelegate.chooseApps() }
+            separator
+            tile("Window", "macwindow", hotkey: .startWithWindow) { appDelegate.chooseWindow() }
+            separator
+            tile("Mobile Device", "apps.ipad", hotkey: nil) { isDevicePopoverShowing = true }
+                .popover(isPresented: $isDevicePopoverShowing, arrowEdge: .bottom) {
+                    iDevicePopoverView(closePopover: {
+                        // A device was chosen: its recording starts right away
+                        isDevicePopoverShowing = false
+                        MainPanelReturn.shared.startPressed()
+                    })
+                }
+            separator
+            appButtons
         }
+        .padding(.vertical, 10 * k)
+        .padding(.horizontal, 20 * k)
         .environment(\.colorScheme, material == .black ? .dark : colorScheme)
         .background {
             // An NSHostingView takes the mouse-down, so the panel's isMovableByWindowBackground alone moves nothing
@@ -87,17 +73,22 @@ struct ContentView: View {
         }
     }
 
-    /// Preferences, and Quit when there is no Dock or menu bar icon to quit from, sized to sit with the tiles' symbols.
-    /// The microphone is in every capsule now, the System Audio tile's too (#96).
+    /// Close over Preferences, a short rule between them as the dividers between the tiles; Quit beside Preferences when
+    /// there is no Dock or menu bar icon to quit from. The microphone is in every capsule now, the System Audio tile's too (#96).
     private var appButtons: some View {
-        VStack(spacing: 4 * k) {
-            IconButton(symbol: "gearshape", help: "Preferences".local, size: 36 * k) {
-                MainPanelReturn.shared.settingsOpened()
-                closeMainWindow()
-                appDelegate.openSettingPanel()
-            }
-            if !showOnDock && !showMenubar {
-                IconButton(symbol: "xmark.circle", help: "Quit".local, hoverTint: .darkMyRed, size: 36 * k) { NSApp.terminate(nil) }
+        VStack(spacing: 5 * k) {
+            IconButton(symbol: "xmark.circle", help: "Close".local, size: 32 * k) { closeMainWindow() }
+            Divider().frame(width: 22 * k)
+            HStack(spacing: 2 * k) {
+                IconButton(symbol: "gearshape", help: "Preferences".local, size: 32 * k) {
+                    MainPanelReturn.shared.settingsOpened()
+                    closeMainWindow()
+                    appDelegate.openSettingPanel()
+                }
+                // A power symbol, so it doesn't read as a second Close
+                if !showOnDock && !showMenubar {
+                    IconButton(symbol: "power", help: "Quit".local, hoverTint: .darkMyRed, size: 32 * k) { NSApp.terminate(nil) }
+                }
             }
         }
         .padding(.horizontal, 4 * k)
