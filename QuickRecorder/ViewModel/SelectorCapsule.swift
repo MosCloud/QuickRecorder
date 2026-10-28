@@ -66,6 +66,9 @@ final class CapsuleBubbles: ObservableObject {
             MainActor.assumeIsolated {
                 let bubbles = CapsuleBubbles.shared
                 guard let open = bubbles.open else { return }
+                // The system colour panel is part of the bubble's surface, its title bar and close button too:
+                // closing the panel must leave the bubble and the colour window as they are
+                if let window, window is NSColorPanel { return }
                 if bubbles.bubbleView?.covers(point, in: window) == true { return }
                 if bubbles.extraHitAreas.contains(where: { $0.view?.covers(point, in: window) == true }) { return }
                 if bubbles.sourceViews[open]?.view?.covers(point, in: window) == true { return }

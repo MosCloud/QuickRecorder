@@ -140,8 +140,6 @@ private final class SystemColorPanel: NSObject {
         panel.setTarget(self)
         panel.setAction(#selector(changed(_:)))
         panel.orderFront(nil)
-        // Clicks in the panel are part of the bubble's surface: they must not dismiss it (#117)
-        if let view = panel.contentView { CapsuleBubbles.shared.addHitArea(view) }
     }
 
     @objc private func changed(_ sender: NSColorPanel) {

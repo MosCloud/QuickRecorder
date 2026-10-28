@@ -92,7 +92,6 @@ final class ColorWindow {
         // The system panel belongs to this window: it goes with it rather than outliving it
         if NSColorPanel.shared.isVisible { NSColorPanel.shared.orderOut(nil) }
         if let content = panel.contentView { CapsuleBubbles.shared.removeHitArea(content) }
-        if let content = NSColorPanel.shared.contentView { CapsuleBubbles.shared.removeHitArea(content) }
         parent?.removeChildWindow(panel)
         panel.orderOut(nil)
         parent?.makeKey()
