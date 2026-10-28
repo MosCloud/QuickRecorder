@@ -8,6 +8,7 @@
 import SwiftUI
 import ScreenCaptureKit
 import Quartz
+import CoreImage
 
 /// The marks around an area (#97): thin square corners just outside it, white in dark mode and near-black in light
 enum AreaMarkStyle {
@@ -129,21 +130,42 @@ struct AreaMarks: View {
     }
 }
 
-/// The frost around the area: a live blur of whatever is on screen behind the overlay (#97)
-private final class FrostView: NSVisualEffectView {
-    override init(frame: NSRect) {
-        super.init(frame: frame)
-        material = .fullScreenUI
-        blendingMode = .behindWindow
-        state = .active
+/// The frost around the area (#108): a picture of the screen as the selector opens, blurred as lightly as the prototype
+/// the owner chose in #97. The system's materials blur far more, and how much can't be set.
+@MainActor
+enum AreaFrost {
+    /// The prototype's "medium": a 10-point blur under a 16% tint, dark in dark mode and light in light
+    static let radius: CGFloat = 10
+    static let tint: CGFloat = 0.16
+    /// The last picture of each display, for the overlay remade at a new size from the Edit Area bubble
+    private static var last: [CGDirectDisplayID: CGImage] = [:]
+
+    /// The display without QuickRecorder's own windows, frosted; nil when it can't be captured
+    static func picture(of display: SCDisplay, reusing: Bool) async -> CGImage? {
+        if reusing, let picture = last[display.displayID] { return picture }
+        guard let screen = display.nsScreen else { return nil }
+        let scale = screen.backingScaleFactor
+        let own = SCContext.getSelf().map { [$0] } ?? []
+        let filter = SCContentFilter(display: display, excludingApplications: own, exceptingWindows: [])
+        let configuration = SCStreamConfiguration()
+        configuration.width = Int(CGFloat(display.width) * scale)
+        configuration.height = Int(CGFloat(display.height) * scale)
+        configuration.showsCursor = false
+        guard let shot = try? await SCScreenshotManager.captureImage(contentFilter: filter, configuration: configuration) else { return nil }
+        let dark = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        let picture = frosted(shot, radius: radius * scale, dark: dark)
+        last[display.displayID] = picture
+        return picture
     }
 
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+    private static func frosted(_ image: CGImage, radius: CGFloat, dark: Bool) -> CGImage? {
+        let input = CIImage(cgImage: image)
+        // Clamped first, so the edges blur against themselves rather than fade to clear
+        let blurred = input.clampedToExtent().applyingGaussianBlur(sigma: radius).cropped(to: input.extent)
+        let shade: CGFloat = dark ? 0 : 1
+        let tinted = CIImage(color: CIColor(red: shade, green: shade, blue: shade, alpha: tint)).cropped(to: input.extent).composited(over: blurred)
+        return CIContext().createCGImage(tinted, from: input.extent)
     }
-
-    // The overlay takes the mouse
-    override func hitTest(_ point: NSPoint) -> NSView? { nil }
 }
 
 /// The area's size in a bubble of the capsule: width × height, then what the recording comes out at
@@ -250,8 +272,9 @@ class ScreenshotOverlayView: NSView {
     var size: NSSize
     var force: Bool
 
-    /// The frost on the four sides of the area, and over it the marks (#97)
-    private let frost = (0..<4).map { _ in FrostView(frame: .zero) }
+    /// The frost with the area cut out of it (#108), and over it the marks (#97)
+    private let frost = NSView()
+    private let cutOut = CAShapeLayer()
     private let marks = AreaMarksModel()
     private var eased = false
 
@@ -260,7 +283,17 @@ class ScreenshotOverlayView: NSView {
         self.force = force
         super.init(frame: frame)
         wantsLayer = true
-        frost.forEach(addSubview)
+        // Hosting its own layer: the picture and the cut-out are set on it directly
+        frost.layer = CALayer()
+        frost.wantsLayer = true
+        frost.layer?.contentsGravity = .resize
+        cutOut.fillRule = .evenOdd
+        frost.layer?.mask = cutOut
+        frost.frame = bounds
+        frost.autoresizingMask = [.width, .height]
+        // Clear until the picture is ready
+        frost.alphaValue = 0
+        addSubview(frost)
         let host = NSHostingView(rootView: AreaMarks(model: marks))
         host.safeAreaRegions = []
         host.frame = bounds
@@ -302,23 +335,43 @@ class ScreenshotOverlayView: NSView {
     private func layoutMarks() {
         guard let r = selectionRect else { return }
         let b = bounds
-        let sides = [NSRect(x: 0, y: 0, width: b.width, height: r.minY),
-                     NSRect(x: 0, y: r.maxY, width: b.width, height: b.height - r.maxY),
-                     NSRect(x: 0, y: r.minY, width: r.minX, height: r.height),
-                     NSRect(x: r.maxX, y: r.minY, width: b.width - r.maxX, height: r.height)]
-        for (view, side) in zip(frost, sides) {
-            view.frame = NSRect(x: side.minX, y: side.minY, width: max(side.width, 0), height: max(side.height, 0))
-        }
+        let path = CGMutablePath()
+        path.addRect(b)
+        path.addRect(r)
+        // Following the pointer, not animating after it
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        cutOut.frame = b
+        cutOut.path = path
+        CATransaction.commit()
         marks.rect = CGRect(x: r.minX, y: b.height - r.maxY, width: r.width, height: r.height)
+    }
+
+    /// Frosts the overlay with `display`'s picture once it's taken, or with the last one when only remade at a new size
+    func frost(_ display: SCDisplay, reusing: Bool) {
+        Task { @MainActor in
+            if let picture = await AreaFrost.picture(of: display, reusing: reusing) {
+                frost.layer?.contents = picture
+            } else {
+                // No picture, as without the screen recording permission: a light shade instead
+                frost.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.3).cgColor
+            }
+            NSAnimationContext.runAnimationGroup({ context in
+                context.duration = reusing ? 0 : 0.15
+                frost.animator().alphaValue = eased ? 0.25 : 1
+            }, completionHandler: nil)
+        }
     }
 
     /// While the area moves or changes size the frost thins, so what's around it shows to line it up against
     private func ease(_ on: Bool) {
         guard on != eased else { return }
         eased = on
+        // Not before the picture is in
+        guard frost.layer?.contents != nil || frost.layer?.backgroundColor != nil else { return }
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.2
-            frost.forEach { $0.animator().alphaValue = on ? 0.25 : 1 }
+            frost.animator().alphaValue = on ? 0.25 : 1
         }
     }
 

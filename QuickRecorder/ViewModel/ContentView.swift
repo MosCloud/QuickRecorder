@@ -264,6 +264,8 @@ extension AppDelegate {
         guard let screen = scDisplay.nsScreen else { return }
         let screenshotWindow = ScreenshotWindow(contentRect: screen.frame, backing: .buffered, defer: false, size: size, force: noPanel)
         screenshotWindow.title = "Area Selector".local
+        // Remade at a new size, it keeps the picture it had (#108)
+        (screenshotWindow.contentView as? ScreenshotOverlayView)?.frost(scDisplay, reusing: noPanel)
         // The frost fades in as the selector opens, not when it's only remade at a new size (#97)
         if !noPanel { screenshotWindow.alphaValue = 0 }
         screenshotWindow.orderFrontRegardless()
