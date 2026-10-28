@@ -10,9 +10,15 @@ import Testing
 
 @Suite("The background behind a recording")
 struct BackdropTests {
-    @Test("Window and app recordings use the chosen background", arguments: [StreamType.window, .windows, .application])
-    func windowsAndApps(type: StreamType) {
-        #expect(Backdrop.applies(to: type))
+    @Test("Application recordings use the chosen background")
+    func applications() {
+        #expect(Backdrop.applies(to: .application))
+    }
+
+    @Test("A window recording is the window itself, with no area for a backdrop",
+          arguments: [StreamType.window, .windows])
+    func windows(type: StreamType) {
+        #expect(!Backdrop.applies(to: type))
     }
 
     @Test("Screen and area recordings show the screen as it is, so a colour picked for an app can't leak into them",
