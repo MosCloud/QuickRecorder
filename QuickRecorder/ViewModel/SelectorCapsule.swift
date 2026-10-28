@@ -22,9 +22,10 @@ enum CapsuleBubble: Hashable { case leading(String), mic, timer, options }
 final class CapsuleBubbles: ObservableObject {
     static let shared = CapsuleBubbles()
     @Published private(set) var open: CapsuleBubble?
-    /// Where the open bubble and the controls that open bubbles are, each reported by the view itself
-    fileprivate var bubbleFrame: (window: NSWindow, rect: NSRect)?
-    fileprivate var sourceFrames: [CapsuleBubble: (window: NSWindow, rect: NSRect)] = [:]
+    /// The open bubble and the controls that open bubbles, each registered by the view itself. A click is measured
+    /// against them as they are when it comes: a frame noted earlier went stale, caught mid scale-in at 85% (#105)
+    fileprivate weak var bubbleView: NSView?
+    fileprivate var sourceViews: [CapsuleBubble: WeakView] = [:]
     private var monitors: [Any] = []
 
     func toggle(_ bubble: CapsuleBubble) { set(open == bubble ? nil : bubble) }
@@ -51,8 +52,8 @@ final class CapsuleBubbles: ObservableObject {
             MainActor.assumeIsolated {
                 let bubbles = CapsuleBubbles.shared
                 guard let open = bubbles.open else { return }
-                if let b = bubbles.bubbleFrame, b.window === window, b.rect.contains(point) { return }
-                if let s = bubbles.sourceFrames[open], s.window === window, s.rect.contains(point) { return }
+                if bubbles.bubbleView?.covers(point, in: window) == true { return }
+                if bubbles.sourceViews[open]?.view?.covers(point, in: window) == true { return }
                 bubbles.close()
             }
             return event
@@ -75,24 +76,32 @@ final class CapsuleBubbles: ObservableObject {
     }
 }
 
-/// Reports the frame of the view it backs, in its window: the open bubble's, or a control's that opens one
-private struct GeometryReporter: NSViewRepresentable {
-    let source: CapsuleBubble?
-    func makeNSView(context: Context) -> Reporter { Reporter(source: source) }
-    func updateNSView(_ view: Reporter, context: Context) { view.report() }
+fileprivate struct WeakView { weak var view: NSView? }
 
-    final class Reporter: NSView {
+private extension NSView {
+    /// Whether a click at `point`, in `window`'s coordinates, lands on this view where it is now
+    func covers(_ point: NSPoint, in window: NSWindow?) -> Bool {
+        guard let window, self.window === window else { return false }
+        return convert(bounds, to: nil).contains(point)
+    }
+}
+
+/// Marks where a click counts as on the open bubble, or on a control that opens one: the view behind it registers
+/// itself, and the click is measured against it then (#105)
+private struct HitArea: NSViewRepresentable {
+    let source: CapsuleBubble?
+    func makeNSView(context: Context) -> Marker { Marker(source: source) }
+    func updateNSView(_ view: Marker, context: Context) {}
+
+    final class Marker: NSView {
         let source: CapsuleBubble?
         init(source: CapsuleBubble?) { self.source = source; super.init(frame: .zero) }
         required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
         override func hitTest(_ point: NSPoint) -> NSView? { nil }
-        override func layout() { super.layout(); report() }
-        override func viewDidMoveToWindow() { report() }
-        func report() {
-            guard let window else { return }
-            let entry = (window: window, rect: convert(bounds, to: nil))
+        override func viewDidMoveToWindow() {
+            guard window != nil else { return }
             MainActor.assumeIsolated {
-                if let source { CapsuleBubbles.shared.sourceFrames[source] = entry } else { CapsuleBubbles.shared.bubbleFrame = entry }
+                if let source { CapsuleBubbles.shared.sourceViews[source] = WeakView(view: self) } else { CapsuleBubbles.shared.bubbleView = self }
             }
         }
     }
@@ -173,7 +182,7 @@ private struct BubbleChrome<Content: View>: View {
         content
             .padding(.horizontal, horizontal).padding(.vertical, vertical)
             .background(CapsuleMaterial(shape: RoundedRectangle(cornerRadius: corner, style: .continuous)))
-            .background(GeometryReporter(source: nil))
+            .background(HitArea(source: nil))
             .shadow(color: .black.opacity(material == .glass ? 0 : 0.25), radius: 8, y: 2)
             .capsuleScheme(material, colorScheme)
             .fixedSize()
@@ -234,7 +243,7 @@ struct SelectorCapsule: View {
             separator
             if recordsVideo {
                 CapsuleIcon(symbol: "slider.horizontal.3", label: "Options".local, active: bubbles.open == .options) { bubbles.toggle(.options) }
-                    .background(GeometryReporter(source: .options))
+                    .background(HitArea(source: .options))
             }
             Button {
                 bubbles.close()
@@ -280,7 +289,7 @@ private struct LeadingButton: View {
                 bubbles.toggle(which)
             }
         }
-        .background { if item.bubble != nil { GeometryReporter(source: which) } }
+        .background { if item.bubble != nil { HitArea(source: which) } }
         .overlay { if item.bubble != nil && !opensOnClick { RightClick { bubbles.toggle(which) } } }
         .bubble(which, alignment: .bottomLeading) { if let bubble = item.bubble { BubbleChrome(horizontal: 6, vertical: 6) { bubble } } }
     }
@@ -322,7 +331,7 @@ private struct CapsuleToggle: View {
         .onHover { hovering = $0 }
         .accessibilityLabel(label)
         .accessibilityAddTraits(isOn ? .isSelected : [])
-        .background { if let owns { GeometryReporter(source: owns) } }
+        .background { if let owns { HitArea(source: owns) } }
     }
 }
 
@@ -357,7 +366,7 @@ private struct CapsuleTimer: View {
         .accessibilityLabel("Auto Stop".local)
         .accessibilityAddTraits(autoStopOn ? .isSelected : [])
         .onChange(of: autoStopOn) { _, on in if on { bounces += 1 } }
-        .background(GeometryReporter(source: .timer))
+        .background(HitArea(source: .timer))
         .overlay(RightClick { bubbles.toggle(.timer) })
         .bubble(.timer) { BubbleChrome(corner: 19, vertical: 8) { TimerFields() } }
     }
