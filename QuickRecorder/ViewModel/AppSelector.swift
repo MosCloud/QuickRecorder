@@ -210,6 +210,9 @@ struct OptionsView: View {
     @AppStorage("highRes")        private var highRes: Int = 2
     @AppStorage("recordHDR")      private var recordHDR: Bool = false
     @AppStorage("micDevice")      private var micDevice: String = "default"
+
+    /// Screen and area recordings show the screen as it is (#83)
+    var showsBackground = true
     
     var body: some View {
         VStack(spacing: 6) {
@@ -246,7 +249,7 @@ struct OptionsView: View {
                 Divider().frame(height: 50)
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Quality")
-                    Text("Background")
+                    if showsBackground { Text("Background") }
                 }.padding(.leading, 8)
                 VStack(alignment: .leading, spacing: 10) {
                     Picker("", selection: $videoQuality) {
@@ -256,21 +259,23 @@ struct OptionsView: View {
                     }
                     .buttonStyle(.borderless)
                     .frame(minWidth: 10)
-                    Picker("", selection: $background) {
-                        Text("Wallpaper").tag(BackgroundType.wallpaper)
-                        if ud.bool(forKey: "withAlpha") { Text("Transparent").tag(BackgroundType.clear) }
-                        Text("Black").tag(BackgroundType.black)
-                        Text("White").tag(BackgroundType.white)
-                        Text("Gray").tag(BackgroundType.gray)
-                        Text("Yellow").tag(BackgroundType.yellow)
-                        Text("Orange").tag(BackgroundType.orange)
-                        Text("Green").tag(BackgroundType.green)
-                        Text("Blue").tag(BackgroundType.blue)
-                        Text("Red").tag(BackgroundType.red)
-                        Text("Custom").tag(BackgroundType.custom)
+                    if showsBackground {
+                        Picker("", selection: $background) {
+                            Text("Wallpaper").tag(BackgroundType.wallpaper)
+                            if ud.bool(forKey: "withAlpha") { Text("Transparent").tag(BackgroundType.clear) }
+                            Text("Black").tag(BackgroundType.black)
+                            Text("White").tag(BackgroundType.white)
+                            Text("Gray").tag(BackgroundType.gray)
+                            Text("Yellow").tag(BackgroundType.yellow)
+                            Text("Orange").tag(BackgroundType.orange)
+                            Text("Green").tag(BackgroundType.green)
+                            Text("Blue").tag(BackgroundType.blue)
+                            Text("Red").tag(BackgroundType.red)
+                            Text("Custom").tag(BackgroundType.custom)
+                        }
+                        .buttonStyle(.borderless)
+                        .frame(minWidth: 10)
                     }
-                    .buttonStyle(.borderless)
-                    .frame(minWidth: 10)
                 }.scaledToFit()
                 Divider().frame(height: 50)
                 VStack(alignment: .leading, spacing: 2) {

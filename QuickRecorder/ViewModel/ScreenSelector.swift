@@ -106,7 +106,7 @@ struct ScreenSelector: View {
                         
                     }).buttonStyle(.plain)
                     Spacer()
-                    OptionsView().padding(.leading, 18)
+                    OptionsView(showsBackground: false).padding(.leading, 18)
                     Spacer()
                     Button(action: {
                         isPopoverShowing = true

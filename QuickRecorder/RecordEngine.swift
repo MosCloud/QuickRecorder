@@ -60,18 +60,8 @@ extension AppDelegate {
         let controlWindows = SCContext.getControlWindows()
         let overlays = SCContext.getOverlayWindows()
         SCContext.log.info("Found \(overlays.count, privacy: .public) of the 3 overlays meant to be recorded")
-        let dockApp = SCContext.availableContent!.applications.first(where: { $0.bundleIdentifier.description == "com.apple.dock" })
         let wallpaper = SCContext.availableContent!.windows.filter({
-            guard let title = $0.title else { return false }
-            return $0.owningApplication?.bundleIdentifier == "com.apple.dock" && title != "LPSpringboard" && title != "Dock"
-        })
-        let desktop = SCContext.availableContent!.windows.filter({
-            guard let title = $0.title else { return false }
-            return $0.owningApplication?.bundleIdentifier == "" && title == "Desktop"
-        })
-        let dockWindow = SCContext.availableContent!.windows.filter({
-            guard let title = $0.title else { return true }
-            return $0.owningApplication?.bundleIdentifier == "com.apple.dock" && title == "Dock"
+            Backdrop.isWallpaper(bundleID: $0.owningApplication?.bundleIdentifier, title: $0.title)
         })
         let desktopFiles = SCContext.availableContent!.windows.filter({
             $0.owningApplication?.bundleIdentifier == "com.apple.finder"
@@ -90,7 +80,7 @@ extension AppDelegate {
             if var includ = SCContext.window {
                 if includ.count > 1 {
                     if highlightMouse { includ += mouseWindow }
-                    if background.rawValue == BackgroundType.wallpaper.rawValue { if dockApp != nil { includ += wallpaper }}
+                    if background == .wallpaper { includ += wallpaper }
                     SCContext.filter = SCContentFilter(display: screen, including: includ + camLayer)
                     SCContext.filter?.includeMenuBar = includeMenuBar
                 } else {
@@ -113,10 +103,6 @@ extension AppDelegate {
                 let own = OwnWindows.screen(hideSelf: hideSelf, app: qrSelf, overlays: overlays, capsule: controlWindows, opened: qrWindows ?? [])
                 excluded += own.excludedApps
                 except += own.exceptions
-                if background.rawValue != BackgroundType.wallpaper.rawValue { if dockApp != nil {
-                    except += wallpaper
-                    except += desktop
-                }}
                 if hideDesktopFiles { except += desktopFiles }
                 SCContext.filter = SCContentFilter(display: screen, excludingApplications: excluded, exceptingWindows: except)
                 SCContext.filter?.includeMenuBar = ((SCContext.streamType == .screen || SCContext.streamType == .screenarea) && includeMenuBar)
@@ -129,7 +115,8 @@ extension AppDelegate {
                 except += own.exceptions
                 let withFinder = includ.map{ $0.bundleIdentifier }.contains("com.apple.finder")
                 if withFinder && hideDesktopFiles { except += desktopFiles }
-                if background.rawValue == BackgroundType.wallpaper.rawValue { if let dock = dockApp { includ.append(dock); except += dockWindow}}
+                // Its app isn't among the recorded ones, so the wallpaper shows as an exception
+                if background == .wallpaper { except += wallpaper }
                 SCContext.filter = SCContentFilter(display: screen, including: includ, exceptingWindows: except)
                 SCContext.filter?.includeMenuBar = includeMenuBar
             }
@@ -162,7 +149,7 @@ extension AppDelegate {
             // Hotkey starts follow the settings too (they used to hide the cursor and force system audio on)
             conf.showsCursor = showMouse
 
-            if background.rawValue != BackgroundType.wallpaper.rawValue { conf.backgroundColor = SCContext.getBackgroundColor() }
+            if background != .wallpaper, let type = SCContext.streamType, Backdrop.applies(to: type) { conf.backgroundColor = SCContext.getBackgroundColor() }
             if !recordHDR {
                 conf.pixelFormat = kCVPixelFormatType_32BGRA
                 conf.colorSpaceName = CGColorSpace.sRGB

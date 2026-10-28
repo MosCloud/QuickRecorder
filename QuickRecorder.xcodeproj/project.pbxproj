@@ -94,6 +94,9 @@
 		CC3300000000000000003103 /* DisplayPickTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000003101 /* DisplayPickTests.swift */; };
 		CC3300000000000000003002 /* DisplayPick.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000003001 /* DisplayPick.swift */; };
 		CC3300000000000000003003 /* DisplayPick.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000003001 /* DisplayPick.swift */; };
+		CC3300000000000000003202 /* Backdrop.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000003201 /* Backdrop.swift */; };
+		CC3300000000000000003203 /* Backdrop.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000003201 /* Backdrop.swift */; };
+		CC3300000000000000003303 /* BackdropTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000003301 /* BackdropTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -171,6 +174,8 @@
 		CC3300000000000000002801 /* ScreenAccess.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenAccess.swift; sourceTree = "<group>"; };
 		CC3300000000000000003101 /* DisplayPickTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayPickTests.swift; sourceTree = "<group>"; };
 		CC3300000000000000003001 /* DisplayPick.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayPick.swift; sourceTree = "<group>"; };
+		CC3300000000000000003201 /* Backdrop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Backdrop.swift; sourceTree = "<group>"; };
+		CC3300000000000000003301 /* BackdropTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackdropTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -309,6 +314,7 @@
 				CC3300000000000000002601 /* OwnWindows.swift */,
 				CC3300000000000000002801 /* ScreenAccess.swift */,
 				CC3300000000000000003001 /* DisplayPick.swift */,
+				CC3300000000000000003201 /* Backdrop.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -328,6 +334,7 @@
 				CC3300000000000000002701 /* OwnWindowsTests.swift */,
 				CC3300000000000000002901 /* ScreenAccessTests.swift */,
 				CC3300000000000000003101 /* DisplayPickTests.swift */,
+				CC3300000000000000003301 /* BackdropTests.swift */,
 			);
 			path = QuickRecorderTests;
 			sourceTree = "<group>";
@@ -490,6 +497,7 @@
 				CC3300000000000000002602 /* OwnWindows.swift in Sources */,
 				CC3300000000000000002802 /* ScreenAccess.swift in Sources */,
 				CC3300000000000000003002 /* DisplayPick.swift in Sources */,
+				CC3300000000000000003202 /* Backdrop.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -529,6 +537,8 @@
 				CC3300000000000000002803 /* ScreenAccess.swift in Sources */,
 				CC3300000000000000003103 /* DisplayPickTests.swift in Sources */,
 				CC3300000000000000003003 /* DisplayPick.swift in Sources */,
+				CC3300000000000000003203 /* Backdrop.swift in Sources */,
+				CC3300000000000000003303 /* BackdropTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
