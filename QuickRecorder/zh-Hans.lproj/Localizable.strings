@@ -30,8 +30,8 @@
 "Please select the screen to record" = "请选择需要录制的屏幕, 仅支持单选";
 "Refresh" = "刷新列表";
 "Start" = "开始录制";
-"Resolution" = "清晰度";
-"Frame Rate" = "帧速率";
+"Resolution" = "分辨率";
+"Frame Rate" = "帧率";
 "Auto" = "自动";
 "High (auto)" = "高 (自动)";
 "Normal (1x)" = "普通 (1x)";
@@ -47,7 +47,7 @@
 "System Audio" = "录制系统声音";
 "App's Audio" = "录制App声音";
 "Microphone" = "录制麦克风";
-"Background" = "画面背景";
+"Background" = "背景";
 "Wallpaper" = "桌面壁纸";
 "Transparent" = "透明";
 "Yellow" = "系统黄色";
@@ -128,9 +128,9 @@
 "Show QuickRecorder on Dock" = "在程序坞中显示 QuickRecorder";
 "Show QuickRecorder on Menu Bar" = "在菜单栏中显示 QuickRecorder";
 "Icon Settings" = "图标设置";
-"hr" = "小时";
+"hr" = "时";
 "min" = "分";
-"sec" = "秒后自动停止录制";
+"sec" = "秒";
 "Reset" = "重置";
 " Stop after" = "在";
 "Don't remind me again" = "不再提醒";
@@ -262,3 +262,13 @@
 "Reopen" = "重新打开";
 "Later" = "稍后";
 "No display is available to record on. The screen may be locked or asleep." = "没有可以录制的显示器，屏幕可能已锁定或处于休眠。";
+
+/* Selector capsule (#79) */
+"Record" = "录制";
+"Options" = "选项";
+"Standard" = "标准";
+"Picture Quality" = "画质";
+"Auto Stop" = "定时停止";
+"High " = "高";
+"Medium " = "中";
+"Low " = "低";

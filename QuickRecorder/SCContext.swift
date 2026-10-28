@@ -227,21 +227,25 @@ class SCContext {
     }
     
     static func getBackgroundColor() -> CGColor {
-        guard let color = ud.string(forKey: "background") else { return CGColor.black  }
-        if color == BackgroundType.wallpaper.rawValue { return CGColor.black }
-        switch color {
-            case "clear": backgroundColor = CGColor.clear
-            case "black": backgroundColor = CGColor.black
-            case "white": backgroundColor = CGColor.white
-            case "gray": backgroundColor = NSColor.systemGray.cgColor
-            case "yellow": backgroundColor = NSColor.systemYellow.cgColor
-            case "orange": backgroundColor = NSColor.systemOrange.cgColor
-            case "green": backgroundColor = NSColor.systemGreen.cgColor
-            case "blue": backgroundColor = NSColor.systemBlue.cgColor
-            case "red": backgroundColor = NSColor.systemRed.cgColor
-            default: backgroundColor = ud.cgColor(forKey: "userColor") ?? CGColor.black
-        }
+        guard let type = BackgroundType(rawValue: ud.string(forKey: "background") ?? "") else { return CGColor.black }
+        backgroundColor = color(for: type)
         return backgroundColor
+    }
+
+    /// The colour a background fills with; the capsule's swatches show the same (#79)
+    static func color(for type: BackgroundType) -> CGColor {
+        switch type {
+        case .wallpaper, .black: CGColor.black
+        case .clear: CGColor.clear
+        case .white: CGColor.white
+        case .gray: NSColor.systemGray.cgColor
+        case .yellow: NSColor.systemYellow.cgColor
+        case .orange: NSColor.systemOrange.cgColor
+        case .green: NSColor.systemGreen.cgColor
+        case .blue: NSColor.systemBlue.cgColor
+        case .red: NSColor.systemRed.cgColor
+        case .custom: ud.cgColor(forKey: "userColor") ?? CGColor.black
+        }
     }
     
     static func performMicCheck() async {

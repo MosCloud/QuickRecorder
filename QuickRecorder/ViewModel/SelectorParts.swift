@@ -2,103 +2,12 @@
 //  SelectorParts.swift
 //  QuickRecorder
 //
-//  What the screen, area, window, app and click-to-select pickers share (#23)
+//  What the screen, area, window, app and click-to-select pickers share (#23); their capsule is in SelectorCapsule.swift (#79)
 //
 
 import SwiftUI
 import Combine
 import ScreenCaptureKit
-
-/// A round icon over its caption, the buttons along the selectors' bars
-struct BarButton<Style: ShapeStyle>: View {
-    let icon: String
-    let style: Style
-    let title: LocalizedStringKey
-    var size: CGFloat = 36
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action, label: {
-            VStack {
-                Image(systemName: icon)
-                    .font(.system(size: size))
-                    .foregroundStyle(style)
-                Text(title)
-                    .foregroundStyle(.secondary)
-                    .font(.system(size: 12))
-            }
-        }).buttonStyle(.plain)
-    }
-}
-
-/// The end of every selector's bar: the timer that stops the recording after a set time, and Start.
-/// Its two buttons join the bar's own stack.
-struct StartControls: View {
-    var canStart = true
-    /// Starts with the seconds after which to stop, 0 for never
-    let start: (_ autoStop: TimeInterval) -> Void
-    @State private var autoStop = AutoStop()
-    @State private var isTimerShowing = false
-    /// Bumped to redraw the fields: one showing a number just set back to 0 that was 0 before keeps the number otherwise
-    @State private var fieldsVersion = 0
-
-    var body: some View {
-        Button(action: {
-            isTimerShowing = true
-        }, label: {
-            Image(systemName: "timer")
-                .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(.blue)
-        })
-        .buttonStyle(.plain)
-        .padding(.top, 42.5)
-        .popover(isPresented: $isTimerShowing, arrowEdge: .bottom, content: {
-            HStack(spacing: 4) {
-                Text(" Stop after".local)
-                field($autoStop.hours, in: AutoStop.hourRange)
-                Text("hr".local)
-                field($autoStop.minutes, in: AutoStop.minuteRange)
-                Text("min".local)
-                field($autoStop.seconds, in: AutoStop.secondRange)
-                Text("sec".local)
-                Button(action: {
-                    autoStop = AutoStop()
-                    fieldsVersion += 1
-                }, label: {
-                    Label("Reset", systemImage: "arrow.counterclockwise")
-                        .labelStyle(.iconOnly)
-                })
-                .buttonStyle(.borderless)
-                .help("Reset")
-                .disabled(autoStop == AutoStop())
-            }
-            .id(fieldsVersion)
-            .fixedSize()
-            .padding()
-        })
-        BarButton(icon: "record.circle.fill", style: .red, title: "Start") { start(autoStop.limit) }
-            .disabled(!canStart)
-    }
-
-    /// A number with its stepper. The stepper stops at the range's ends (it used to go down to -1, #86); a number typed
-    /// outside the range goes back to 0
-    private func field(_ value: Binding<Int>, in range: ClosedRange<Int>) -> some View {
-        let formatter = NumberFormatter()
-        formatter.allowsFloats = false
-        let checked = Binding(get: { value.wrappedValue }, set: {
-            value.wrappedValue = range.orZero($0)
-            if value.wrappedValue != $0 { fieldsVersion += 1 }
-        })
-        return HStack(spacing: 0) {
-            TextField("", value: checked, formatter: formatter)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .multilineTextAlignment(.trailing)
-                .frame(width: 34)
-            Stepper("", value: checked, in: range)
-                .labelsHidden()
-        }
-    }
-}
 
 /// A screen or window thumbnail over a soft shadow of itself, so light content stands out from the window
 struct ShadowedThumbnail: View {
@@ -125,37 +34,6 @@ struct ShadowedThumbnail: View {
                 .resizable()
                 .aspectRatio(contentMode: .fit)
         }
-    }
-}
-
-/// The green tick on a chosen thumbnail
-struct SelectionMark: View {
-    let selected: Bool
-    var size: CGFloat = 27
-
-    var body: some View {
-        ZStack {
-            Image(systemName: "circle.fill")
-                .font(.system(size: size * 31 / 27))
-                .foregroundStyle(.white)
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: size))
-                .foregroundStyle(.green)
-        }.opacity(selected ? 1.0 : 0.0)
-    }
-}
-
-/// The blue behind a chosen thumbnail
-struct SelectionBackground: View {
-    let selected: Bool
-    /// Above zero, an unchosen card still takes clicks across its whole area
-    var idle = 0.0
-
-    var body: some View {
-        Rectangle()
-            .foregroundStyle(.blue)
-            .cornerRadius(5)
-            .opacity(selected ? 0.2 : idle)
     }
 }
 

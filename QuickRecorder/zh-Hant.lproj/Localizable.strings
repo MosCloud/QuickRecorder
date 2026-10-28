@@ -31,7 +31,7 @@
 "Refresh" = "重新整理列表";
 "Start" = "開始錄製";
 "Resolution" = "解析度";
-"Frame Rate" = "幀速率";
+"Frame Rate" = "幀率";
 "Auto" = "自動";
 "High (auto)" = "高 (自動)";
 "Normal (1x)" = "普通 (1x)";
@@ -47,7 +47,7 @@
 "System Audio" = "錄製系統聲音";
 "App's Audio" = "錄製App聲音";
 "Microphone" = "錄製麥克風";
-"Background" = "畫面背景";
+"Background" = "背景";
 "Wallpaper" = "桌面背景";
 "Transparent" = "透明";
 "Yellow" = "系統黃色";
@@ -128,9 +128,9 @@
 "Show QuickRecorder on Dock" = "在 Dock 中顯示 QuickRecorder";
 "Show QuickRecorder on Menu Bar" = "在選單列中顯示 QuickRecorder";
 "Icon Settings" = "圖示設定";
-"hr" = "小時";
+"hr" = "時";
 "min" = "分";
-"sec" = "秒後自動停止錄製";
+"sec" = "秒";
 "Reset" = "重設";
 " Stop after" = "在";
 "Don't remind me again" = "不再提醒";
@@ -262,3 +262,13 @@
 "Reopen" = "重新打開";
 "Later" = "稍後";
 "No display is available to record on. The screen may be locked or asleep." = "沒有可以錄製的顯示器，螢幕可能已鎖定或處於休眠。";
+
+/* Selector capsule (#79) */
+"Record" = "錄製";
+"Options" = "選項";
+"Standard" = "標準";
+"Picture Quality" = "畫質";
+"Auto Stop" = "定時停止";
+"High " = "高";
+"Medium " = "中";
+"Low " = "低";

@@ -44,4 +44,38 @@ struct AutoStopTests {
         #expect(AutoStop.hourRange.orZero(99) == 99)
         #expect(AutoStop.secondRange.orZero(59) == 59)
     }
+
+    @Test("Switching on without a duration takes ten minutes")
+    func onWithoutDuration() {
+        let next = AutoStop.toggled(on: false, duration: AutoStop())
+        #expect(next.on)
+        #expect(next.duration == AutoStop(minutes: 10))
+    }
+
+    @Test("Switching off keeps the duration, and switching on again uses it")
+    func offKeepsDuration() {
+        let off = AutoStop.toggled(on: true, duration: AutoStop(seconds: 30))
+        #expect(!off.on)
+        #expect(off.duration == AutoStop(seconds: 30))
+        let on = AutoStop.toggled(on: off.on, duration: off.duration)
+        #expect(on.on)
+        #expect(on.duration == AutoStop(seconds: 30))
+    }
+
+    @Test("Editing the duration doesn't switch the timer on")
+    func editKeepsOff() {
+        #expect(!AutoStop.staysOn(false, after: AutoStop(minutes: 5)))
+        #expect(AutoStop.staysOn(true, after: AutoStop(minutes: 5)))
+    }
+
+    @Test("Clearing the duration switches the timer off: a timer of nothing can't run")
+    func clearSwitchesOff() {
+        #expect(!AutoStop.staysOn(true, after: AutoStop()))
+    }
+
+    @Test("A duration round-trips through its seconds, as it is stored")
+    func stored() {
+        #expect(AutoStop(totalSeconds: 3723) == AutoStop(hours: 1, minutes: 2, seconds: 3))
+        #expect(AutoStop(hours: 1, minutes: 2, seconds: 3).totalSeconds == 3723)
+    }
 }

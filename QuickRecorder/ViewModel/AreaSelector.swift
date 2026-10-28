@@ -24,132 +24,66 @@ struct DashWindow: View {
     }
 }
 
-struct resizeView: View {
-    private enum Field: Int, Hashable { case width, height }
-    @FocusState private var focusedField: Field?
-    
+/// The area's size in a bubble of the capsule: width × height, then what the recording comes out at
+struct AreaSizeFields: View {
     @AppStorage("areaWidth")  private var areaWidth: Int = 600
     @AppStorage("areaHeight") private var areaHeight: Int = 450
     @AppStorage("highRes")    private var highRes: Int = 2
-    
+
     var appDelegate = AppDelegate.shared
     var screen: SCDisplay!
-    
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 4) {
-                Text("Area Size:")
-                TextField("", value: $areaWidth, formatter: NumberFormatter())
-                    .frame(width: 60)
-                    .textFieldStyle(.roundedBorder)
-                    .focused($focusedField, equals: .width)
-                    .onChange(of: areaWidth) { _, newValue in
-                        if !appDelegate.isResizing {
-                            areaWidth = min(max(newValue, 1), screen.width)
-                            resize()
-                        }
-                    }
-                Image(systemName: "xmark").font(.system(size: 10, weight: .medium))
-                TextField("", value: $areaHeight, formatter: NumberFormatter())
-                    .frame(width: 60)
-                    .textFieldStyle(.roundedBorder)
-                    .focused($focusedField, equals: .height)
-                    .onChange(of: areaHeight) { _, newValue in
-                        if !appDelegate.isResizing {
-                            areaHeight = min(max(newValue, 1), screen.height)
-                            resize()
-                        }
-                    }
-            }
-            HStack(spacing: 4) {
-                Text("Output Size:")
-                let scale = Int(screen.nsScreen!.backingScaleFactor)
-                Text(" \(highRes == 2 ? areaWidth * scale : areaWidth) x \(highRes == 2 ? areaHeight * scale : areaHeight)")
-            }
-        }.onAppear{ focusedField = .width }
+        let scale = highRes == 2 ? Int(screen.nsScreen?.backingScaleFactor ?? 1) : 1
+        HStack(spacing: 4) {
+            field($areaWidth, max: screen.width)
+            Image(systemName: "xmark").font(.system(size: 8, weight: .semibold)).foregroundStyle(.secondary)
+            field($areaHeight, max: screen.height)
+            Text(verbatim: "→ \(areaWidth * scale) × \(areaHeight * scale)")
+                .font(.system(size: 12).monospacedDigit()).foregroundStyle(.secondary)
+                .padding(.leading, 6)
+        }
+        .padding(.horizontal, 6).padding(.vertical, 2)
+        .fixedSize()
     }
-    
+
+    private func field(_ value: Binding<Int>, max: Int) -> some View {
+        TextField("", value: value, formatter: NumberFormatter())
+            .onSubmit { CapsuleBubbles.shared.close() }
+            .textFieldStyle(.plain)
+            .font(.system(size: 13, weight: .medium).monospacedDigit())
+            .multilineTextAlignment(.center)
+            .frame(width: 46, height: 22)
+            .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(.quaternary))
+            .onChange(of: value.wrappedValue) { _, newValue in
+                if !appDelegate.isResizing {
+                    value.wrappedValue = min(Swift.max(newValue, 1), max)
+                    resize()
+                }
+            }
+    }
+
     func resize() {
         closeAllWindow(except: "Start Recording".local)
         AppDelegate.shared.showAreaSelector(size: NSSize(width: areaWidth, height: areaHeight), noPanel: true)
     }
 }
 
+/// The area selector's capsule (#79): Close, Window Area and Resize first, then what every selector's capsule has
 struct AreaSelector: View {
-    @State private var resizePopoverShowing = false
     @State private var nsWindow: NSWindow?
     
     var screen: SCDisplay!
     var appDelegate = AppDelegate.shared
     
     var body: some View {
-        ZStack {
-            Color(nsColor: NSColor.windowBackgroundColor)
-                .cornerRadius(10)
-            VStack {
-                HStack(spacing: 6) {
-                    Spacer()
-                    Button(action: {
-                        nsWindow?.close()
-                        for w in NSApp.windows.filter({$0.title == "Area Selector".local }) { w.close() }
-                        appDelegate.stopGlobalMouseMonitor()
-                        WindowHighlighter.shared.registerMouseMonitor(mode: 2)
-                    }, label: {
-                        VStack(spacing:0){
-                            ZStack {
-                                Image(systemName: "circle.fill")
-                                    .font(.system(size: 36))
-                                    .foregroundStyle(.green)
-                                Image("window.select")
-                                    .resizable().scaledToFit()
-                                    .foregroundStyle(.black)
-                                    .frame(width: 27)
-                                    .offset(y: 0.5)
-                                    .blendMode(.destinationOut)
-                            }
-                            .compositingGroup()
-                            .frame(width: 42, height: 41)
-                            Text("Window Area")
-                                .foregroundStyle(.secondary)
-                                .font(.system(size: 12))
-                        }
-                    }).buttonStyle(.plain)
-                    BarButton(icon: "viewfinder.circle.fill", style: .blue, title: "Resize") { resizePopoverShowing = true }
-                    .sheet(isPresented: $resizePopoverShowing, content: {
-                        HStack(spacing: 10) {
-                            BarButton(icon: "arrow.uturn.backward.circle.fill", style: .secondary, title: "Back", size: 30) {
-                                resizePopoverShowing = false
-                            }
-                            resizeView(screen: screen)
-                        }.padding()
-                    })
-                    Spacer()
-                    OptionsView(showsBackground: false).padding(.horizontal, 10)
-                    Spacer()
-                    StartControls { autoStop in startRecording(autoStop: autoStop) }
-                    Spacer()
-                }
-            }.padding(.horizontal, 10)
-            Button(action: {
-                /*for w in NSApp.windows.filter({ $0.title == "Area Selector".local || $0.title == "Start Recording".local}) { w.close() }
-                if let monitor = keyMonitor {
-                    NSEvent.removeMonitor(monitor)
-                    keyMonitor = nil
-                }
-                appDelegate.stopGlobalMouseMonitor()*/
-                nsWindow?.close()
-            }, label: {
-                Image(systemName: "x.circle")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(.secondary)
-            })
-            .buttonStyle(.plain)
-            .padding(.top, -39)
-            .padding(.leading, -389)
-            .keyboardShortcut(.cancelAction)
+        SelectorCapsule(leading: [
+            CapsuleLeading(symbol: "xmark", label: "Close".local, action: { nsWindow?.close() }),
+            CapsuleLeading(symbol: "macwindow", label: "Window Area".local, action: selectWindowArea),
+            CapsuleLeading(symbol: "viewfinder", label: "Resize".local, bubble: AnyView(AreaSizeFields(screen: screen))),
+        ], screen: screen.nsScreen, showsBackground: false) {
+            startRecording(autoStop: $0)
         }
-        .focusable(false)
-        .frame(width: 790, height: 90)
         .background(WindowAccessor(onWindowOpen: { w in nsWindow = w }, onWindowClose: {
             DispatchQueue.main.async {
                 for w in NSApp.windows.filter({ $0.title == "Area Selector".local }) { w.close() }
@@ -160,6 +94,13 @@ struct AreaSelector: View {
                 appDelegate.stopGlobalMouseMonitor()
             }
         }))
+    }
+
+    private func selectWindowArea() {
+        nsWindow?.close()
+        for w in NSApp.windows.filter({$0.title == "Area Selector".local }) { w.close() }
+        appDelegate.stopGlobalMouseMonitor()
+        WindowHighlighter.shared.registerMouseMonitor(mode: 2)
     }
     
     func startRecording(autoStop: TimeInterval) {
@@ -454,6 +395,8 @@ class ScreenshotWindow: NSPanel {
     }
 
     func myKeyDownEvent(event: NSEvent) -> NSEvent? {
+        // Esc closes an open bubble of the capsule first (its own monitor takes it); the next one cancels the selection
+        if event.keyCode == 53 && MainActor.assumeIsolated({ CapsuleBubbles.shared.open != nil }) { return event }
         if event.keyCode == 53 && !event.isARepeat {
             self.close()
             for w in NSApp.windows.filter({ $0.title == "Start Recording".local }) { w.close() }

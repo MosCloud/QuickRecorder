@@ -101,6 +101,10 @@
 		CC3300000000000000003502 /* AutoStop.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000003501 /* AutoStop.swift */; };
 		CC3300000000000000003503 /* AutoStop.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000003501 /* AutoStop.swift */; };
 		CC3300000000000000003603 /* AutoStopTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000003601 /* AutoStopTests.swift */; };
+		CC3300000000000000003702 /* FrameRates.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000003701 /* FrameRates.swift */; };
+		CC3300000000000000003703 /* FrameRates.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000003701 /* FrameRates.swift */; };
+		CC3300000000000000003803 /* FrameRatesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000003801 /* FrameRatesTests.swift */; };
+		CC3300000000000000003902 /* SelectorCapsule.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000003901 /* SelectorCapsule.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -183,6 +187,9 @@
 		CC3300000000000000003401 /* SelectorParts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectorParts.swift; sourceTree = "<group>"; };
 		CC3300000000000000003501 /* AutoStop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoStop.swift; sourceTree = "<group>"; };
 		CC3300000000000000003601 /* AutoStopTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoStopTests.swift; sourceTree = "<group>"; };
+		CC3300000000000000003701 /* FrameRates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrameRates.swift; sourceTree = "<group>"; };
+		CC3300000000000000003801 /* FrameRatesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrameRatesTests.swift; sourceTree = "<group>"; };
+		CC3300000000000000003901 /* SelectorCapsule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectorCapsule.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -295,6 +302,7 @@
 				CC3300000000000000001401 /* PanelControls.swift */,
 				CC3300000000000000001701 /* MainPanelReturn.swift */,
 				CC3300000000000000003401 /* SelectorParts.swift */,
+				CC3300000000000000003901 /* SelectorCapsule.swift */,
 			);
 			path = ViewModel;
 			sourceTree = "<group>";
@@ -324,6 +332,7 @@
 				CC3300000000000000003001 /* DisplayPick.swift */,
 				CC3300000000000000003201 /* Backdrop.swift */,
 				CC3300000000000000003501 /* AutoStop.swift */,
+				CC3300000000000000003701 /* FrameRates.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -345,6 +354,7 @@
 				CC3300000000000000003101 /* DisplayPickTests.swift */,
 				CC3300000000000000003301 /* BackdropTests.swift */,
 				CC3300000000000000003601 /* AutoStopTests.swift */,
+				CC3300000000000000003801 /* FrameRatesTests.swift */,
 			);
 			path = QuickRecorderTests;
 			sourceTree = "<group>";
@@ -510,6 +520,8 @@
 				CC3300000000000000003202 /* Backdrop.swift in Sources */,
 				CC3300000000000000003402 /* SelectorParts.swift in Sources */,
 				CC3300000000000000003502 /* AutoStop.swift in Sources */,
+				CC3300000000000000003702 /* FrameRates.swift in Sources */,
+				CC3300000000000000003902 /* SelectorCapsule.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -553,6 +565,8 @@
 				CC3300000000000000003303 /* BackdropTests.swift in Sources */,
 				CC3300000000000000003503 /* AutoStop.swift in Sources */,
 				CC3300000000000000003603 /* AutoStopTests.swift in Sources */,
+				CC3300000000000000003703 /* FrameRates.swift in Sources */,
+				CC3300000000000000003803 /* FrameRatesTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

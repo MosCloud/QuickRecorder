@@ -18,62 +18,22 @@ struct HighlightMask: View {
     let app: String
     let title: String
     let windowID: Int
-    var appDelegate = AppDelegate.shared
-    @State var window: SCWindow?
-    @State var display: SCDisplay?
     @State var color: Color = .blue
-    @State var showSheet: Bool = false
 
     var body: some View {
         color
             .opacity(0.2)
             .cornerRadius(10)
             .help("\(app) - \(title)")
-            .sheet(isPresented: $showSheet) {
-                HStack(spacing: 4) {
-                    BarButton(icon: "xmark.circle.fill", style: .gray, title: "Cancel") { showSheet = false }
-                    Spacer()
-                    OptionsView()
-                    Spacer()
-                    StartControls { autoStop in startRecording(autoStop: autoStop) }
-                }
-                .focusable(false)
-                .frame(width: 640, height: 90)
-                .padding(.horizontal, 40)
-                .onDisappear {
-                    if let mask = WindowHighlighter.shared.mask {
-                        mask.close()
-                    }
-                }
-            }
             .onPressGesture {
                 if let w = WindowHighlighter.shared.getSCWindowWithID(UInt32(windowID)),
                    let d = SCContext.getSCDisplayWithMouse() {
-                    display = d
-                    window = w
-                    WindowHighlighter.shared.stopMouseMonitor()
-                    showSheet = true
+                    WindowHighlighter.shared.chose(window: w, display: d)
                     return
                 }
                 color = .red
                 withAnimation(.easeInOut(duration: 0.6)) { color = .blue }
             }
-    }
-    
-    func startRecording(autoStop: TimeInterval) {
-        closeAllWindow()
-        switch WindowHighlighter.shared.Mode {
-        case 2:
-            guard let screen = display, let nsScreen = display?.nsScreen, var area = window?.frame else { return }
-            area = CGRectTransform(cgRect: area)
-            SCContext.screenArea = NSRect(x: area.origin.x - nsScreen.frame.minX, y: area.origin.y - nsScreen.frame.minY, width:area.width, height: area.height)
-            appDelegate.showAreaOutline(area, margin: 3)
-            appDelegate.countdownAndRecord(type: "area", screen: screen, autoStop: autoStop)
-        default:
-            if let d = display, let w = window {
-                appDelegate.countdownAndRecord(type: "window", screen: d, windows: [w], autoStop: autoStop)
-            }
-        }
     }
 }
 
@@ -84,6 +44,49 @@ class WindowHighlighter {
     var targetWindowID: Int?
     var mask: EscPanel?
     var Mode: Int = 1
+    /// The capsule shown for the clicked window, at the bottom of it
+    var capsule: FloatingCapsulePanel?
+
+    /// The window was clicked: its capsule floats at its bottom, over the highlight (#79)
+    @MainActor
+    func chose(window: SCWindow, display: SCDisplay) {
+        // The mask's press fires on every move of a drag: one capsule per choice
+        guard capsule == nil else { return }
+        stopMouseMonitor()
+        let screen = display.nsScreen
+        let frame = mask?.frame ?? screen?.visibleFrame ?? .zero
+        let visible = screen?.visibleFrame ?? frame
+        capsule = FloatingCapsulePanel.show(
+            SelectorCapsule(leading: [CapsuleLeading(symbol: "xmark", label: "Close".local, action: { [weak self] in self?.cancel() })],
+                            screen: screen, showsBackground: Mode != 2) { [weak self] autoStop in
+                self?.startRecording(window: window, display: display, autoStop: autoStop)
+            },
+            title: "Start Recording".local, centerX: frame.midX, bottom: max(frame.minY + 20, visible.minY + 20), within: visible)
+        capsule?.onCancel = { [weak self] in self?.cancel() }
+    }
+
+    @MainActor
+    func cancel() {
+        capsule?.close()
+        capsule = nil
+        mask?.close()
+    }
+
+    func startRecording(window: SCWindow, display: SCDisplay, autoStop: TimeInterval) {
+        capsule = nil
+        closeAllWindow()
+        let appDelegate = AppDelegate.shared
+        switch Mode {
+        case 2:
+            guard let nsScreen = display.nsScreen else { return }
+            let area = CGRectTransform(cgRect: window.frame)
+            SCContext.screenArea = NSRect(x: area.origin.x - nsScreen.frame.minX, y: area.origin.y - nsScreen.frame.minY, width:area.width, height: area.height)
+            appDelegate.showAreaOutline(area, margin: 3)
+            appDelegate.countdownAndRecord(type: "area", screen: display, autoStop: autoStop)
+        default:
+            appDelegate.countdownAndRecord(type: "window", screen: display, windows: [window], autoStop: autoStop)
+        }
+    }
     
     func registerMouseMonitor(mode: Int = 1) {
         closeAllWindow()

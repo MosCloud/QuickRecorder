@@ -15,58 +15,55 @@ struct ScreenSelector: View {
     var appDelegate = AppDelegate.shared
     
     var body: some View {
-        ZStack {
-            VStack(spacing: 15) {
-                Text("Please select the screen to record")
-                let count = viewModel.screenThumbnails.count
-                ScrollView(.vertical) {
-                    VStack(spacing: 14){
-                        ForEach(0..<viewModel.screenThumbnails.count/2 + 1, id: \.self) { rowIndex in
-                            HStack(spacing: 30) {
-                                ForEach(0..<2, id: \.self) { columnIndex in
-                                    let index = 2 * rowIndex + columnIndex
-                                    if index <= viewModel.screenThumbnails.count - 1 {
-                                        Button(action: {
-                                            selected = viewModel.screenThumbnails[index].screen
-                                        }, label: {
-                                            ZStack {
-                                                VStack(spacing: 4) {
-                                                    ShadowedThumbnail(image: viewModel.screenThumbnails[index].image)
-                                                        .frame(width: count == 1 ? 672 : 320, height: count == 1 ? 378 : 180, alignment: .center)
-                                                    let screenName = NSScreen.screens.first(where: { $0.displayID == viewModel.screenThumbnails[index].screen.displayID })?.localizedName ?? "Display ".local + "\(viewModel.screenThumbnails[index].screen.displayID)"
-                                                    Text(screenName)
-                                                        .foregroundStyle(.secondary)
-                                                        .lineLimit(1)
-                                                        .truncationMode(.tail)
-                                                        .offset(y:count == 1 ? 5 : 2)
-                                                }
-                                                .padding(count == 1 ? 19 : 10)
-                                                .background(SelectionBackground(selected: selected == viewModel.screenThumbnails[index].screen))
-                                                SelectionMark(selected: selected == viewModel.screenThumbnails[index].screen, size: count == 1 ? 54 : 27)
-                                                    .offset(x: count == 1 ? 270 : 120, y: count == 1 ? 130 : 50)
-                                            }
-                                        }).buttonStyle(.plain)
+        VStack(spacing: 15) {
+            Text("Please select the screen to record")
+            let count = viewModel.screenThumbnails.count
+            ScrollView(.vertical) {
+                VStack(spacing: 14) {
+                    ForEach(0..<count/2 + 1, id: \.self) { rowIndex in
+                        HStack(spacing: 30) {
+                            ForEach(0..<2, id: \.self) { columnIndex in
+                                let index = 2 * rowIndex + columnIndex
+                                if index <= count - 1 {
+                                    let thumbnail = viewModel.screenThumbnails[index]
+                                    let size = size(of: thumbnail.screen, among: count)
+                                    SelectableCard(title: name(of: thumbnail.screen), titleWidth: size.width, chosen: selected == thumbnail.screen,
+                                                   action: { selected = thumbnail.screen }) {
+                                        ShadowedThumbnail(image: thumbnail.image).frame(width: size.width, height: size.height)
                                     }
                                 }
                             }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.leading, 35)
                         }
+                        .frame(maxWidth: .infinity, alignment: count == 1 ? .center : .leading)
+                        .padding(.leading, count == 1 ? 0 : 35)
                     }
                 }
-                .frame(height: 445)
-                
-                HStack(spacing: 4) {
-                    BarButton(icon: "arrow.clockwise.circle.fill", style: .blue, title: "Refresh") { viewModel.setupStreams() }
-                    Spacer()
-                    OptionsView(showsBackground: false).padding(.leading, 18)
-                    Spacer()
-                    StartControls(canStart: selected != nil) { autoStop in startRecording(autoStop: autoStop) }
-                }.padding(.horizontal, 40)
-                Spacer()
+                // Room for the ring and the tick of a chosen card
+                .padding(.top, 8)
             }
-            .padding(.top, -5)
-        }.frame(width: 780, height:555)
+            .frame(height: 445)
+            SelectorCapsule(leading: [CapsuleLeading(symbol: "arrow.clockwise", label: "Refresh".local, spins: true, action: { viewModel.setupStreams() })],
+                            screen: selected?.nsScreen ?? NSScreen.main, showsBackground: false, canStart: selected != nil) {
+                startRecording(autoStop: $0)
+            }
+            Spacer()
+        }
+        .padding(.top, -5)
+        .frame(width: 780, height: 555)
+    }
+
+    private func name(of screen: SCDisplay) -> String {
+        NSScreen.screens.first(where: { $0.displayID == screen.displayID })?.localizedName ?? "Display ".local + "\(screen.displayID)"
+    }
+
+    /// The display's own shape (#79): one display as large as the window allows, two to a row otherwise
+    private func size(of screen: SCDisplay, among count: Int) -> CGSize {
+        let aspect = CGFloat(screen.width) / CGFloat(max(screen.height, 1))
+        if count == 1 {
+            let height = min(380, 680 / aspect)
+            return CGSize(width: height * aspect, height: height)
+        }
+        return CGSize(width: 320, height: 320 / aspect)
     }
 
     func startRecording(autoStop: TimeInterval) {
