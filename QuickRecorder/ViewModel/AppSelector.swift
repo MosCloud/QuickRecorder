@@ -74,7 +74,7 @@ struct AppSelector: View {
         }.frame(width: 780, height:555)
     }
 
-    func startRecording(autoStop: Int) {
+    func startRecording(autoStop: TimeInterval) {
         closeAllWindow()
         appDelegate.countdownAndRecord(type: "application", screen: display, applications: selected, autoStop: autoStop)
     }

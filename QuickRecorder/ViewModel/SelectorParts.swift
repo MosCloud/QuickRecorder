@@ -31,14 +31,16 @@ struct BarButton<Style: ShapeStyle>: View {
     }
 }
 
-/// The end of every selector's bar: the timer that stops the recording after a set number of minutes, and Start.
+/// The end of every selector's bar: the timer that stops the recording after a set time, and Start.
 /// Its two buttons join the bar's own stack.
 struct StartControls: View {
     var canStart = true
-    /// Starts with the minutes after which to stop, 0 for never
-    let start: (_ autoStop: Int) -> Void
-    @State private var autoStop = 0
+    /// Starts with the seconds after which to stop, 0 for never
+    let start: (_ autoStop: TimeInterval) -> Void
+    @State private var autoStop = AutoStop()
     @State private var isTimerShowing = false
+    /// Bumped to redraw the fields: one showing a number just set back to 0 that was 0 before keeps the number otherwise
+    @State private var fieldsVersion = 0
 
     var body: some View {
         Button(action: {
@@ -51,19 +53,50 @@ struct StartControls: View {
         .buttonStyle(.plain)
         .padding(.top, 42.5)
         .popover(isPresented: $isTimerShowing, arrowEdge: .bottom, content: {
-            HStack {
+            HStack(spacing: 4) {
                 Text(" Stop after".local)
-                TextField("", value: $autoStop, formatter: NumberFormatter())
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                Stepper("", value: $autoStop)
-                    .padding(.leading, -10)
-                Text("minutes ".local)
+                field($autoStop.hours, in: AutoStop.hourRange)
+                Text("hr".local)
+                field($autoStop.minutes, in: AutoStop.minuteRange)
+                Text("min".local)
+                field($autoStop.seconds, in: AutoStop.secondRange)
+                Text("sec".local)
+                Button(action: {
+                    autoStop = AutoStop()
+                    fieldsVersion += 1
+                }, label: {
+                    Label("Reset", systemImage: "arrow.counterclockwise")
+                        .labelStyle(.iconOnly)
+                })
+                .buttonStyle(.borderless)
+                .help("Reset")
+                .disabled(autoStop == AutoStop())
             }
+            .id(fieldsVersion)
             .fixedSize()
             .padding()
         })
-        BarButton(icon: "record.circle.fill", style: .red, title: "Start") { start(autoStop) }
+        BarButton(icon: "record.circle.fill", style: .red, title: "Start") { start(autoStop.limit) }
             .disabled(!canStart)
+    }
+
+    /// A number with its stepper. The stepper stops at the range's ends (it used to go down to -1, #86); a number typed
+    /// outside the range goes back to 0
+    private func field(_ value: Binding<Int>, in range: ClosedRange<Int>) -> some View {
+        let formatter = NumberFormatter()
+        formatter.allowsFloats = false
+        let checked = Binding(get: { value.wrappedValue }, set: {
+            value.wrappedValue = range.orZero($0)
+            if value.wrappedValue != $0 { fieldsVersion += 1 }
+        })
+        return HStack(spacing: 0) {
+            TextField("", value: checked, formatter: formatter)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .multilineTextAlignment(.trailing)
+                .frame(width: 34)
+            Stepper("", value: checked, in: range)
+                .labelsHidden()
+        }
     }
 }
 
@@ -171,7 +204,7 @@ struct DisplayTabs<Item, Content: View>: View {
 extension AppDelegate {
     /// What a selector's Start does once its windows are closed: count down on `screen`, then record
     func countdownAndRecord(type: String, screen: SCDisplay, windows: [SCWindow]? = nil,
-                            applications: [SCRunningApplication]? = nil, autoStop: Int) {
+                            applications: [SCRunningApplication]? = nil, autoStop: TimeInterval) {
         createCountdownPanel(screen: screen) {
             SCContext.autoStop = autoStop
             self.prepRecord(type: type, screens: screen, windows: windows, applications: applications)

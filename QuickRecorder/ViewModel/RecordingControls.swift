@@ -125,7 +125,7 @@ final class RecordingControls {
 
     private func tick() {
         refresh()
-        if SCContext.autoStop != 0 && SCContext.recordingElapsed() / 60 >= Double(SCContext.autoStop) {
+        if AutoStop.isDue(limit: SCContext.autoStop, elapsed: SCContext.recordingElapsed()) {
             stop()
             return
         }
