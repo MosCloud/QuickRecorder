@@ -283,7 +283,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
     
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         closeAllWindow()
-        if showOnDock { _ = applicationShouldHandleReopen(NSApp, hasVisibleWindows: true) }
+        // Launched hidden, by a script command or as a hidden login item, it keeps the main panel to itself (#88)
+        if showOnDock && !NSApp.isHidden { _ = applicationShouldHandleReopen(NSApp, hasVisibleWindows: true) }
         tips("Would you like to use H.265 format for better video quality and smaller file size?",
              id: "qr.switch-to-h265.note", buttonTitle: "Use H.265", switchButton: true) {
             ud.setValue(Encoder.h265.rawValue, forKey: "encoder")

@@ -9,7 +9,16 @@ import Foundation
 import AppKit
 import ScreenCaptureKit
 
-class selectScreen: NSScriptCommand {
+/// Launched by a script command, QuickRecorder starts hidden, and nothing it opens shows until it's unhidden: the
+/// pickers, the countdown and the capsule stayed out of sight for as long as it ran (#88)
+class ScriptCommand: NSScriptCommand {
+    override func execute() -> Any? {
+        if NSApp.isHidden { NSApp.unhideWithoutActivation() }
+        return super.execute()
+    }
+}
+
+class selectScreen: ScriptCommand {
     override func performDefaultImplementation() -> Any? {
         if SCContext.stream != nil {
             createAlert(title: "Error".local, message: "Already recording!".local, button1: "OK".local).runModal()
@@ -41,7 +50,7 @@ class selectScreen: NSScriptCommand {
     }
 }
 
-class selectArea: NSScriptCommand {
+class selectArea: ScriptCommand {
     override func performDefaultImplementation() -> Any? {
         if SCContext.stream != nil {
             createAlert(title: "Error".local, message: "Already recording!".local, button1: "OK".local).runModal()
@@ -68,7 +77,7 @@ class selectArea: NSScriptCommand {
     }
 }
 
-class selectApps: NSScriptCommand {
+class selectApps: ScriptCommand {
     override func performDefaultImplementation() -> Any? {
         if SCContext.stream != nil {
             createAlert(title: "Error".local, message: "Already recording!".local, button1: "OK".local).runModal()
@@ -119,7 +128,7 @@ class selectApps: NSScriptCommand {
     }
 }
 
-class selectWindows: NSScriptCommand {
+class selectWindows: ScriptCommand {
     override func performDefaultImplementation() -> Any? {
         if SCContext.stream != nil {
             createAlert(title: "Error".local, message: "Already recording!".local, button1: "OK".local).runModal()
@@ -171,7 +180,7 @@ class selectWindows: NSScriptCommand {
     }
 }
 
-class recordAudio: NSScriptCommand {
+class recordAudio: ScriptCommand {
     override func performDefaultImplementation() -> Any? {
         if SCContext.stream != nil {
             createAlert(title: "Error".local, message: "Already recording!".local, button1: "OK".local).runModal()
@@ -201,7 +210,7 @@ class recordAudio: NSScriptCommand {
     }
 }
 
-class setPreferences: NSScriptCommand {
+class setPreferences: ScriptCommand {
     override func performDefaultImplementation() -> Any? {
         if SCContext.stream != nil {
             createAlert(title: "Error".local, message: "Already recording!".local, button1: "OK".local).runModal()
