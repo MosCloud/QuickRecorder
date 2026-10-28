@@ -523,6 +523,7 @@ private struct OptionsBubble: View {
     @AppStorage("videoQuality") private var videoQuality = 1.0
     @AppStorage("background")   private var background: BackgroundType = .wallpaper
     @AppStorage("recordHDR")    private var recordHDR = false
+    @State private var customColor = ud.color(forKey: "userColor") ?? .black
 
     var body: some View {
         let retina = (screen?.backingScaleFactor ?? 2) > 1
@@ -543,7 +544,12 @@ private struct OptionsBubble: View {
                     Segments(items: [(1.0, "High ".local), (0.7, "Medium ".local), (0.3, "Low ".local)], value: $videoQuality)
                 }
                 if showsBackground {
-                    GridRow { label("Background"); Swatches(value: $background) }
+                    GridRow { label("Background"); Swatches(value: $background, customColor: customColor) }
+                    // Custom opens its colours right here, rather than in Settings (#92)
+                    if background == .custom {
+                        GridRow { Color.clear.frame(width: 0, height: 0); ColorGridPicker(selection: $customColor) }
+                            .transition(.opacity)
+                    }
                 }
                 GridRow {
                     label("HDR")
@@ -618,6 +624,7 @@ private struct FrameRateStepper: View {
 /// for now (#92 moves the picking here).
 private struct Swatches: View {
     @Binding var value: BackgroundType
+    let customColor: Color
     @AppStorage("withAlpha") private var withAlpha = false
 
     var body: some View {
@@ -632,7 +639,8 @@ private struct Swatches: View {
                         .contentShape(Circle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(type.rawValue)
+                // The names the Background menu had: "Wallpaper", "Transparent", "Black" and so on
+                .accessibilityLabel((type == .clear ? "Transparent" : type.rawValue.capitalized).local)
             }
         }
     }
@@ -645,7 +653,9 @@ private struct Swatches: View {
         case .clear:
             Circle().fill(.background).overlay(Image(systemName: "checkerboard.rectangle").font(.system(size: 8)).foregroundStyle(.secondary))
         case .custom:
-            Circle().fill(AngularGradient(colors: [.red, .yellow, .green, .blue, .purple, .red], center: .center))
+            // The colour chosen, in a ring of every colour
+            Circle().fill(customColor)
+                .overlay(Circle().strokeBorder(AngularGradient(colors: [.red, .yellow, .green, .blue, .purple, .red], center: .center), lineWidth: 3.5))
         default:
             Circle().fill(Color(cgColor: SCContext.color(for: type)))
         }
