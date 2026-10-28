@@ -76,9 +76,7 @@ struct resizeView: View {
 }
 
 struct AreaSelector: View {
-    @State private var isPopoverShowing = false
     @State private var resizePopoverShowing = false
-    @State private var autoStop = 0
     @State private var nsWindow: NSWindow?
     
     var screen: SCDisplay!
@@ -116,73 +114,19 @@ struct AreaSelector: View {
                                 .font(.system(size: 12))
                         }
                     }).buttonStyle(.plain)
-                    Button(action: {
-                        resizePopoverShowing = true
-                    }, label: {
-                        VStack{
-                            Image(systemName: "viewfinder.circle.fill")
-                                .font(.system(size: 36))
-                                .foregroundStyle(.blue)
-                            Text("Resize")
-                                .foregroundStyle(.secondary)
-                                .font(.system(size: 12))
-                        }
-                    })
-                    .buttonStyle(.plain)
+                    BarButton(icon: "viewfinder.circle.fill", style: .blue, title: "Resize") { resizePopoverShowing = true }
                     .sheet(isPresented: $resizePopoverShowing, content: {
                         HStack(spacing: 10) {
-                            Button(action: {
+                            BarButton(icon: "arrow.uturn.backward.circle.fill", style: .secondary, title: "Back", size: 30) {
                                 resizePopoverShowing = false
-                            }, label: {
-                                VStack{
-                                    Image(systemName: "arrow.uturn.backward.circle.fill")
-                                        .font(.system(size: 30))
-                                        .foregroundStyle(.secondary)
-                                    Text("Back")
-                                        .foregroundStyle(.secondary)
-                                        .font(.system(size: 12))
-                                }
-                                
-                            }).buttonStyle(.plain)
+                            }
                             resizeView(screen: screen)
                         }.padding()
                     })
                     Spacer()
                     OptionsView(showsBackground: false).padding(.horizontal, 10)
                     Spacer()
-                    Button(action: {
-                        isPopoverShowing = true
-                    }, label: {
-                        Image(systemName: "timer")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundStyle(.blue)
-                    })
-                    .buttonStyle(.plain)
-                    .padding(.top, 42.5)
-                    .popover(isPresented: $isPopoverShowing, arrowEdge: .bottom, content: {
-                        HStack {
-                            Text(" Stop after".local)
-                            TextField("", value: $autoStop, formatter: NumberFormatter())
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
-                            Stepper("", value: $autoStop)
-                                .padding(.leading, -10)
-                            Text("minutes ".local)
-                        }
-                        .fixedSize()
-                        .padding()
-                    })
-                    Button(action: {
-                        startRecording()
-                    }, label: {
-                        VStack{
-                            Image(systemName: "record.circle.fill")
-                                .font(.system(size: 36))
-                                .foregroundStyle(.red)
-                            Text("Start")
-                                .foregroundStyle(.secondary)
-                                .font(.system(size: 12))
-                        }
-                    }).buttonStyle(.plain)
+                    StartControls { autoStop in startRecording(autoStop: autoStop) }
                     Spacer()
                 }
             }.padding(.horizontal, 10)
@@ -218,28 +162,13 @@ struct AreaSelector: View {
         }))
     }
     
-    func startRecording() {
+    func startRecording(autoStop: Int) {
         closeAllWindow()
         appDelegate.stopGlobalMouseMonitor()
-        var window = NSWindow()
         let area = SCContext.screenArea!
         guard let nsScreen = screen.nsScreen else { return }
-        let frame = NSRect(x: Int(area.origin.x + nsScreen.frame.minX - 4),
-                           y: Int(area.origin.y + nsScreen.frame.minY - 4),
-                           width: Int(area.width + 8), height: Int(area.height + 8))
-        window = NSWindow(contentRect: frame, styleMask: [.fullSizeContentView], backing: .buffered, defer: false)
-        window.hasShadow = false
-        window.level = .screenSaver
-        window.ignoresMouseEvents = true
-        window.isReleasedWhenClosed = false
-        window.title = "Area Overlayer".local
-        window.backgroundColor = NSColor.clear
-        window.contentView = NSHostingView(rootView: DashWindow())
-        window.orderFront(self)
-        appDelegate.createCountdownPanel(screen: screen) {
-            SCContext.autoStop = autoStop
-            appDelegate.prepRecord(type: "area", screens: screen, windows: nil, applications: nil)
-        }
+        appDelegate.showAreaOutline(area.offsetBy(dx: nsScreen.frame.minX, dy: nsScreen.frame.minY), margin: 4)
+        appDelegate.countdownAndRecord(type: "area", screen: screen, autoStop: autoStop)
     }
 }
 
