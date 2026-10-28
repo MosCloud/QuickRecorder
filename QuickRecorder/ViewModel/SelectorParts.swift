@@ -89,8 +89,9 @@ extension AppDelegate {
         }
     }
 
-    /// The dashed outline around an area about to be recorded (global coordinates), `margin` points outside it
-    func showAreaOutline(_ area: NSRect, margin: CGFloat) {
+    /// The corners around an area about to be recorded (global coordinates), far enough out to stay out of it (#97)
+    func showAreaOutline(_ area: NSRect) {
+        let margin = 2 * AreaMarkStyle.width
         let frame = NSRect(x: Int(area.origin.x - margin),
                            y: Int(area.origin.y - margin),
                            width: Int(area.width + 2 * margin), height: Int(area.height + 2 * margin))
@@ -101,7 +102,7 @@ extension AppDelegate {
         window.isReleasedWhenClosed = false
         window.title = "Area Overlayer".local
         window.backgroundColor = NSColor.clear
-        window.contentView = NSHostingView(rootView: DashWindow())
+        window.contentView = NSHostingView(rootView: AreaOutline())
         window.orderFront(self)
     }
 }
