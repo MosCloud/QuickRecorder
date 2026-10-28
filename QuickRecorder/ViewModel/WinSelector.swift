@@ -126,7 +126,7 @@ struct WinSelector: View {
         }
     }
     
-    func startRecording(autoStop: Int) {
+    func startRecording(autoStop: TimeInterval) {
         closeAllWindow()
         appDelegate.countdownAndRecord(type: selected.count < 2 ? "window" : "windows", screen: display, windows: selected, autoStop: autoStop)
     }

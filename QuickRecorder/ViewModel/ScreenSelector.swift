@@ -69,7 +69,7 @@ struct ScreenSelector: View {
         }.frame(width: 780, height:555)
     }
 
-    func startRecording(autoStop: Int) {
+    func startRecording(autoStop: TimeInterval) {
         closeAllWindow()
         if let screen = selected {
             appDelegate.countdownAndRecord(type: "display", screen: screen, autoStop: autoStop)

@@ -128,7 +128,9 @@
 "Show QuickRecorder on Dock" = "在 Dock 中顯示 QuickRecorder";
 "Show QuickRecorder on Menu Bar" = "在選單列中顯示 QuickRecorder";
 "Icon Settings" = "圖示設定";
-"minutes " = "分鐘後自動停止錄製";
+"hr" = "小時";
+"min" = "分";
+"sec" = "秒後自動停止錄製";
 " Stop after" = "在";
 "Don't remind me again" = "不再提醒";
 "OK" = "好";

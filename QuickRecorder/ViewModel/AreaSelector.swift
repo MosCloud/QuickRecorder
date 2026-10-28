@@ -162,7 +162,7 @@ struct AreaSelector: View {
         }))
     }
     
-    func startRecording(autoStop: Int) {
+    func startRecording(autoStop: TimeInterval) {
         closeAllWindow()
         appDelegate.stopGlobalMouseMonitor()
         let area = SCContext.screenArea!

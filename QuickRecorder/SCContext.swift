@@ -16,7 +16,8 @@ import SwiftUI
 class SCContext {
     static var trimingList = [URL]()
     static var firstFrame: CMSampleBuffer?
-    static var autoStop = 0
+    /// Seconds after which the recording stops, 0 for never
+    static var autoStop: TimeInterval = 0
     static var recordCam = ""
     static var recordDevice = ""
     static var captureSession: AVCaptureSession!

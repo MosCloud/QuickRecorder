@@ -60,7 +60,7 @@ struct HighlightMask: View {
             }
     }
     
-    func startRecording(autoStop: Int) {
+    func startRecording(autoStop: TimeInterval) {
         closeAllWindow()
         switch WindowHighlighter.shared.Mode {
         case 2:

@@ -31,13 +31,13 @@ struct BarButton<Style: ShapeStyle>: View {
     }
 }
 
-/// The end of every selector's bar: the timer that stops the recording after a set number of minutes, and Start.
+/// The end of every selector's bar: the timer that stops the recording after a set time, and Start.
 /// Its two buttons join the bar's own stack.
 struct StartControls: View {
     var canStart = true
-    /// Starts with the minutes after which to stop, 0 for never
-    let start: (_ autoStop: Int) -> Void
-    @State private var autoStop = 0
+    /// Starts with the seconds after which to stop, 0 for never
+    let start: (_ autoStop: TimeInterval) -> Void
+    @State private var autoStop = AutoStop()
     @State private var isTimerShowing = false
 
     var body: some View {
@@ -51,19 +51,37 @@ struct StartControls: View {
         .buttonStyle(.plain)
         .padding(.top, 42.5)
         .popover(isPresented: $isTimerShowing, arrowEdge: .bottom, content: {
-            HStack {
+            HStack(spacing: 4) {
                 Text(" Stop after".local)
-                TextField("", value: $autoStop, formatter: NumberFormatter())
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                Stepper("", value: $autoStop)
-                    .padding(.leading, -10)
-                Text("minutes ".local)
+                field($autoStop.hours, in: AutoStop.hourRange)
+                Text("hr".local)
+                field($autoStop.minutes, in: AutoStop.minuteRange)
+                Text("min".local)
+                field($autoStop.seconds, in: AutoStop.secondRange)
+                Text("sec".local)
             }
             .fixedSize()
             .padding()
         })
-        BarButton(icon: "record.circle.fill", style: .red, title: "Start") { start(autoStop) }
+        BarButton(icon: "record.circle.fill", style: .red, title: "Start") { start(autoStop.limit) }
             .disabled(!canStart)
+    }
+
+    /// A number with its stepper. Neither goes past the range: the stepper used to go down to -1 (#86)
+    private func field(_ value: Binding<Int>, in range: ClosedRange<Int>) -> some View {
+        let formatter = NumberFormatter()
+        formatter.minimum = range.lowerBound as NSNumber
+        formatter.maximum = range.upperBound as NSNumber
+        formatter.allowsFloats = false
+        let clamped = Binding(get: { value.wrappedValue }, set: { value.wrappedValue = range.clamp($0) })
+        return HStack(spacing: 0) {
+            TextField("", value: clamped, formatter: formatter)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .multilineTextAlignment(.trailing)
+                .frame(width: 34)
+            Stepper("", value: clamped, in: range)
+                .labelsHidden()
+        }
     }
 }
 
@@ -171,7 +189,7 @@ struct DisplayTabs<Item, Content: View>: View {
 extension AppDelegate {
     /// What a selector's Start does once its windows are closed: count down on `screen`, then record
     func countdownAndRecord(type: String, screen: SCDisplay, windows: [SCWindow]? = nil,
-                            applications: [SCRunningApplication]? = nil, autoStop: Int) {
+                            applications: [SCRunningApplication]? = nil, autoStop: TimeInterval) {
         createCountdownPanel(screen: screen) {
             SCContext.autoStop = autoStop
             self.prepRecord(type: type, screens: screen, windows: windows, applications: applications)

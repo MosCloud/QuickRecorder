@@ -98,6 +98,9 @@
 		CC3300000000000000003203 /* Backdrop.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000003201 /* Backdrop.swift */; };
 		CC3300000000000000003303 /* BackdropTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000003301 /* BackdropTests.swift */; };
 		CC3300000000000000003402 /* SelectorParts.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000003401 /* SelectorParts.swift */; };
+		CC3300000000000000003502 /* AutoStop.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000003501 /* AutoStop.swift */; };
+		CC3300000000000000003503 /* AutoStop.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000003501 /* AutoStop.swift */; };
+		CC3300000000000000003603 /* AutoStopTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000003601 /* AutoStopTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -178,6 +181,8 @@
 		CC3300000000000000003201 /* Backdrop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Backdrop.swift; sourceTree = "<group>"; };
 		CC3300000000000000003301 /* BackdropTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackdropTests.swift; sourceTree = "<group>"; };
 		CC3300000000000000003401 /* SelectorParts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectorParts.swift; sourceTree = "<group>"; };
+		CC3300000000000000003501 /* AutoStop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoStop.swift; sourceTree = "<group>"; };
+		CC3300000000000000003601 /* AutoStopTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoStopTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -318,6 +323,7 @@
 				CC3300000000000000002801 /* ScreenAccess.swift */,
 				CC3300000000000000003001 /* DisplayPick.swift */,
 				CC3300000000000000003201 /* Backdrop.swift */,
+				CC3300000000000000003501 /* AutoStop.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -338,6 +344,7 @@
 				CC3300000000000000002901 /* ScreenAccessTests.swift */,
 				CC3300000000000000003101 /* DisplayPickTests.swift */,
 				CC3300000000000000003301 /* BackdropTests.swift */,
+				CC3300000000000000003601 /* AutoStopTests.swift */,
 			);
 			path = QuickRecorderTests;
 			sourceTree = "<group>";
@@ -502,6 +509,7 @@
 				CC3300000000000000003002 /* DisplayPick.swift in Sources */,
 				CC3300000000000000003202 /* Backdrop.swift in Sources */,
 				CC3300000000000000003402 /* SelectorParts.swift in Sources */,
+				CC3300000000000000003502 /* AutoStop.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -543,6 +551,8 @@
 				CC3300000000000000003003 /* DisplayPick.swift in Sources */,
 				CC3300000000000000003203 /* Backdrop.swift in Sources */,
 				CC3300000000000000003303 /* BackdropTests.swift in Sources */,
+				CC3300000000000000003503 /* AutoStop.swift in Sources */,
+				CC3300000000000000003603 /* AutoStopTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
