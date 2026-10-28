@@ -46,6 +46,7 @@
 - [ ] iPhone / iPad（有设备时）
 - [ ] AppleScript：`record window titled "…"`、`record system audio with microphone` 能开始录制；锁屏时也不会没反应（能录就录，没有显示器时弹出提示）
   - 麦克风设置关着时 `record system audio with microphone`：录制中麦克风在用，停止后设置恢复成关，得到一个混好音的文件
+  - QuickRecorder 没有运行时执行脚本命令：应用被拉起，选择器、倒计时和胶囊都正常显示；不弹主面板，也不抢走前台应用
 
 ## 3. 音频
 
