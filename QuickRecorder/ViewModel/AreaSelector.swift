@@ -280,7 +280,6 @@ class ScreenshotOverlayView: NSView {
     var dragIng: Bool = false
     var activeHandle: ResizeHandle = .none
     var lastMouseLocation: NSPoint?
-    var maxFrame: NSRect?
 
     /// The frost with the area cut out of it (#108), and over it the marks (#97)
     private let frost = NSView()
@@ -389,17 +388,9 @@ class ScreenshotOverlayView: NSView {
         return CGRect(x: x, y: y, width: w, height: h)
     }
 
-    /// The bounds a drag draws inside: set when the view is laid out, not only when it draws, or the first drag after
-    /// the selector opens has no bounds yet and does nothing (#133)
     override func layout() {
         super.layout()
-        maxFrame = bounds
         updateCursor()
-    }
-
-    override func draw(_ dirtyRect: NSRect) {
-        super.draw(dirtyRect)
-        maxFrame = bounds
     }
 
     // The frost and the marks only show: every click is the overlay's
@@ -644,18 +635,18 @@ class ScreenshotOverlayView: NSView {
             } else {
                 //dragIng = false
                 // 创建新矩形
-                let maxFrame = self.maxFrame ?? bounds
-                let origin = NSPoint(x: max(maxFrame.origin.x, min(initialLocation.x, currentLocation.x)), y: max(maxFrame.origin.y, min(initialLocation.y, currentLocation.y)))
+                let limit = bounds
+                let origin = NSPoint(x: max(limit.origin.x, min(initialLocation.x, currentLocation.x)), y: max(limit.origin.y, min(initialLocation.y, currentLocation.y)))
                 var maxH = abs(currentLocation.y - initialLocation.y)
                 var maxW = abs(currentLocation.x - initialLocation.x)
-                if currentLocation.y < maxFrame.origin.y { maxH = initialLocation.y }
-                if currentLocation.x < maxFrame.origin.x { maxW = initialLocation.x }
+                if currentLocation.y < limit.origin.y { maxH = initialLocation.y }
+                if currentLocation.x < limit.origin.x { maxW = initialLocation.x }
                 let size = NSSize(width: maxW, height: maxH)
                 // A click is not a new selection: a stray click in the veiled part used to wipe the area down to a
                 // pixel or two, after which every click landed outside it (#131)
                 guard size.width >= AreaRect.smallestUsable.width,
                       size.height >= AreaRect.smallestUsable.height else { return }
-                self.selectionRect = NSIntersectionRect(maxFrame, NSRect(origin: origin, size: size))
+                self.selectionRect = NSIntersectionRect(limit, NSRect(origin: origin, size: size))
                 areaWidth = Int(selectionRect!.width)
                 areaHeight = Int(selectionRect!.height)
                 //initialLocation = currentLocation
