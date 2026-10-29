@@ -1,71 +1,67 @@
 //
 //  WindowAccessor.swift
-//  xHistory
-//
-//  Created by apple on 2024/11/7.
+//  QuickRecorder
 //
 
 import AppKit
 import SwiftUI
 
+/// Hands over the window a view ends up in, and says when that window closes (#155, #172).
+///
+/// The window comes from `viewDidMoveToWindow`, which AppKit calls once the view is attached: asking for `view.window`
+/// a run loop turn later can come back nil. Closing is watched with `willCloseNotification` rather than a window
+/// delegate, so two of these in one window both hear about it. The callbacks themselves run a turn later, since the view
+/// is attached while SwiftUI is updating and they often write `@State`.
 struct WindowAccessor: NSViewRepresentable {
     var onWindowOpen: ((NSWindow?) -> Void)?
-    var onWindowActive: ((NSWindow?) -> Void)?
-    var onWindowDeactivate: ((NSWindow?) -> Void)?
     var onWindowClose: (() -> Void)?
 
-    func makeNSView(context: Context) -> NSView {
-        let view = NSView()
-        DispatchQueue.main.async {
-            if let window = view.window {
-                window.delegate = context.coordinator
-                context.coordinator.window = window
-                self.onWindowOpen?(window)
-            } else {
-                self.onWindowOpen?(nil)
-            }
-        }
+    func makeNSView(context: Context) -> WatchedView {
+        let view = WatchedView()
+        view.onWindowOpen = onWindowOpen
+        view.onWindowClose = onWindowClose
         return view
     }
 
-    func updateNSView(_ nsView: NSView, context: Context) {}
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator(
-            onWindowOpen: onWindowOpen,
-            onWindowActive: onWindowActive,
-            onWindowDeactivate: onWindowDeactivate,
-            onWindowClose: onWindowClose
-        )
+    func updateNSView(_ nsView: WatchedView, context: Context) {
+        nsView.onWindowOpen = onWindowOpen
+        nsView.onWindowClose = onWindowClose
     }
 
-    class Coordinator: NSObject, NSWindowDelegate {
-        weak var window: NSWindow? // 使用 weak 避免循环引用
+    final class WatchedView: NSView {
         var onWindowOpen: ((NSWindow?) -> Void)?
-        var onWindowActive: ((NSWindow?) -> Void)?
-        var onWindowDeactivate: ((NSWindow?) -> Void)?
         var onWindowClose: (() -> Void)?
+        private var observer: NSObjectProtocol?
+        private weak var observed: NSWindow?
 
-        init(onWindowOpen: ((NSWindow?) -> Void)? = nil,
-             onWindowActive: ((NSWindow?) -> Void)? = nil,
-             onWindowDeactivate: ((NSWindow?) -> Void)? = nil,
-             onWindowClose: (() -> Void)? = nil) {
-            self.onWindowOpen = onWindowOpen
-            self.onWindowClose = onWindowClose
-            self.onWindowActive = onWindowActive
-            self.onWindowDeactivate = onWindowDeactivate
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            let window = self.window
+            if window !== observed {
+                detach()
+                observed = window
+                if let window {
+                    observer = NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification,
+                                                                      object: window, queue: .main) { [weak self] _ in
+                        self?.onWindowClose?()
+                    }
+                }
+            }
+            // Handed over once the update that attached the view is finished, and only if it is still that window
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.window === window else { return }
+                self.onWindowOpen?(window)
+            }
         }
 
-        func windowWillClose(_ notification: Notification) {
-            onWindowClose?()
-        }
-        
-        func windowDidBecomeKey(_ notification: Notification) {
-            onWindowActive?(window)
+        private func detach() {
+            if let observer { NotificationCenter.default.removeObserver(observer) }
+            observer = nil
+            observed = nil
         }
 
-        func windowDidResignKey(_ notification: Notification) {
-            onWindowDeactivate?(window)
+        deinit {
+            if let observer { NotificationCenter.default.removeObserver(observer) }
         }
     }
 }

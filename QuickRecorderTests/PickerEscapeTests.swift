@@ -3,8 +3,8 @@
 //  QuickRecorderTests
 //
 
+import Foundation
 import Testing
-@testable import QuickRecorder
 
 @Suite("What an Esc does in a picker")
 struct PickerEscapeTests {
