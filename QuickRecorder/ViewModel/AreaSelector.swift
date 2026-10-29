@@ -377,6 +377,10 @@ class ScreenshotOverlayView: NSView {
     // The frost and the marks only show: every click is the overlay's
     override func hitTest(_ point: NSPoint) -> NSView? { super.hitTest(point) == nil ? nil : self }
 
+    /// The capsule takes key when it opens under the overlay, so the overlay's first click would otherwise only
+    /// bring it forward and be swallowed: the click that starts a drag has to land (#133)
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
     /// Frost everywhere but the area, and the marks around it
     private func layoutMarks() {
         guard let r = selectionRect else { return }
