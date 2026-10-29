@@ -172,7 +172,8 @@ class WindowHighlighter {
                             screen: screen) { [weak self] autoStop in
                 self?.startRecording(window: window, display: display, autoStop: autoStop)
             },
-            title: "Start Recording".local, centerX: frame.midX, bottom: max(frame.minY + 20, visible.minY + 20), within: visible)
+            title: "Start Recording".local, centerX: frame.midX, bottom: max(frame.minY + 20, visible.minY + 20), within: visible,
+            level: PickerShield.above)
         capsule?.onCancel = { [weak self] in self?.back() }
     }
 
@@ -230,6 +231,8 @@ class WindowHighlighter {
     
     func registerMouseMonitor(mode: Int = 1) {
         closeAllWindow()
+        // Same as the area selector: the menu bar swallows real clicks even over the covers (#163)
+        PickerPresentation.begin()
         Mode = mode
         state.hovered = nil
         state.chosen = nil
@@ -247,7 +250,7 @@ class WindowHighlighter {
                                                                menuBar: max(screen.frame.maxY - screen.visibleFrame.maxY, screen.safeAreaInsets.top)))
             host.safeAreaRegions = []
             cover.contentView = host
-            cover.level = .statusBar
+            cover.level = PickerShield.cover
             cover.sharingType = .none
             cover.backgroundColor = .clear
             cover.isReleasedWhenClosed = false
@@ -260,6 +263,10 @@ class WindowHighlighter {
         let pointer = NSEvent.mouseLocation
         let target = NSScreen.screens.first { $0.frame.contains(pointer) } ?? NSScreen.main
         NSApp.windows.first { $0.title == "Screen Cover" && $0.frame == target?.frame }?.makeKeyAndOrderFront(nil)
+        // Same as the area selector: the top row's clicks go to the frontmost app's menu bar until activation lands (#163)
+        if let pointerCover = NSApp.windows.first(where: { $0.title == "Screen Cover" && $0.frame == target?.frame }) {
+            holdActivation(while: pointerCover)
+        }
         
         startHoverTracking()
     }
@@ -281,6 +288,8 @@ class WindowHighlighter {
         
     func stopMouseMonitor() {
         state.frost = [:]
+        // Leaving the picker: menu bar and Dock back (#163)
+        PickerPresentation.end()
         DispatchQueue.main.async {
             for w in NSApp.windows.filter({ $0.title == "Screen Cover" }) { w.close() }
         }

@@ -70,6 +70,9 @@ struct ContentView: View {
                       hotkey: KeyboardShortcuts.Name?, action: @escaping () -> Void) -> some View {
         RecordTile(title: title, symbol: symbol, symbolSize: symbolSize, overlayer: overlayer, hotkey: hotkey, scale: k) {
             MainPanelReturn.shared.tileChosen()
+            // The panel never activates the app, so a picker opened from it came up with the previous app still in front:
+            // the menu bar then stayed on screen, and its clicks never reached the picker (#163)
+            NSApp.activate()
             action()
         }
     }
@@ -282,6 +285,8 @@ extension AppDelegate {
         let screenshotWindow = ScreenshotWindow(contentRect: screen.frame, backing: .buffered, defer: false)
         screenshotWindow.title = "Area Selector".local
         (screenshotWindow.contentView as? ScreenshotOverlayView)?.frost(scDisplay)
+        // Real clicks on the menu bar are handled before any window sees them: it has to go while the picker is up (#163)
+        PickerPresentation.begin()
         // The frost fades in as the selector opens (#97)
         screenshotWindow.alphaValue = 0
         screenshotWindow.makeKeyAndOrderFront(nil)
@@ -289,9 +294,13 @@ extension AppDelegate {
             context.duration = 0.2
             screenshotWindow.animator().alphaValue = 1
         }
+        // Activation is cooperative on macOS 14+, and until it lands the menu bar still belongs to the app that was in
+        // front: a click on the screen's very top row goes there instead of to the shield (#163)
+        holdActivation(while: screenshotWindow)
         MainActor.assumeIsolated {
             let panel = FloatingCapsulePanel.show(AreaSelector(screen: scDisplay), title: "Start Recording".local,
-                                                  centerX: screen.frame.midX, bottom: screen.visibleFrame.minY + 60)
+                                                  centerX: screen.frame.midX, bottom: screen.visibleFrame.minY + 60,
+                                                  level: PickerShield.above)
             panel.onCancel = { [weak panel] in panel?.close() }
         }
     }
@@ -355,3 +364,14 @@ extension View {
     ContentView()
 }
 */
+
+/// Asks to come to the front again while the picker is up: a picker that isn't frontmost can't take the clicks the
+/// active app's menu bar takes on the screen's top row (#163)
+func holdActivation(while window: NSWindow) {
+    for delay in [0.05, 0.2, 0.5, 1.0] {
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            guard window.isVisible, !NSApp.isActive else { return }
+            NSApp.activate()
+        }
+    }
+}
