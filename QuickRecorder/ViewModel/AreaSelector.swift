@@ -10,6 +10,16 @@ import ScreenCaptureKit
 import Quartz
 import CoreImage
 
+/// The marks' hosting view: the view under the pointer over the overlay, so the cursor rect it carries is the one
+/// AppKit keeps. SwiftUI's own arrow rects are replaced by this one (#136)
+final class MarksHost<Content: View>: NSHostingView<Content> {
+    var cursor: NSCursor = .crosshair
+
+    override func resetCursorRects() {
+        addCursorRect(bounds, cursor: cursor)
+    }
+}
+
 /// The marks around an area (#97): thin square corners just outside it, white in dark mode and near-black in light
 enum AreaMarkStyle {
     /// The marks' line width; they sit just outside the area, their inner side on its edge
@@ -285,6 +295,17 @@ class ScreenshotOverlayView: NSView {
     private let cutOut = CAShapeLayer()
     private let marks = AreaMarksModel()
     private var eased = false
+    /// The marks' hosting view, which owns the cursor rect over the overlay (#136)
+    private var marksHost: MarksHost<AreaMarks>?
+    /// What the pointer was last set to, so the timer doesn't set it again thirty times a second (#136)
+    private var lastCursorKey: String?
+    /// The button is down: the pointer keeps the drag's own shape rather than following the area moving under it (#136)
+    private var buttonDown = false
+    /// The shape the pointer should have; the timer re-asserts it, since AppKit puts its own rects back over ours (#136)
+    private var wantedCursor: NSCursor = .crosshair
+    /// Refreshes the pointer while the selector is up: after a drag the window stopped sending mouse-moved events, so
+    /// the resize cursor set at the end of the drag stayed (#136)
+    private var cursorTimer: Timer?
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -300,7 +321,16 @@ class ScreenshotOverlayView: NSView {
         // Clear until the picture is ready
         frost.alphaValue = 0
         addSubview(frost)
-        let host = NSHostingView(rootView: AreaMarks(model: marks))
+
+        // A whisker of black over the whole overlay: the cut-out is otherwise fully transparent, and the window server
+        // hands clicks on transparent pixels to whatever is behind the window (#114)
+        let clickable = NSView(frame: bounds)
+        clickable.wantsLayer = true
+        clickable.layer?.backgroundColor = NSColor.black.withAlphaComponent(1.0 / 255.0).cgColor
+        clickable.autoresizingMask = [.width, .height]
+        addSubview(clickable)
+        let host = MarksHost(rootView: AreaMarks(model: marks))
+        marksHost = host
         host.safeAreaRegions = []
         host.frame = bounds
         host.autoresizingMask = [.width, .height]
@@ -323,6 +353,7 @@ class ScreenshotOverlayView: NSView {
         }
         // The overlay covers its screen, so the screen's notch is where it is on the overlay
         marks.notch = window?.screen?.notch
+        startCursorTimer()
     }
 
     /// The Edit Area bubble changed the size: the rectangle takes it where it sits, keeping its middle, instead of
@@ -338,6 +369,10 @@ class ScreenshotOverlayView: NSView {
     /// Leaving the screen keeps its selection, also when the selection is cancelled: the next visit starts where this
     /// one left off (#113)
     override func viewWillMove(toWindow newWindow: NSWindow?) {
+        if newWindow == nil {
+            stopCursorTimer()
+            NSCursor.arrow.set()
+        }
         if newWindow == nil, let rect = selectionRect, rect.width > 0, rect.height > 0,
            let name = window?.screen?.localizedName {
             let all = ud.object(forKey: "savedArea") as? [String: [String: CGFloat]] ?? [:]
@@ -367,6 +402,7 @@ class ScreenshotOverlayView: NSView {
     override func layout() {
         super.layout()
         maxFrame = bounds
+        updateCursor()
     }
 
     override func draw(_ dirtyRect: NSRect) {
@@ -395,6 +431,7 @@ class ScreenshotOverlayView: NSView {
         cutOut.path = path
         CATransaction.commit()
         marks.rect = CGRect(x: r.minX, y: b.height - r.maxY, width: r.width, height: r.height)
+        updateCursor()
     }
 
     /// Frosts the overlay with `display`'s picture once it's taken
@@ -427,7 +464,8 @@ class ScreenshotOverlayView: NSView {
 
     /// Where each handle takes the pointer: a square at a corner, the rest of the edge between them
     private func zone(_ handle: ResizeHandle, of r: NSRect) -> NSRect {
-        let corner: CGFloat = 28, edge: CGFloat = 14
+        // A small area's corners would otherwise cover all of it, leaving no room to drag it (#136)
+        let corner = min(28, max(r.width, r.height) / 3), edge = min(14, min(r.width, r.height) / 3)
         func square(_ x: CGFloat, _ y: CGFloat) -> NSRect { NSRect(x: x - corner / 2, y: y - corner / 2, width: corner, height: corner) }
         let across = NSRect(x: r.minX + corner / 2, y: 0, width: max(r.width - corner, 0), height: edge)
         let along = NSRect(x: 0, y: r.minY + corner / 2, width: edge, height: max(r.height - corner, 0))
@@ -453,17 +491,68 @@ class ScreenshotOverlayView: NSView {
         super.updateTrackingAreas()
         trackingAreas.forEach(removeTrackingArea)
         // Always: the capsule's panel is the key window, not this one
-        addTrackingArea(NSTrackingArea(rect: .zero, options: [.mouseMoved, .cursorUpdate, .activeAlways, .inVisibleRect], owner: self))
+        addTrackingArea(NSTrackingArea(rect: .zero, options: [.mouseMoved, .mouseEnteredAndExited, .cursorUpdate, .activeAlways, .inVisibleRect], owner: self))
     }
 
     override func mouseMoved(with event: NSEvent) { pointerMoved(event) }
+    override func mouseEntered(with event: NSEvent) { pointerMoved(event) }
     override func cursorUpdate(with event: NSEvent) { pointerMoved(event) }
 
     private func pointerMoved(_ event: NSEvent) {
-        let point = convert(event.locationInWindow, from: nil)
-        let handle = handleForPoint(point)
+        updateCursor(at: convert(event.locationInWindow, from: nil))
+    }
+
+    /// The pointer's shape follows what can be done where it is now, so it is also right when the area changes under a
+    /// pointer that hasn't moved: on opening, after the Edit Area bubble, after a drag (#136)
+    private func updateCursor(at point: NSPoint? = nil) {
+        guard let window, window.isVisible else { return }
+        let here = point ?? convert(window.mouseLocationOutsideOfEventStream, from: nil)
+
+        // While the button is down the pointer speaks for what the drag does, not for what it has just drawn
+        if buttonDown {
+            let key = activeHandle != .none ? "\(activeHandle)" : (dragIng ? "closedHand" : "crosshair")
+            apply(cursor(for: activeHandle, at: here), key: key, at: here)
+            return
+        }
+
+        let handle = handleForPoint(here)
         if marks.handle != handle { marks.handle = handle }
-        cursor(for: handle, at: point).set()
+        let key = handle == .none
+            ? (selectionRect?.contains(here) == true ? (dragIng ? "closedHand" : "openHand") : "crosshair")
+            : "\(handle)"
+        apply(cursor(for: handle, at: here), key: key, at: here)
+    }
+
+    /// Takes the cursor as this view's own (#136). The rect on the marks' host says what it should be, and
+    /// `set()` shows it now; the rects are never invalidated from here, because doing that while AppKit is
+    /// updating its structural regions (as it is in `mouseMoved`) throws and takes the app down
+    private func apply(_ cursor: NSCursor, key: String, at point: NSPoint) {
+        wantedCursor = cursor
+        marksHost?.cursor = cursor
+        guard key != lastCursorKey else { return }
+        lastCursorKey = key
+        cursor.set()
+    }
+
+    private func startCursorTimer() {
+        guard cursorTimer == nil else { return }
+        cursorTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, let window = self.window else { return }
+                // A window of ours above this one (the capsule and its bubbles) keeps the pointer to itself
+                let mouse = NSEvent.mouseLocation
+                guard !NSApp.windows.contains(where: { $0 !== window && $0.isVisible && $0.frame.contains(mouse) }) else { return }
+                self.updateCursor()
+                // AppKit re-applies the window's own rects as the pointer moves, so say it again while we have it (#136)
+                self.wantedCursor.set()
+            }
+        }
+        if let cursorTimer { RunLoop.main.add(cursorTimer, forMode: .common) }
+    }
+
+    private func stopCursorTimer() {
+        cursorTimer?.invalidate()
+        cursorTimer = nil
     }
 
     /// Resizing at the edges and corners, a hand inside the area, a crosshair to draw a new one outside it
@@ -484,6 +573,7 @@ class ScreenshotOverlayView: NSView {
     }
 
     override func mouseDown(with event: NSEvent) {
+        buttonDown = true
         let location = convert(event.locationInWindow, from: nil)
         initialLocation = location
         lastMouseLocation = location
@@ -584,6 +674,7 @@ class ScreenshotOverlayView: NSView {
     }
 
     override func mouseUp(with event: NSEvent) {
+        buttonDown = false
         initialLocation = nil
         activeHandle = .none
         dragIng = false
@@ -592,7 +683,8 @@ class ScreenshotOverlayView: NSView {
             SCContext.screenArea = rect
         }
         ease(false)
-        pointerMoved(event)
+        updateCursor(at: convert(event.locationInWindow, from: nil))
+        DispatchQueue.main.async { [weak self] in self?.updateCursor() }
     }
 }
 
@@ -608,10 +700,14 @@ class ScreenshotWindow: NSPanel {
         self.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         self.isReleasedWhenClosed = false
         self.contentView = overlayView
+        // Off by default: the pointer's shape would then only change when the tracking area speaks up, so the corner
+        // cursor set at the end of a drag stayed put (#136)
+        self.acceptsMouseMovedEvents = true
         
         if keyMonitor != nil { return }
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: NSEvent.EventTypeMask.keyDown, handler: myKeyDownEvent)
     }
+
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
