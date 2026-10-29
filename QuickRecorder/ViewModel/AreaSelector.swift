@@ -242,7 +242,7 @@ struct AreaSelector: View {
             CapsuleLeading(symbol: "xmark.circle", label: "Close".local, action: { nsWindow?.close() }),
             CapsuleLeading(symbol: "macwindow", label: "Window Area".local, action: selectWindowArea),
             CapsuleLeading(symbol: "viewfinder", label: "Resize".local, bubble: AnyView(AreaSizeFields(screen: screen))),
-        ], screen: screen.nsScreen, showsBackground: false) {
+        ], screen: screen.nsScreen) {
             startRecording(autoStop: $0)
         }
         .background(WindowAccessor(onWindowOpen: { w in nsWindow = w }, onWindowClose: {

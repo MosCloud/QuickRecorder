@@ -58,7 +58,7 @@ struct WinSelector: View {
             // Refresh's own settings, as a right-click opens the microphone's and the timer's
             SelectorCapsule(leading: [CapsuleLeading(symbol: "arrow.clockwise", label: "Refresh".local, spins: true, action: refresh,
                                                      bubble: AnyView(listSettings))],
-                            screen: display?.nsScreen ?? NSScreen.main, showsBackground: false, canStart: selected.count >= 1) {
+                            screen: display?.nsScreen ?? NSScreen.main, canStart: selected.count >= 1) {
                 startRecording(autoStop: $0)
             }
             Spacer()
@@ -205,5 +205,22 @@ class WindowThumbnail {
     init(image: NSImage, window: SCWindow) {
         self.image = image
         self.window = window
+    }
+}
+
+/// A borderless button whose label takes the accent colour under the pointer, for the window selector's toolbar
+private struct HoverButton<Content: View>: View {
+    var color: Color = .primary
+    var secondaryColor: Color = .blue
+    var action: () -> Void
+    @ViewBuilder let label: () -> Content
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action, label: {
+            label().foregroundStyle(isHovered ? secondaryColor : color)
+        })
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
     }
 }

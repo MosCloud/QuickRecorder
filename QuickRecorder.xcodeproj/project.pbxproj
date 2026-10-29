@@ -21,7 +21,6 @@
 		189BD5ED2BDE971B0056D06C /* VideoEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 189BD5EC2BDE971B0056D06C /* VideoEditor.swift */; };
 		189BD5F52BDF8A800056D06C /* CameraOverlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 189BD5F42BDF8A800056D06C /* CameraOverlayer.swift */; };
 		18A551F62D0749C3008FC5F6 /* AppleScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18A551EE2D0749C3008FC5F6 /* AppleScript.swift */; };
-		18A551F72D0749C3008FC5F6 /* GroupForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18A551EF2D0749C3008FC5F6 /* GroupForm.swift */; };
 		18A551F82D0749C3008FC5F6 /* SleepPreventer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18A551F12D0749C3008FC5F6 /* SleepPreventer.swift */; };
 		18A551FA2D0749C3008FC5F6 /* WindowAccessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18A551F32D0749C3008FC5F6 /* WindowAccessor.swift */; };
 		18A551FB2D0749C3008FC5F6 /* WindowHighlighter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18A551F42D0749C3008FC5F6 /* WindowHighlighter.swift */; };
@@ -66,7 +65,7 @@
 		CC3300000000000000000802 /* AudioMix.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000000801 /* AudioMix.swift */; };
 		CC3300000000000000000803 /* AudioMix.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000000801 /* AudioMix.swift */; };
 		CC3300000000000000000903 /* AudioMixTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000000901 /* AudioMixTests.swift */; };
-		CC3300000000000000001002 /* ColorGridPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001001 /* ColorGridPicker.swift */; };
+		CC3300000000000000001002 /* BackgroundColorWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001001 /* BackgroundColorWindow.swift */; };
 		CC3300000000000000001102 /* HotkeyCheck.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001101 /* HotkeyCheck.swift */; };
 		CC3300000000000000001103 /* HotkeyCheck.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001101 /* HotkeyCheck.swift */; };
 		CC3300000000000000001202 /* MicConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000001201 /* MicConverter.swift */; };
@@ -130,7 +129,6 @@
 		189BD5F42BDF8A800056D06C /* CameraOverlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraOverlayer.swift; sourceTree = "<group>"; };
 		189BD5F62BDFDF200056D06C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		18A551EE2D0749C3008FC5F6 /* AppleScript.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleScript.swift; sourceTree = "<group>"; };
-		18A551EF2D0749C3008FC5F6 /* GroupForm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupForm.swift; sourceTree = "<group>"; };
 		18A551F02D0749C3008FC5F6 /* Scriptable.sdef */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Scriptable.sdef; sourceTree = "<group>"; };
 		18A551F12D0749C3008FC5F6 /* SleepPreventer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepPreventer.swift; sourceTree = "<group>"; };
 		18A551F32D0749C3008FC5F6 /* WindowAccessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowAccessor.swift; sourceTree = "<group>"; };
@@ -170,7 +168,7 @@
 		CC3300000000000000000701 /* NotchCapsule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchCapsule.swift; sourceTree = "<group>"; };
 		CC3300000000000000000801 /* AudioMix.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioMix.swift; sourceTree = "<group>"; };
 		CC3300000000000000000901 /* AudioMixTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioMixTests.swift; sourceTree = "<group>"; };
-		CC3300000000000000001001 /* ColorGridPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorGridPicker.swift; sourceTree = "<group>"; };
+		CC3300000000000000001001 /* BackgroundColorWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundColorWindow.swift; sourceTree = "<group>"; };
 		CC3300000000000000001101 /* HotkeyCheck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyCheck.swift; sourceTree = "<group>"; };
 		CC3300000000000000001201 /* MicConverter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicConverter.swift; sourceTree = "<group>"; };
 		CC3300000000000000001301 /* MicConverterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicConverterTests.swift; sourceTree = "<group>"; };
@@ -234,12 +232,11 @@
 			isa = PBXGroup;
 			children = (
 				18A551EE2D0749C3008FC5F6 /* AppleScript.swift */,
-				18A551EF2D0749C3008FC5F6 /* GroupForm.swift */,
 				18A551F02D0749C3008FC5F6 /* Scriptable.sdef */,
 				18A551F12D0749C3008FC5F6 /* SleepPreventer.swift */,
 				18A551F32D0749C3008FC5F6 /* WindowAccessor.swift */,
 				18A551F42D0749C3008FC5F6 /* WindowHighlighter.swift */,
-				CC3300000000000000001001 /* ColorGridPicker.swift */,
+				CC3300000000000000001001 /* BackgroundColorWindow.swift */,
 				CC3300000000000000011704 /* ColorWindow.swift */,
 			);
 			path = Supports;
@@ -496,7 +493,6 @@
 				18D3BDFF2BCE5E4B006CFFC0 /* StatusBar.swift in Sources */,
 				1821F2E82CF4B226004A2EC0 /* MenuBarPanel.swift in Sources */,
 				18A551F62D0749C3008FC5F6 /* AppleScript.swift in Sources */,
-				18A551F72D0749C3008FC5F6 /* GroupForm.swift in Sources */,
 				18A551F82D0749C3008FC5F6 /* SleepPreventer.swift in Sources */,
 				18CEED922D08312C00FBC4BF /* PreviewView.swift in Sources */,
 				18A551FA2D0749C3008FC5F6 /* WindowAccessor.swift in Sources */,
@@ -521,7 +517,7 @@
 				CC3300000000000000000602 /* RecordingControls.swift in Sources */,
 				CC3300000000000000000702 /* NotchCapsule.swift in Sources */,
 				CC3300000000000000000802 /* AudioMix.swift in Sources */,
-				CC3300000000000000001002 /* ColorGridPicker.swift in Sources */,
+				CC3300000000000000001002 /* BackgroundColorWindow.swift in Sources */,
 				CC3300000000000000001102 /* HotkeyCheck.swift in Sources */,
 				CC3300000000000000001202 /* MicConverter.swift in Sources */,
 				CC3300000000000000001402 /* PanelControls.swift in Sources */,

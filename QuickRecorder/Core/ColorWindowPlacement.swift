@@ -6,7 +6,7 @@
 //  it where the screen has room, flipped to the left where it hasn't, and always inside the visible frame.
 //
 
-import CoreGraphics
+import Foundation
 
 enum ColorWindowPlacement {
     /// `bubble` and the returned frame are screen coordinates with the origin at the bottom left, as AppKit has them.

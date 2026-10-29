@@ -87,12 +87,6 @@ class AVOutputClass: NSObject, AVCaptureFileOutputRecordingDelegate, AVCaptureVi
         if mute {
             if let audioConnection = output.connection(with: .audio) {
                 SCContext.captureSession.removeConnection(audioConnection)
-                /*DispatchQueue.main.async {
-                    let alert = createAlert(title: "No Audio Connection",
-                                                               message: "Unable to get audio stream on this device, only screen content will be recorded!",
-                                                               button1: "OK")
-                    alert.runModal()
-                }*/
             }
         }
         
