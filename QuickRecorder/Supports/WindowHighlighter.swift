@@ -84,7 +84,7 @@ class WindowHighlighter {
         DispatchQueue.main.async {
             switch mode {
             case 2:
-                AppDelegate.shared.showAreaSelector(size: NSSize(width: 600, height: 450))
+                AppDelegate.shared.showAreaSelector()
             default:
                 AppDelegate.shared.showWindowSelector()
             }

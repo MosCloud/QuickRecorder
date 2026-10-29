@@ -154,12 +154,8 @@ enum AreaFrost {
     /// The prototype's "medium": a 10-point blur under a 16% tint, dark in dark mode and light in light
     static let radius: CGFloat = 10
     static let tint: CGFloat = 0.16
-    /// The last picture of each display, for the overlay remade at a new size from the Edit Area bubble
-    private static var last: [CGDirectDisplayID: CGImage] = [:]
-
     /// The display without QuickRecorder's own windows, frosted; nil when it can't be captured
-    static func picture(of display: SCDisplay, reusing: Bool) async -> CGImage? {
-        if reusing, let picture = last[display.displayID] { return picture }
+    static func picture(of display: SCDisplay) async -> CGImage? {
         guard let screen = display.nsScreen else { return nil }
         let scale = screen.backingScaleFactor
         let own = SCContext.getSelf().map { [$0] } ?? []
@@ -170,9 +166,7 @@ enum AreaFrost {
         configuration.showsCursor = false
         guard let shot = try? await SCScreenshotManager.captureImage(contentFilter: filter, configuration: configuration) else { return nil }
         let dark = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-        let picture = frosted(shot, radius: radius * scale, dark: dark)
-        last[display.displayID] = picture
-        return picture
+        return frosted(shot, radius: radius * scale, dark: dark)
     }
 
     private static func frosted(_ image: CGImage, radius: CGFloat, dark: Bool) -> CGImage? {
@@ -225,8 +219,7 @@ struct AreaSizeFields: View {
     }
 
     func resize() {
-        closeAllWindow(except: "Start Recording".local)
-        AppDelegate.shared.showAreaSelector(size: NSSize(width: areaWidth, height: areaHeight), noPanel: true)
+        AppDelegate.shared.resizeAreaSelector(to: NSSize(width: areaWidth, height: areaHeight))
     }
 }
 
@@ -286,8 +279,6 @@ class ScreenshotOverlayView: NSView {
     var activeHandle: ResizeHandle = .none
     var lastMouseLocation: NSPoint?
     var maxFrame: NSRect?
-    var size: NSSize
-    var force: Bool
 
     /// The frost with the area cut out of it (#108), and over it the marks (#97)
     private let frost = NSView()
@@ -295,9 +286,7 @@ class ScreenshotOverlayView: NSView {
     private let marks = AreaMarksModel()
     private var eased = false
 
-    init(frame: CGRect, size: NSSize, force: Bool) {
-        self.size = size
-        self.force = force
+    override init(frame: CGRect) {
         super.init(frame: frame)
         wantsLayer = true
         // Hosting its own layer: the picture and the cut-out are set on it directly
@@ -326,14 +315,7 @@ class ScreenshotOverlayView: NSView {
         super.viewDidMoveToWindow()
         // What the menu bar and the Dock leave of this screen, in the overlay's own coordinates
         let visible = visibleArea
-        if force {
-            // Remade at a new size: its middle stays where the rectangle was, rather than jumping to the middle
-            // of the screen (#113)
-            selectionRect = AreaRect.resized(SCContext.screenArea ?? AreaRect.initial(visible: visible),
-                                             to: size, visible: visible)
-        } else {
-            selectionRect = AreaRect.restored(savedArea, visible: visible)
-        }
+        selectionRect = AreaRect.restored(savedArea, visible: visible)
         if self.window != nil {
             areaWidth = Int(selectionRect!.width)
             areaHeight = Int(selectionRect!.height)
@@ -341,6 +323,16 @@ class ScreenshotOverlayView: NSView {
         }
         // The overlay covers its screen, so the screen's notch is where it is on the overlay
         marks.notch = window?.screen?.notch
+    }
+
+    /// The Edit Area bubble changed the size: the rectangle takes it where it sits, keeping its middle, instead of
+    /// the overlay being rebuilt for every digit typed (#113, #129)
+    func apply(size newSize: NSSize) {
+        guard let rect = selectionRect else { return }
+        selectionRect = AreaRect.resized(rect, to: newSize, visible: visibleArea)
+        areaWidth = Int(selectionRect!.width)
+        areaHeight = Int(selectionRect!.height)
+        SCContext.screenArea = selectionRect
     }
 
     /// Leaving the screen keeps its selection, also when the selection is cancelled: the next visit starts where this
@@ -394,17 +386,17 @@ class ScreenshotOverlayView: NSView {
         marks.rect = CGRect(x: r.minX, y: b.height - r.maxY, width: r.width, height: r.height)
     }
 
-    /// Frosts the overlay with `display`'s picture once it's taken, or with the last one when only remade at a new size
-    func frost(_ display: SCDisplay, reusing: Bool) {
+    /// Frosts the overlay with `display`'s picture once it's taken
+    func frost(_ display: SCDisplay) {
         Task { @MainActor in
-            if let picture = await AreaFrost.picture(of: display, reusing: reusing) {
+            if let picture = await AreaFrost.picture(of: display) {
                 frost.layer?.contents = picture
             } else {
                 // No picture, as without the screen recording permission: a light shade instead
                 frost.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.3).cgColor
             }
             NSAnimationContext.runAnimationGroup({ context in
-                context.duration = reusing ? 0 : 0.15
+                context.duration = 0.15
                 frost.animator().alphaValue = eased ? 0.25 : 1
             }, completionHandler: nil)
         }
@@ -591,8 +583,8 @@ class ScreenshotOverlayView: NSView {
 
 class ScreenshotWindow: NSPanel {
     
-    init(contentRect: NSRect, backing bufferingType: NSWindow.BackingStoreType, defer flag: Bool, size: NSSize, force: Bool = false) {
-        let overlayView = ScreenshotOverlayView(frame: contentRect, size:size, force: force)
+    init(contentRect: NSRect, backing bufferingType: NSWindow.BackingStoreType, defer flag: Bool) {
+        let overlayView = ScreenshotOverlayView(frame: contentRect)
         super.init(contentRect: contentRect, styleMask: [.borderless, .nonactivatingPanel], backing: bufferingType, defer: flag)
         self.isOpaque = false
         self.hasShadow = false
