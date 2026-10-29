@@ -53,11 +53,11 @@ struct ContentView: View {
         .padding(.horizontal, 20 * k)
         .environment(\.colorScheme, material == .black ? .dark : colorScheme)
         .background {
-            // An NSHostingView takes the mouse-down, so the panel's isMovableByWindowBackground alone moves nothing
             background(shape)
                 .contentShape(shape)
-                .gesture(WindowDragGesture())
         }
+        // Pressing anywhere moves the panel, tiles and buttons included; a click is still a click (#164)
+        .dragWindowFromAnywhere()
         .allowsWindowActivationEvents(true)
         .fixedSize()
         .focusable(false)
