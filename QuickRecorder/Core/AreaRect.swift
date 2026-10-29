@@ -16,6 +16,8 @@ enum AreaRect {
     static let share: CGFloat = 0.6
     /// Below this the rectangle is awkward to drag, so a small screen gets this much rather than its share
     static let smallest = CGSize(width: 480, height: 270)
+    /// Smaller than this a rectangle is a stray click's leftover rather than a choice, and is no memory at all (#131)
+    static let smallestUsable = CGSize(width: 20, height: 20)
 
     /// The rectangle a screen starts with, centred in what the menu bar and the Dock leave of it
     static func initial(visible: CGRect) -> CGRect {
@@ -31,7 +33,9 @@ enum AreaRect {
     /// The rectangle a screen remembers, brought inside it: a rectangle too big is scaled down around its middle,
     /// one hanging over an edge is moved in, and one with no size at all is no memory at all
     static func restored(_ saved: CGRect?, visible: CGRect) -> CGRect {
-        guard let saved, saved.width > 0, saved.height > 0 else { return initial(visible: visible) }
+        guard let saved, saved.width >= smallestUsable.width, saved.height >= smallestUsable.height else {
+            return initial(visible: visible)
+        }
         var rect = saved
         let fitting = min(1, visible.width / rect.width, visible.height / rect.height)
         if fitting < 1 {

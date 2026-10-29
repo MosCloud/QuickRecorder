@@ -266,6 +266,9 @@ extension AppDelegate {
     }
 
     func showAreaSelector(size: NSSize, noPanel: Bool = false) {
+        // The selector takes the keys, Esc among them: without this the app stays in the background and Esc goes
+        // to whichever app is in front (#131)
+        NSApp.activate()
         guard let scDisplay = SCContext.getSCDisplayWithMouse() else { return }
         guard let screen = scDisplay.nsScreen else { return }
         let screenshotWindow = ScreenshotWindow(contentRect: screen.frame, backing: .buffered, defer: false, size: size, force: noPanel)
@@ -274,7 +277,7 @@ extension AppDelegate {
         (screenshotWindow.contentView as? ScreenshotOverlayView)?.frost(scDisplay, reusing: noPanel)
         // The frost fades in as the selector opens, not when it's only remade at a new size (#97)
         if !noPanel { screenshotWindow.alphaValue = 0 }
-        screenshotWindow.orderFrontRegardless()
+        screenshotWindow.makeKeyAndOrderFront(nil)
         if !noPanel {
             NSAnimationContext.runAnimationGroup { context in
                 context.duration = 0.2
