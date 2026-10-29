@@ -72,6 +72,20 @@ class WindowHighlighter {
         mask?.close()
     }
 
+    /// Esc while picking a window goes back to the picker it came from, rather than closing the whole flow and
+    /// bringing the main panel back (#116)
+    @MainActor
+    func escaped() {
+        let mode = Mode
+        cancel()
+        stopMouseMonitor()
+        guard mode == 2 else { return }
+        // The area selector remembers its rectangle (#113), so it comes back holding the one it had
+        DispatchQueue.main.async {
+            AppDelegate.shared.showAreaSelector(size: NSSize(width: 600, height: 450))
+        }
+    }
+
     func startRecording(window: SCWindow, display: SCDisplay, autoStop: TimeInterval) {
         capsule = nil
         closeAllWindow()
@@ -229,7 +243,7 @@ class WindowHighlighter {
 class EscPanel: NSPanel {
     override func cancelOperation(_ sender: Any?) {
         self.close()
-        WindowHighlighter.shared.stopMouseMonitor()
+        WindowHighlighter.shared.escaped()
     }
     override var canBecomeKey: Bool {
         return true
