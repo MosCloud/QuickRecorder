@@ -14,7 +14,6 @@ struct PickTarget: Equatable {
     /// Global, in AppKit's bottom-left coordinates
     var frame: CGRect
     var app: String
-    var title: String
 }
 
 /// The pick in progress: what is under the pointer, what has been picked, and each screen's frosted picture (#115)
@@ -154,7 +153,6 @@ class WindowHighlighter {
     static let shared = WindowHighlighter()
     var mouseMonitor: Any?
     var mouseMonitorL: Any?
-    var targetWindowID: Int?
     /// What the covers draw; nil when the pointer is over nothing worth picking
     let state = PickState()
     var Mode: Int = 1
@@ -236,10 +234,12 @@ class WindowHighlighter {
         state.hovered = nil
         state.chosen = nil
         state.prompting = true
+        // Last pick's pictures are gone: before the new ones arrive the covers draw nothing rather than the old screen
+        state.frost = [:]
         MainActor.assumeIsolated { captureFrost() }
         for screen in NSScreen.screens {
-            let cover = EscPanel(contentRect: screen.frame, styleMask: [.nonactivatingPanel, .fullSizeContentView], backing: .buffered, defer: false)
             guard let displayID = screen.displayID else { continue }
+            let cover = EscPanel(contentRect: screen.frame, styleMask: [.nonactivatingPanel, .fullSizeContentView], backing: .buffered, defer: false)
             let host = NSHostingView(rootView: WindowPickCover(state: state, screen: screen.frame,
                                                                displayID: displayID, notch: screen.notch,
                                                                hint: mode == 2 ? "Select the area to record"
@@ -280,6 +280,7 @@ class WindowHighlighter {
     }
         
     func stopMouseMonitor() {
+        state.frost = [:]
         DispatchQueue.main.async {
             for w in NSApp.windows.filter({ $0.title == "Screen Cover" }) { w.close() }
         }
@@ -308,13 +309,10 @@ class WindowHighlighter {
               let windowID = targetWindow["kCGWindowNumber"] as? UInt32,
               let frame = getCGWindowFrame(window: targetWindow) else {
             state.hovered = nil
-            targetWindowID = nil
             return
         }
         guard state.hovered?.id != windowID else { return }
-        targetWindowID = Int(windowID)
-        state.hovered = PickTarget(id: windowID, frame: CGRectTransform(cgRect: frame), app: app,
-                                   title: targetWindow["kCGWindowName"] as? String ?? "")
+        state.hovered = PickTarget(id: windowID, frame: CGRectTransform(cgRect: frame), app: app)
     }
 
     /// The click: the window under the pointer is taken, everything else frosts over, and its capsule comes up
@@ -389,8 +387,9 @@ class WindowHighlighter {
 }
 
 class EscPanel: NSPanel {
+    /// Only back one layer (#155): closing this cover first would take it away and leave the picker with nothing on
+    /// screen, while `back()` stays on the layer below. Leaving the picker altogether closes every cover itself.
     override func cancelOperation(_ sender: Any?) {
-        self.close()
         WindowHighlighter.shared.back()
     }
     override var canBecomeKey: Bool {

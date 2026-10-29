@@ -192,9 +192,9 @@ struct CapsuleMaterial<S: Shape>: View {
 
 /// The pill the pickers draw over the screen: the point-select hint and name tag, the area's size tag (#151).
 ///
-/// Never Liquid Glass, whatever the panel material is: glass draws a dark rim around a small shape in a window that
-/// isn't key, and over the screen that reads as a heavy black outline. The blur, told the control state is active so
-/// it isn't dimmed either, has no rim. The capsules and the bubbles live in key windows and keep their glass.
+/// Never Liquid Glass, whatever the panel material is: on the screen a small glass shape comes with a dark rim, which
+/// reads as a heavy black outline right where these pills sit. The blur has no rim, and is told the control state is
+/// active so it isn't dimmed either. The capsules and the bubbles keep their glass.
 struct OverlayCapsule<Content: View>: View {
     @AppStorage("capsuleMaterial") private var material: PanelMaterial = .glass
     @Environment(\.colorScheme) private var scheme

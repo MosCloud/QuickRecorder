@@ -280,7 +280,6 @@ class ScreenshotOverlayView: NSView {
     var dragIng: Bool = false
     var activeHandle: ResizeHandle = .none
     var lastMouseLocation: NSPoint?
-    var maxFrame: NSRect?
 
     /// The frost with the area cut out of it (#108), and over it the marks (#97)
     private let frost = NSView()
@@ -289,7 +288,8 @@ class ScreenshotOverlayView: NSView {
     private var eased = false
     /// The marks' hosting view, which owns the cursor rect over the overlay (#136)
     private var marksHost: MarksHost<AreaMarks>?
-    /// What the pointer was last set to, so the timer doesn't set it again thirty times a second (#136)
+    /// The shape the pointer was last given: a mouse-moved event that finds the same shape doesn't set it again, while
+    /// the timer re-asserts it against the window's own rects (#136)
     private var lastCursorKey: String?
     /// The button is down: the pointer keeps the drag's own shape rather than following the area moving under it (#136)
     private var buttonDown = false
@@ -389,17 +389,9 @@ class ScreenshotOverlayView: NSView {
         return CGRect(x: x, y: y, width: w, height: h)
     }
 
-    /// The bounds a drag draws inside: set when the view is laid out, not only when it draws, or the first drag after
-    /// the selector opens has no bounds yet and does nothing (#133)
     override func layout() {
         super.layout()
-        maxFrame = bounds
         updateCursor()
-    }
-
-    override func draw(_ dirtyRect: NSRect) {
-        super.draw(dirtyRect)
-        maxFrame = bounds
     }
 
     // The frost and the marks only show: every click is the overlay's
@@ -490,6 +482,12 @@ class ScreenshotOverlayView: NSView {
     override func mouseEntered(with event: NSEvent) { pointerMoved(event) }
     override func cursorUpdate(with event: NSEvent) { pointerMoved(event) }
 
+    /// The pointer left this screen's overlay: hand it back once instead of leaving our shape on the other screen (#157)
+    override func mouseExited(with event: NSEvent) {
+        lastCursorKey = nil
+        NSCursor.arrow.set()
+    }
+
     private func pointerMoved(_ event: NSEvent) {
         updateCursor(at: convert(event.locationInWindow, from: nil))
     }
@@ -499,6 +497,9 @@ class ScreenshotOverlayView: NSView {
     private func updateCursor(at point: NSPoint? = nil) {
         guard let window, window.isVisible else { return }
         let here = point ?? convert(window.mouseLocationOutsideOfEventStream, from: nil)
+        // The overlay covers one screen: with the pointer on another one nothing here owns it, and the app under it
+        // keeps its own shape (#157)
+        guard bounds.contains(here) else { return }
 
         // While the button is down the pointer speaks for what the drag does, not for what it has just drawn
         if buttonDown {
@@ -530,9 +531,12 @@ class ScreenshotOverlayView: NSView {
         guard cursorTimer == nil else { return }
         cursorTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated {
-                guard let self, let window = self.window else { return }
-                // A window of ours above this one (the capsule and its bubbles) keeps the pointer to itself
+                guard let self, let window = self.window, window.isVisible else { return }
+                // Only while the pointer is on this screen's overlay (#157): the overlay of another screen, or another
+                // app on the other side of it, keeps its own pointer
                 let mouse = NSEvent.mouseLocation
+                guard window.frame.contains(mouse) else { return }
+                // A window of ours above this one (the capsule and its bubbles) keeps the pointer to itself
                 guard !NSApp.windows.contains(where: { $0 !== window && $0.isVisible && $0.frame.contains(mouse) }) else { return }
                 self.updateCursor()
                 // AppKit re-applies the window's own rects as the pointer moves, so say it again while we have it (#136)
@@ -644,18 +648,18 @@ class ScreenshotOverlayView: NSView {
             } else {
                 //dragIng = false
                 // 创建新矩形
-                let maxFrame = self.maxFrame ?? bounds
-                let origin = NSPoint(x: max(maxFrame.origin.x, min(initialLocation.x, currentLocation.x)), y: max(maxFrame.origin.y, min(initialLocation.y, currentLocation.y)))
+                let limit = bounds
+                let origin = NSPoint(x: max(limit.origin.x, min(initialLocation.x, currentLocation.x)), y: max(limit.origin.y, min(initialLocation.y, currentLocation.y)))
                 var maxH = abs(currentLocation.y - initialLocation.y)
                 var maxW = abs(currentLocation.x - initialLocation.x)
-                if currentLocation.y < maxFrame.origin.y { maxH = initialLocation.y }
-                if currentLocation.x < maxFrame.origin.x { maxW = initialLocation.x }
+                if currentLocation.y < limit.origin.y { maxH = initialLocation.y }
+                if currentLocation.x < limit.origin.x { maxW = initialLocation.x }
                 let size = NSSize(width: maxW, height: maxH)
                 // A click is not a new selection: a stray click in the veiled part used to wipe the area down to a
                 // pixel or two, after which every click landed outside it (#131)
                 guard size.width >= AreaRect.smallestUsable.width,
                       size.height >= AreaRect.smallestUsable.height else { return }
-                self.selectionRect = NSIntersectionRect(maxFrame, NSRect(origin: origin, size: size))
+                self.selectionRect = NSIntersectionRect(limit, NSRect(origin: origin, size: size))
                 areaWidth = Int(selectionRect!.width)
                 areaHeight = Int(selectionRect!.height)
                 //initialLocation = currentLocation
