@@ -92,8 +92,9 @@ extension AppDelegate {
             if SCContext.streamType == .screen || SCContext.streamType == .screenarea {
                 if SCContext.streamType == .screenarea {
                     if let area = SCContext.screenArea, let name = screen.nsScreen?.localizedName {
-                        let a = ["x": area.origin.x, "y": area.origin.y, "width": area.width, "height": area.height]
-                        ud.set([name: a], forKey: "savedArea")
+                        // One screen's rectangle replaces only its own: the others keep the one they were given (#113)
+                        let all = ud.object(forKey: "savedArea") as? [String: [String: CGFloat]] ?? [:]
+                        ud.set(AreaRect.saving(all, screen: name, rect: area), forKey: "savedArea")
                     }
                 }
                 var excluded = [SCRunningApplication]()
