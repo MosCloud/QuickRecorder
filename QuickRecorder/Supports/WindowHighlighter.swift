@@ -202,14 +202,13 @@ class WindowHighlighter {
         }
         let mode = Mode
         cancel()
+        // 「窗口范围」 comes back as the area selector under these covers: it holds the screen first, so the menu bar and
+        // the Dock never come back for a frame in between (#171). The window selector is a normal window and takes no
+        // hold, so it opens once the covers are gone.
+        if mode == 2 { AppDelegate.shared.showAreaSelector() }
         stopMouseMonitor()
-        DispatchQueue.main.async {
-            switch mode {
-            case 2:
-                AppDelegate.shared.showAreaSelector()
-            default:
-                AppDelegate.shared.showWindowSelector()
-            }
+        if mode != 2 {
+            DispatchQueue.main.async { AppDelegate.shared.showWindowSelector() }
         }
     }
 
@@ -230,9 +229,6 @@ class WindowHighlighter {
     }
     
     func registerMouseMonitor(mode: Int = 1) {
-        closeAllWindow()
-        // Same as the area selector: the menu bar swallows real clicks even over the covers (#163)
-        PickerPresentation.begin()
         Mode = mode
         state.hovered = nil
         state.chosen = nil
@@ -240,6 +236,9 @@ class WindowHighlighter {
         // Last pick's pictures are gone: before the new ones arrive the covers draw nothing rather than the old screen
         state.frost = [:]
         MainActor.assumeIsolated { captureFrost() }
+        // The covers of the picker this one replaces, kept aside: the new ones hold the screen before these close, so
+        // the menu bar and the Dock don't flash back for a frame (#171)
+        let replaced = NSApp.windows.filter { $0.title == "Screen Cover" }
         for screen in NSScreen.screens {
             guard let displayID = screen.displayID else { continue }
             let cover = EscPanel(contentRect: screen.frame, styleMask: [.nonactivatingPanel, .fullSizeContentView], backing: .buffered, defer: false)
@@ -257,7 +256,12 @@ class WindowHighlighter {
             cover.collectionBehavior = [.canJoinAllSpaces, .stationary]
             cover.title = "Screen Cover"
             cover.orderFront(self)
+            // Same as the area selector: the menu bar swallows real clicks even over the covers (#163)
+            PickerPresentation.hold(cover)
         }
+        // Only now: the picker this one replaces closes without the screen ever going back to the menu bar (#171)
+        for window in replaced { window.close() }
+        closeAllWindow(except: "Screen Cover")
         // Esc goes to the key window, and until the pointer is over a window there is no highlight to take it: the
         // cover under the pointer does, so Esc works as soon as point-select opens (#133)
         let pointer = NSEvent.mouseLocation
@@ -288,8 +292,7 @@ class WindowHighlighter {
         
     func stopMouseMonitor() {
         state.frost = [:]
-        // Leaving the picker: menu bar and Dock back (#163)
-        PickerPresentation.end()
+        // Each cover puts the menu bar and the Dock back by closing (#171)
         DispatchQueue.main.async {
             for w in NSApp.windows.filter({ $0.title == "Screen Cover" }) { w.close() }
         }
