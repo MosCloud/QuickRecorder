@@ -106,3 +106,45 @@ extension AppDelegate {
         window.orderFront(self)
     }
 }
+
+/// Esc in a picker goes one layer at a time (#153): a bubble or the colour window takes the first one (#95), then the
+/// choice itself, and only when nothing is chosen does the picker close and the main panel come back (#95).
+struct EscapeClearsSelection: ViewModifier {
+    let canClear: () -> Bool
+    let clear: () -> Void
+    @State private var monitor: Any?
+
+    func body(content: Content) -> some View {
+        content
+            .onAppear {
+                monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+                    guard event.keyCode == 53 else { return event }
+                    // A bubble's Esc is the layer above this one; leave it alone
+                    guard MainActor.assumeIsolated({ CapsuleBubbles.shared.open == nil && !ColorWindow.shared.isOpen }) else { return event }
+                    // A held Esc acts once: the repeats are swallowed, or they would close the picker after the first
+                    // one cleared the choice
+                    if event.isARepeat { return nil }
+                    guard MainActor.assumeIsolated({ canClear() }) else { return event }
+                    MainActor.assumeIsolated { clear() }
+                    return nil
+                }
+            }
+            .onDisappear {
+                if let monitor { NSEvent.removeMonitor(monitor) }
+                monitor = nil
+            }
+    }
+}
+
+extension View {
+    /// Esc clears what's chosen in a picker before it leaves (#153)
+    func escapeClearsSelection<Element>(_ selection: Binding<[Element]>) -> some View {
+        modifier(EscapeClearsSelection(canClear: { !selection.wrappedValue.isEmpty },
+                                       clear: { selection.wrappedValue.removeAll() }))
+    }
+
+    func escapeClearsSelection<Element>(_ selection: Binding<Element?>) -> some View {
+        modifier(EscapeClearsSelection(canClear: { selection.wrappedValue != nil },
+                                       clear: { selection.wrappedValue = nil }))
+    }
+}
