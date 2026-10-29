@@ -70,6 +70,9 @@ struct ContentView: View {
                       hotkey: KeyboardShortcuts.Name?, action: @escaping () -> Void) -> some View {
         RecordTile(title: title, symbol: symbol, symbolSize: symbolSize, overlayer: overlayer, hotkey: hotkey, scale: k) {
             MainPanelReturn.shared.tileChosen()
+            // The panel never activates the app, so a picker opened from it came up with the previous app still in front:
+            // the menu bar then stayed on screen, and its clicks never reached the picker (#163)
+            NSApp.activate()
             action()
         }
     }
