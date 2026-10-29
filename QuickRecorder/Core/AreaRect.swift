@@ -30,36 +30,40 @@ enum AreaRect {
                       width: size.width, height: size.height)
     }
 
-    /// The rectangle a screen remembers, brought inside it: a rectangle too big is scaled down around its middle,
-    /// one hanging over an edge is moved in, and one with no size at all is no memory at all
-    static func restored(_ saved: CGRect?, visible: CGRect) -> CGRect {
+    /// The rectangle a screen remembers, brought inside the screen: a rectangle too big is scaled down around its
+    /// middle, one hanging over an edge is moved in, and one with no size at all is no memory at all.
+    ///
+    /// The screen, not what the menu bar and the Dock leave of it: a rectangle drawn over the menu bar or the Dock was
+    /// put there on purpose, to record a menu or a Dock's bounce, and has to come back where it was (#156). Only a
+    /// screen's first rectangle has to fit between them, which `initial(visible:)` decides.
+    static func restored(_ saved: CGRect?, screen: CGRect, visible: CGRect) -> CGRect {
         guard let saved, saved.width >= smallestUsable.width, saved.height >= smallestUsable.height else {
             return initial(visible: visible)
         }
         var rect = saved
-        let fitting = min(1, visible.width / rect.width, visible.height / rect.height)
+        let fitting = min(1, screen.width / rect.width, screen.height / rect.height)
         if fitting < 1 {
             let middle = CGPoint(x: rect.midX, y: rect.midY)
             rect.size = CGSize(width: (rect.width * fitting).rounded(.down), height: (rect.height * fitting).rounded(.down))
             rect.origin = CGPoint(x: middle.x - rect.width / 2, y: middle.y - rect.height / 2)
         }
-        if rect.minX < visible.minX { rect.origin.x = visible.minX }
-        if rect.minY < visible.minY { rect.origin.y = visible.minY }
-        if rect.maxX > visible.maxX { rect.origin.x = visible.maxX - rect.width }
-        if rect.maxY > visible.maxY { rect.origin.y = visible.maxY - rect.height }
+        if rect.minX < screen.minX { rect.origin.x = screen.minX }
+        if rect.minY < screen.minY { rect.origin.y = screen.minY }
+        if rect.maxX > screen.maxX { rect.origin.x = screen.maxX - rect.width }
+        if rect.maxY > screen.maxY { rect.origin.y = screen.maxY - rect.height }
         return rect
     }
 
     /// The rectangle at a new size, still where it was: its middle stays put, and a size the screen can't hold is
-    /// cut to the visible frame
-    static func resized(_ rect: CGRect, to size: CGSize, visible: CGRect) -> CGRect {
-        let width = min(max(size.width, 1), visible.width)
-        let height = min(max(size.height, 1), visible.height)
+    /// cut to the screen (#156: the Edit Area fields offer the screen's own width and height)
+    static func resized(_ rect: CGRect, to size: CGSize, screen: CGRect) -> CGRect {
+        let width = min(max(size.width, 1), screen.width)
+        let height = min(max(size.height, 1), screen.height)
         var new = CGRect(x: rect.midX - width / 2, y: rect.midY - height / 2, width: width, height: height)
-        if new.minX < visible.minX { new.origin.x = visible.minX }
-        if new.minY < visible.minY { new.origin.y = visible.minY }
-        if new.maxX > visible.maxX { new.origin.x = visible.maxX - width }
-        if new.maxY > visible.maxY { new.origin.y = visible.maxY - height }
+        if new.minX < screen.minX { new.origin.x = screen.minX }
+        if new.minY < screen.minY { new.origin.y = screen.minY }
+        if new.maxX > screen.maxX { new.origin.x = screen.maxX - width }
+        if new.maxY > screen.maxY { new.origin.y = screen.maxY - height }
         return new
     }
 

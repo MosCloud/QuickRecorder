@@ -335,9 +335,9 @@ class ScreenshotOverlayView: NSView {
 
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
-        // What the menu bar and the Dock leave of this screen, in the overlay's own coordinates
-        let visible = visibleArea
-        selectionRect = AreaRect.restored(savedArea, visible: visible)
+        // A remembered rectangle comes back inside the whole screen (#156); only a screen's first one keeps clear of
+        // the menu bar and the Dock, and `AreaRect.initial(visible:)` decides that
+        selectionRect = AreaRect.restored(savedArea, screen: bounds, visible: visibleArea)
         if self.window != nil {
             areaWidth = Int(selectionRect!.width)
             areaHeight = Int(selectionRect!.height)
@@ -352,7 +352,7 @@ class ScreenshotOverlayView: NSView {
     /// the overlay being rebuilt for every digit typed (#113, #129)
     func apply(size newSize: NSSize) {
         guard let rect = selectionRect else { return }
-        selectionRect = AreaRect.resized(rect, to: newSize, visible: visibleArea)
+        selectionRect = AreaRect.resized(rect, to: newSize, screen: bounds)
         areaWidth = Int(selectionRect!.width)
         areaHeight = Int(selectionRect!.height)
         SCContext.screenArea = selectionRect

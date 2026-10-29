@@ -13,6 +13,7 @@ import Testing
 @Suite("The area selector's rectangle")
 struct AreaRectTests {
     /// The owner's MacBook Air: 1710×1107 points, the visible frame 988 tall after the menu bar and the Dock
+    let screen = CGRect(x: 0, y: 0, width: 1710, height: 1107)
     let visible = CGRect(x: 0, y: 85, width: 1710, height: 988)
 
     @Test("A new screen starts at 60% of its visible frame, in the middle of it")
@@ -35,53 +36,87 @@ struct AreaRectTests {
 
     @Test("A remembered rectangle that is too big for the screen shrinks, keeping its middle and its shape")
     func restoredShrinks() {
-        let saved = CGRect(x: 0, y: 0, width: 1600, height: 1000)
-        let rect = AreaRect.restored(saved, visible: visible)
-        #expect(rect.height == visible.height)
-        #expect(abs(rect.width / rect.height - 1.6) < 0.001)
+        let saved = CGRect(x: 0, y: 0, width: 1710, height: 1300)
+        let rect = AreaRect.restored(saved, screen: screen, visible: visible)
+        #expect(rect.height == screen.height)
+        #expect(abs(rect.width / rect.height - 1710.0 / 1300.0) < 0.001)
         #expect(rect.midX == saved.midX)
-        #expect(visible.contains(rect))
+        #expect(screen.contains(rect))
     }
 
     @Test("A remembered rectangle off the screen edge comes back inside it")
     func restoredComesBack() {
         let saved = CGRect(x: -300, y: -400, width: 600, height: 400)
-        let rect = AreaRect.restored(saved, visible: visible)
+        let rect = AreaRect.restored(saved, screen: screen, visible: visible)
         #expect(rect.size == saved.size)
-        #expect(rect.minX == visible.minX)
-        #expect(rect.minY == visible.minY)
+        #expect(rect.minX == screen.minX)
+        #expect(rect.minY == screen.minY)
     }
 
     @Test("A remembered rectangle with no size is no memory at all, so the screen starts fresh")
     func restoredIgnoresAnEmptyOne() {
-        #expect(AreaRect.restored(CGRect(x: 10, y: 10, width: 0, height: 500), visible: visible)
+        #expect(AreaRect.restored(CGRect(x: 10, y: 10, width: 0, height: 500), screen: screen, visible: visible)
                 == AreaRect.initial(visible: visible))
-        #expect(AreaRect.restored(nil, visible: visible) == AreaRect.initial(visible: visible))
+        #expect(AreaRect.restored(nil, screen: screen, visible: visible) == AreaRect.initial(visible: visible))
     }
 
     @Test("A remembered rectangle too small to be a choice is a stray click's leftover, so the screen starts fresh")
     func restoredIgnoresATinyOne() {
         let leftover = CGRect(x: 864, y: 525, width: 0.297, height: 0.594)
-        #expect(AreaRect.restored(leftover, visible: visible) == AreaRect.initial(visible: visible))
+        #expect(AreaRect.restored(leftover, screen: screen, visible: visible) == AreaRect.initial(visible: visible))
         let almost = CGRect(x: 100, y: 200, width: 19, height: 40)
-        #expect(AreaRect.restored(almost, visible: visible) == AreaRect.initial(visible: visible))
+        #expect(AreaRect.restored(almost, screen: screen, visible: visible) == AreaRect.initial(visible: visible))
     }
 
     @Test("Changing the size keeps the middle where it was")
     func resizedKeepsTheMiddle() {
         let rect = CGRect(x: 342, y: 282, width: 600, height: 450)
-        let bigger = AreaRect.resized(rect, to: CGSize(width: 900, height: 700), visible: visible)
+        let bigger = AreaRect.resized(rect, to: CGSize(width: 900, height: 700), screen: screen)
         #expect(bigger.size == CGSize(width: 900, height: 700))
         #expect(bigger.midX == rect.midX)
         #expect(bigger.midY == rect.midY)
     }
 
-    @Test("A size too big for the screen is cut to the visible frame")
+    @Test("A size too big for the screen is cut to the screen")
     func resizedStaysOnScreen() {
         let rect = CGRect(x: 342, y: 282, width: 600, height: 450)
-        let huge = AreaRect.resized(rect, to: CGSize(width: 3000, height: 2000), visible: visible)
-        #expect(huge.size == visible.size)
-        #expect(visible.contains(huge))
+        let huge = AreaRect.resized(rect, to: CGSize(width: 3000, height: 2000), screen: screen)
+        #expect(huge.size == screen.size)
+        #expect(screen.contains(huge))
+    }
+
+    @Test("A rectangle drawn over the menu bar comes back where it was, not 37 points lower")
+    func restoredKeepsTheMenuBarStrip() {
+        let overTheMenuBar = CGRect(x: 400, y: 807, width: 800, height: 300)
+        #expect(AreaRect.restored(overTheMenuBar, screen: screen, visible: visible) == overTheMenuBar)
+    }
+
+    @Test("A rectangle drawn over the Dock comes back where it was, not 85 points higher")
+    func restoredKeepsTheDockStrip() {
+        let overTheDock = CGRect(x: 400, y: 0, width: 800, height: 200)
+        #expect(AreaRect.restored(overTheDock, screen: screen, visible: visible) == overTheDock)
+    }
+
+    @Test("The whole screen comes back as the whole screen, not shrunk to the visible frame")
+    func restoredKeepsTheWholeScreen() {
+        #expect(AreaRect.restored(screen, screen: screen, visible: visible) == screen)
+    }
+
+    @Test("Editing the size accepts the screen's own height, which the fields offer")
+    func resizedAcceptsTheScreenHeight() {
+        let rect = CGRect(x: 400, y: 807, width: 800, height: 300)
+        let tall = AreaRect.resized(rect, to: CGSize(width: 800, height: 1107), screen: screen)
+        #expect(tall.height == 1107)
+        #expect(screen.contains(tall))
+    }
+
+    @Test("A Dock on the left or hidden changes nothing about what comes back")
+    func restoredIgnoresTheDockSide() {
+        let leftDock = CGRect(x: 82, y: 0, width: 1628, height: 1107)
+        let hidden = screen
+        let saved = CGRect(x: 100, y: 900, width: 600, height: 200)
+        #expect(AreaRect.restored(saved, screen: screen, visible: leftDock) == saved)
+        #expect(AreaRect.restored(saved, screen: screen, visible: hidden) == saved)
     }
 
     @Test("Saving one screen's rectangle keeps the others")
