@@ -364,6 +364,8 @@ class ScreenshotOverlayView: NSView {
         if newWindow == nil {
             stopCursorTimer()
             NSCursor.arrow.set()
+            // The overlay is going away: bring the menu bar and the Dock back (#163)
+            PickerPresentation.end()
         }
         if newWindow == nil, let rect = selectionRect, rect.width > 0, rect.height > 0,
            let name = window?.screen?.localizedName {
