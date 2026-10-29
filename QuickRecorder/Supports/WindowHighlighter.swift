@@ -240,7 +240,7 @@ class WindowHighlighter {
             guard let displayID = screen.displayID else { continue }
             let host = NSHostingView(rootView: WindowPickCover(state: state, screen: screen.frame,
                                                                displayID: displayID, notch: screen.notch,
-                                                               hint: mode == 2 ? "Select a window to record its area"
+                                                               hint: mode == 2 ? "Select the area to record"
                                                                                : "Select a window to record",
                                                                menuBar: max(screen.frame.maxY - screen.visibleFrame.maxY, screen.safeAreaInsets.top)))
             host.safeAreaRegions = []
