@@ -251,6 +251,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
         KeyboardShortcuts.onKeyDown(for: .startWithArea) {[self] in
             if SCContext.stream != nil { return }
             closeAllWindow()
+            // The one activation a picker asks for from here: the menu bar comes off once it lands (#170)
+            NSApp.activate()
             showAreaSelector()
         }
         KeyboardShortcuts.onKeyDown(for: .startWithWindow) { [self] in

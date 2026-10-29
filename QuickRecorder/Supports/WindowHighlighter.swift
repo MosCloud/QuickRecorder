@@ -167,14 +167,17 @@ class WindowHighlighter {
         let screen = display.nsScreen
         let frame = state.chosen?.frame ?? screen?.visibleFrame ?? .zero
         let visible = screen?.visibleFrame ?? frame
-        capsule = FloatingCapsulePanel.show(
+        let panel = FloatingCapsulePanel.show(
             SelectorCapsule(leading: [CapsuleLeading(symbol: "xmark.circle", label: "Close".local, action: { [weak self] in self?.back() })],
                             screen: screen) { [weak self] autoStop in
                 self?.startRecording(window: window, display: display, autoStop: autoStop)
             },
-            title: "Start Recording".local, centerX: frame.midX, bottom: max(frame.minY + 20, visible.minY + 20), within: visible,
-            level: PickerShield.above)
-        capsule?.onCancel = { [weak self] in self?.back() }
+            title: "Start Recording".local, centerX: frame.midX, bottom: max(frame.minY + 20, visible.minY + 20), within: visible)
+        // The screen is frozen from here: the menu bar and the Dock go while this capsule is up, and come back with it
+        // (#170)
+        PickerPresentation.hold(panel)
+        panel.onCancel = { [weak self] in self?.back() }
+        capsule = panel
     }
 
     @MainActor
@@ -202,13 +205,14 @@ class WindowHighlighter {
         }
         let mode = Mode
         cancel()
-        // 「窗口范围」 comes back as the area selector under these covers: it holds the screen first, so the menu bar and
-        // the Dock never come back for a frame in between (#171). The window selector is a normal window and takes no
-        // hold, so it opens once the covers are gone.
-        if mode == 2 { AppDelegate.shared.showAreaSelector() }
         stopMouseMonitor()
-        if mode != 2 {
-            DispatchQueue.main.async { AppDelegate.shared.showWindowSelector() }
+        DispatchQueue.main.async {
+            switch mode {
+            case 2:
+                AppDelegate.shared.showAreaSelector()
+            default:
+                AppDelegate.shared.showWindowSelector()
+            }
         }
     }
 
@@ -236,8 +240,7 @@ class WindowHighlighter {
         // Last pick's pictures are gone: before the new ones arrive the covers draw nothing rather than the old screen
         state.frost = [:]
         MainActor.assumeIsolated { captureFrost() }
-        // The covers of the picker this one replaces, kept aside: the new ones hold the screen before these close, so
-        // the menu bar and the Dock don't flash back for a frame (#171)
+        // A picker entering over another one replaces its covers: kept aside so the new ones are not closed with them
         let replaced = NSApp.windows.filter { $0.title == "Screen Cover" }
         for screen in NSScreen.screens {
             guard let displayID = screen.displayID else { continue }
@@ -249,17 +252,17 @@ class WindowHighlighter {
                                                                menuBar: max(screen.frame.maxY - screen.visibleFrame.maxY, screen.safeAreaInsets.top)))
             host.safeAreaRegions = []
             cover.contentView = host
-            cover.level = PickerShield.cover
+            // The screen is live until a window is picked: the menu bar and the Dock stay, and no cover has to own the
+            // top of the screen (#170)
+            cover.level = .statusBar
             cover.sharingType = .none
             cover.backgroundColor = .clear
             cover.isReleasedWhenClosed = false
             cover.collectionBehavior = [.canJoinAllSpaces, .stationary]
             cover.title = "Screen Cover"
             cover.orderFront(self)
-            // Same as the area selector: the menu bar swallows real clicks even over the covers (#163)
-            PickerPresentation.hold(cover)
         }
-        // Only now: the picker this one replaces closes without the screen ever going back to the menu bar (#171)
+        // The replaced covers go only now, so the new ones are already in place
         for window in replaced { window.close() }
         closeAllWindow(except: "Screen Cover")
         // Esc goes to the key window, and until the pointer is over a window there is no highlight to take it: the
@@ -267,11 +270,7 @@ class WindowHighlighter {
         let pointer = NSEvent.mouseLocation
         let target = NSScreen.screens.first { $0.frame.contains(pointer) } ?? NSScreen.main
         NSApp.windows.first { $0.title == "Screen Cover" && $0.frame == target?.frame }?.makeKeyAndOrderFront(nil)
-        // Same as the area selector: the top row's clicks go to the frontmost app's menu bar until activation lands (#163)
-        if let pointerCover = NSApp.windows.first(where: { $0.title == "Screen Cover" && $0.frame == target?.frame }) {
-            holdActivation(while: pointerCover)
-        }
-        
+
         startHoverTracking()
     }
 

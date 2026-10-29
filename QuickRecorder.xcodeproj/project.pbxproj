@@ -16,7 +16,6 @@
 		CC3300000000000000011307 /* AreaRectTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000011306 /* AreaRectTests.swift */; };
 		CC3300000000000000015502 /* PickerEscape.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000015501 /* PickerEscape.swift */; };
 		CC3300000000000000016402 /* WindowDrag.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000016401 /* WindowDrag.swift */; };
-		CC3300000000000000016302 /* PickerShield.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000016301 /* PickerShield.swift */; };
 		CC3300000000000000016702 /* PickerPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000016701 /* PickerPresentation.swift */; };
 		CC3300000000000000015503 /* PickerEscape.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000015501 /* PickerEscape.swift */; };
 		CC3300000000000000016602 /* PanelPlacement.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000016601 /* PanelPlacement.swift */; };
@@ -136,7 +135,6 @@
 		CC3300000000000000011306 /* AreaRectTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AreaRectTests.swift; sourceTree = "<group>"; };
 		CC3300000000000000015501 /* PickerEscape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PickerEscape.swift; sourceTree = "<group>"; };
 		CC3300000000000000016401 /* WindowDrag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowDrag.swift; sourceTree = "<group>"; };
-		CC3300000000000000016301 /* PickerShield.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PickerShield.swift; sourceTree = "<group>"; };
 		CC3300000000000000016701 /* PickerPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PickerPresentation.swift; sourceTree = "<group>"; };
 		CC3300000000000000015506 /* PickerEscapeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PickerEscapeTests.swift; sourceTree = "<group>"; };
 		CC3300000000000000016601 /* PanelPlacement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelPlacement.swift; sourceTree = "<group>"; };
@@ -262,7 +260,6 @@
 				18A551F12D0749C3008FC5F6 /* SleepPreventer.swift */,
 				18A551F32D0749C3008FC5F6 /* WindowAccessor.swift */,
 				CC3300000000000000016401 /* WindowDrag.swift */,
-				CC3300000000000000016301 /* PickerShield.swift */,
 				CC3300000000000000016701 /* PickerPresentation.swift */,
 				18A551F42D0749C3008FC5F6 /* WindowHighlighter.swift */,
 				CC3300000000000000001001 /* BackgroundColorWindow.swift */,
@@ -577,7 +574,6 @@
 				CC3300000000000000011302 /* AreaRect.swift in Sources */,
 				CC3300000000000000015502 /* PickerEscape.swift in Sources */,
 				CC3300000000000000016402 /* WindowDrag.swift in Sources */,
-				CC3300000000000000016302 /* PickerShield.swift in Sources */,
 				CC3300000000000000016702 /* PickerPresentation.swift in Sources */,
 				CC3300000000000000016602 /* PanelPlacement.swift in Sources */,
 				CC3300000000000000017102 /* PickerHold.swift in Sources */,

@@ -66,6 +66,9 @@ struct MenuBarPanel: View {
                       action: @escaping () -> Void) -> some View {
         RecordTile(title: title, symbol: symbol, overlayer: overlayer, hotkey: hotkey, compact: true) {
             close()
+            // A tile is a user action here too: the one activation a picker asks for, so the menu bar can come off
+            // (#170)
+            NSApp.activate()
             action()
         }
     }

@@ -253,9 +253,10 @@ struct AreaSelector: View {
     }
 
     private func selectWindowArea() {
-        // The capsule goes now; the area window stays until the covers hold the screen, so the menu bar and the Dock
-        // never come back for a frame in between (#171). `registerMouseMonitor` closes it.
+        // The area selector is gone: the screen is live again while a window is being picked, so the menu bar and the
+        // Dock come back with it (#170)
         nsWindow?.close()
+        for w in NSApp.windows.filter({$0.title == "Area Selector".local }) { w.close() }
         appDelegate.stopGlobalMouseMonitor()
         WindowHighlighter.shared.registerMouseMonitor(mode: 2)
     }
@@ -419,8 +420,8 @@ class ScreenshotOverlayView: NSView {
         updateCursor()
     }
 
-    /// Frosts the overlay with `display`'s picture once it's taken
-    func frost(_ display: SCDisplay) {
+    /// Frosts the overlay with `display`'s picture once it's taken; `whenReady` runs afterwards, on the main actor
+    func frost(_ display: SCDisplay, whenReady: @escaping () -> Void = {}) {
         Task { @MainActor in
             if let picture = await AreaFrost.picture(of: display) {
                 frost.layer?.contents = picture
@@ -432,6 +433,7 @@ class ScreenshotOverlayView: NSView {
                 context.duration = 0.15
                 frost.animator().alphaValue = eased ? 0.25 : 1
             }, completionHandler: nil)
+            whenReady()
         }
     }
 
@@ -692,8 +694,9 @@ class ScreenshotWindow: NSPanel {
         super.init(contentRect: contentRect, styleMask: [.borderless, .nonactivatingPanel], backing: bufferingType, defer: flag)
         self.isOpaque = false
         self.hasShadow = false
-        // Owns every click while it is up, the menu bar included (#163)
-        self.level = PickerShield.cover
+        // Above normal windows, not above the system's own: a picker that has hidden the menu bar needs no shield, and
+        // one that spanned every level took the force-quit window and permission alerts with it (#170)
+        self.level = .statusBar
         self.backgroundColor = NSColor.clear
         self.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         self.isReleasedWhenClosed = false
