@@ -16,7 +16,7 @@ func updateStatusBar() {
 /// The menu bar item: the app icon opening the main panel while idle, "● timer" opening a native menu while recording.
 /// Native controls only: macOS 27 delivers every click on a status item at its center, so SwiftUI buttons hosted inside one stop working.
 @MainActor
-final class MenuBarItem: NSObject, NSMenuDelegate {
+final class MenuBarItem: NSObject, NSMenuDelegate, NSPopoverDelegate {
     private enum Mode: Equatable { case idle, recording(RecordingKind) }
 
     private let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -28,6 +28,8 @@ final class MenuBarItem: NSObject, NSMenuDelegate {
     private var mode: Mode?
     private var isMenuOpen = false
     private var shownPaused: Bool?
+    /// The click in another app that closes the panel: a transient popover doesn't hear it while its app is in the back
+    private var outsideClick: Any?
 
     var button: NSStatusBarButton? { item.button }
 
@@ -42,6 +44,7 @@ final class MenuBarItem: NSObject, NSMenuDelegate {
         item.isVisible = false
         item.button?.setAccessibilityLabel("QuickRecorder")
         panelPopover.behavior = .transient
+        panelPopover.delegate = self
         menu.delegate = self
         menu.autoenablesItems = false
         headerItem.isEnabled = false
@@ -105,6 +108,21 @@ final class MenuBarItem: NSObject, NSMenuDelegate {
         panel.sizingOptions = [.preferredContentSize]
         panelPopover.contentViewController = panel
         panelPopover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+        // The panel is up: close it on any click outside, and ask for the front so it takes the keys. A transient
+        // popover only dismisses itself while its app is in front, and a status item's click doesn't always put it
+        // there; the click monitor works either way (#176). The activation is best effort: macOS usually refuses one
+        // asked for by a status item's click.
+        DispatchQueue.main.async { NSApp.activate(ignoringOtherApps: true) }
+        outsideClick = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+            MainActor.assumeIsolated { self?.closePanel() }
+        }
+    }
+
+    func popoverDidClose(_ notification: Notification) {
+        if let outsideClick {
+            NSEvent.removeMonitor(outsideClick)
+            self.outsideClick = nil
+        }
     }
 
     private func buildMenu(for kind: RecordingKind) {
