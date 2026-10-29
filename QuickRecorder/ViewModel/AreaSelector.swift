@@ -324,14 +324,15 @@ class ScreenshotOverlayView: NSView {
 
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
-        selectionRect = NSRect(x: (self.frame.width - size.width) / 2, y: (self.frame.height - size.height) / 2, width: size.width, height: size.height)
-        if !force {
-            let savedArea = ud.object(forKey: "savedArea") as! [String: [String: CGFloat]]
-            if let name = self.window?.screen?.localizedName {
-                if let area = savedArea[name] {
-                    selectionRect = NSRect(x: area["x"]!, y: area["y"]!, width: area["width"]!, height: area["height"]!)
-                }
-            }
+        // What the menu bar and the Dock leave of this screen, in the overlay's own coordinates
+        let visible = visibleArea
+        if force {
+            // Remade at a new size: its middle stays where the rectangle was, rather than jumping to the middle
+            // of the screen (#113)
+            selectionRect = AreaRect.resized(SCContext.screenArea ?? AreaRect.initial(visible: visible),
+                                             to: size, visible: visible)
+        } else {
+            selectionRect = AreaRect.restored(savedArea, visible: visible)
         }
         if self.window != nil {
             areaWidth = Int(selectionRect!.width)
@@ -340,6 +341,22 @@ class ScreenshotOverlayView: NSView {
         }
         // The overlay covers its screen, so the screen's notch is where it is on the overlay
         marks.notch = window?.screen?.notch
+    }
+
+    /// This screen's visible frame (what the menu bar and the Dock leave) moved into the overlay's coordinates, which
+    /// start at the screen's own bottom left (#113)
+    private var visibleArea: CGRect {
+        guard let screen = window?.screen ?? NSScreen.main else { return bounds }
+        return screen.visibleFrame.offsetBy(dx: -screen.frame.minX, dy: -screen.frame.minY)
+    }
+
+    /// The rectangle this screen remembers, if any (#113)
+    private var savedArea: CGRect? {
+        guard let name = window?.screen?.localizedName,
+              let all = ud.object(forKey: "savedArea") as? [String: [String: CGFloat]],
+              let area = all[name],
+              let x = area["x"], let y = area["y"], let w = area["width"], let h = area["height"] else { return nil }
+        return CGRect(x: x, y: y, width: w, height: h)
     }
 
     override func draw(_ dirtyRect: NSRect) {
