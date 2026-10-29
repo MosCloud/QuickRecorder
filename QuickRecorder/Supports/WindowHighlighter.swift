@@ -35,8 +35,11 @@ struct WindowPickCover: View {
     let screen: CGRect
     let displayID: CGDirectDisplayID
     let notch: CGRect?
-    /// From the screen's bottom edge to the bottom of the visible frame: where the capsule will sit
-    let dock: CGFloat
+    /// What this pick is for, when it says anything at all: the window selector's point-and-select names itself, the
+    /// area selector's 「窗口范围」 is already explained by the capsule that opened it (#141)
+    let hint: LocalizedStringKey?
+    /// The menu bar's height on this screen: the hint sits just under it, as the recording capsule does
+    let menuBar: CGFloat
 
     /// The window to frame: the one under the pointer, or the chosen one once a click has happened
     private var subject: PickTarget? { state.chosen ?? state.hovered }
@@ -58,22 +61,23 @@ struct WindowPickCover: View {
                     frost(geo, hole: hole)
                 }
 
-                // Nothing framed yet: say what this screen is waiting for, where its capsule will come up (#141)
-                if state.chosen == nil, state.hovered == nil {
+                // Nothing framed yet: say what this screen is waiting for, where a recording's capsule comes up,
+                // with its material and its spring, so the two read as the same kind of thing (#141)
+                if let hint, state.chosen == nil, state.hovered == nil {
                     VStack {
-                        Spacer()
                         HStack(spacing: 8) {
-                            Text("Click a window to select")
+                            Text(hint)
                             Text("Esc to cancel").foregroundStyle(.secondary)
                         }
                         .font(.system(size: 12))
                         .padding(.horizontal, 14).padding(.vertical, 8)
                         .background(CapsuleMaterial(shape: Capsule()))
-                        .padding(.bottom, dock + 60)
+                        Spacer()
                     }
                     .frame(maxWidth: .infinity)
+                    .padding(.top, hintTop)
                     .allowsHitTesting(false)
-                    .transition(.opacity)
+                    .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .top)))
                 }
 
                 if let hole, let t = subject {
@@ -87,7 +91,8 @@ struct WindowPickCover: View {
                     Text(verbatim: "\(t.app) · \(Int(hole.width)) × \(Int(hole.height))")
                         .font(.system(size: 12, weight: .medium))
                         .padding(.horizontal, 10).padding(.vertical, 4)
-                        .background(Capsule().fill(.regularMaterial).environment(\.controlActiveState, .active))
+                        // The capsule's own material, so it follows the setting like every other capsule (#141)
+                        .background(CapsuleMaterial(shape: Capsule()))
                         .fixedSize()
                         .position(x: hole.midX, y: tagY(hole))
                 }
@@ -96,6 +101,8 @@ struct WindowPickCover: View {
             .onTapGesture {
                 MainActor.assumeIsolated { WindowHighlighter.shared.pick() }
             }
+            .animation(.spring(duration: 0.3, bounce: 0.25), value: state.hovered)
+            .animation(.spring(duration: 0.3, bounce: 0.25), value: state.chosen)
         }
         .ignoresSafeArea()
     }
@@ -123,6 +130,11 @@ struct WindowPickCover: View {
             .fill(Color.black.opacity(0.35), style: FillStyle(eoFill: true))
             .transition(.opacity)
         }
+    }
+
+    /// Under the menu bar, or under the notch where there is one: the recording capsule's own place (#141)
+    private var hintTop: CGFloat {
+        max(menuBar, notch?.maxY ?? 0) + 6
     }
 
     /// Just inside the window's top edge, and below the notch when that is where it would be (#110's rule)
@@ -224,7 +236,8 @@ class WindowHighlighter {
             guard let displayID = screen.displayID else { continue }
             let host = NSHostingView(rootView: WindowPickCover(state: state, screen: screen.frame,
                                                                displayID: displayID, notch: screen.notch,
-                                                               dock: screen.frame.minY - screen.visibleFrame.minY))
+                                                               hint: mode == 2 ? nil : "Select a window to record",
+                                                               menuBar: max(screen.frame.maxY - screen.visibleFrame.maxY, screen.safeAreaInsets.top)))
             host.safeAreaRegions = []
             cover.contentView = host
             cover.level = .statusBar
