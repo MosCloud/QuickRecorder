@@ -57,12 +57,12 @@ class WindowHighlighter {
         let frame = mask?.frame ?? screen?.visibleFrame ?? .zero
         let visible = screen?.visibleFrame ?? frame
         capsule = FloatingCapsulePanel.show(
-            SelectorCapsule(leading: [CapsuleLeading(symbol: "xmark.circle", label: "Close".local, action: { [weak self] in self?.cancel() })],
+            SelectorCapsule(leading: [CapsuleLeading(symbol: "xmark.circle", label: "Close".local, action: { [weak self] in self?.back() })],
                             screen: screen) { [weak self] autoStop in
                 self?.startRecording(window: window, display: display, autoStop: autoStop)
             },
             title: "Start Recording".local, centerX: frame.midX, bottom: max(frame.minY + 20, visible.minY + 20), within: visible)
-        capsule?.onCancel = { [weak self] in self?.cancel() }
+        capsule?.onCancel = { [weak self] in self?.back() }
     }
 
     @MainActor
@@ -70,6 +70,25 @@ class WindowHighlighter {
         capsule?.close()
         capsule = nil
         mask?.close()
+    }
+
+    /// Back one step, whichever way the picker is left: Esc while pointing, or Close on the picked window's capsule
+    /// — both return to the picker that opened it, rather than closing the flow and bringing the main panel back
+    /// (#116). 「窗口范围」 comes back as the area selector, with the rectangle it had (#113); the window selector's
+    /// own point-and-select comes back as the window selector.
+    @MainActor
+    func back() {
+        let mode = Mode
+        cancel()
+        stopMouseMonitor()
+        DispatchQueue.main.async {
+            switch mode {
+            case 2:
+                AppDelegate.shared.showAreaSelector(size: NSSize(width: 600, height: 450))
+            default:
+                AppDelegate.shared.showWindowSelector()
+            }
+        }
     }
 
     func startRecording(window: SCWindow, display: SCDisplay, autoStop: TimeInterval) {
@@ -229,7 +248,7 @@ class WindowHighlighter {
 class EscPanel: NSPanel {
     override func cancelOperation(_ sender: Any?) {
         self.close()
-        WindowHighlighter.shared.stopMouseMonitor()
+        WindowHighlighter.shared.back()
     }
     override var canBecomeKey: Bool {
         return true

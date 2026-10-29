@@ -253,6 +253,12 @@ extension AppDelegate {
 
     /// A tile's picker brings QuickRecorder to the front, so the picker takes the keys, Esc among them (#95).
     /// The panels the tiles sit on never activate it; a script's picker leaves the front app alone (#88)
+    /// Brings the window selector back, for Esc and Close in its point-and-select mode (#116)
+    @MainActor func showWindowSelector() {
+        NSApp.activate()
+        createNewWindow(view: WinSelector(), title: "Window Selector".local, closesOnEsc: true)
+    }
+
     private func openPicker(_ view: some View, title: String) {
         closeMainWindow()
         NSApp.activate()
