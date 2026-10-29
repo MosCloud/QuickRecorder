@@ -142,6 +142,7 @@
 "Select..." = "选择...";
 "Esc to cancel" = "Esc 取消";
 "Select a window to record" = "选择要录制的窗口";
+"Select the area to record" = "选择要录制的范围";
 "Folder Not Found" = "找不到这个文件夹";
 "It may have been moved or deleted." = "它可能已被移动或删除。";
 "Choose Another Folder..." = "选择其他文件夹...";

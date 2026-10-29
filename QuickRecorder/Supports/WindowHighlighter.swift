@@ -24,6 +24,9 @@ final class PickState: ObservableObject {
     @Published var chosen: PickTarget?
     /// Each screen's frosted picture, taken as the pick opens: the area selector's own frost (#108)
     @Published var frost: [CGDirectDisplayID: NSImage] = [:]
+    /// True from the moment the pick opens until the pointer first moves: the hint has to be seen, and the window
+    /// under a pointer that hasn't moved yet would otherwise explain the pick instead (#141)
+    @Published var prompting = true
 }
 
 /// One screen's cover while a window is being picked (#115). Before a window is chosen the screen is left alone and
@@ -63,7 +66,7 @@ struct WindowPickCover: View {
 
                 // Nothing framed yet: say what this screen is waiting for, where a recording's capsule comes up,
                 // with its material and its spring, so the two read as the same kind of thing (#141)
-                if let hint, state.chosen == nil, state.hovered == nil {
+                if let hint, state.chosen == nil, state.hovered == nil || state.prompting {
                     VStack {
                         HStack(spacing: 8) {
                             Text(hint)
@@ -80,7 +83,7 @@ struct WindowPickCover: View {
                     .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .top)))
                 }
 
-                if let hole, let t = subject {
+                if let hole, let t = subject, !state.prompting {
                     Path(hole.insetBy(dx: 0.5, dy: 0.5)).stroke(Color.black.opacity(0.25), lineWidth: 1)
                     Path(hole.insetBy(dx: -0.5, dy: -0.5)).stroke(Color.white.opacity(0.8), lineWidth: 1)
                     ForEach(AreaMarkStyle.corners, id: \.self) { c in
@@ -230,13 +233,15 @@ class WindowHighlighter {
         Mode = mode
         state.hovered = nil
         state.chosen = nil
+        state.prompting = true
         MainActor.assumeIsolated { captureFrost() }
         for screen in NSScreen.screens {
             let cover = EscPanel(contentRect: screen.frame, styleMask: [.nonactivatingPanel, .fullSizeContentView], backing: .buffered, defer: false)
             guard let displayID = screen.displayID else { continue }
             let host = NSHostingView(rootView: WindowPickCover(state: state, screen: screen.frame,
                                                                displayID: displayID, notch: screen.notch,
-                                                               hint: mode == 2 ? nil : "Select a window to record",
+                                                               hint: mode == 2 ? "Select the area to record"
+                                                                               : "Select a window to record",
                                                                menuBar: max(screen.frame.maxY - screen.visibleFrame.maxY, screen.safeAreaInsets.top)))
             host.safeAreaRegions = []
             cover.contentView = host
@@ -294,6 +299,8 @@ class WindowHighlighter {
     @MainActor
     func updateMask() {
         guard state.chosen == nil else { return }
+        // The pointer moved: from here the window it is over explains the pick
+        if state.prompting { state.prompting = false }
         guard let targetWindow = getWindowUnderMouse(),
               let app = targetWindow["kCGWindowOwnerName"] as? String, app != Bundle.main.appName,
               let windowID = targetWindow["kCGWindowNumber"] as? UInt32,
