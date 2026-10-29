@@ -108,31 +108,49 @@ extension AppDelegate {
 }
 
 /// Esc in a picker goes one layer at a time (#153): a bubble or the colour window takes the first one (#95), then the
-/// choice itself, and only when nothing is chosen does the picker close and the main panel come back (#95).
+/// choice itself, and only when nothing is chosen does the picker close and the main panel come back.
+///
+/// The monitor follows the picker's own window (#155): it only handles Esc delivered to that window, and it is removed
+/// when the window closes. SwiftUI does not call `onDisappear` for a window that is merely closed, so a monitor removed
+/// there outlives the picker and eats the next Esc anywhere in the app.
 struct EscapeClearsSelection: ViewModifier {
     let canClear: () -> Bool
     let clear: () -> Void
     @State private var monitor: Any?
 
     func body(content: Content) -> some View {
-        content
-            .onAppear {
-                monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-                    guard event.keyCode == 53 else { return event }
-                    // A bubble's Esc is the layer above this one; leave it alone
-                    guard MainActor.assumeIsolated({ CapsuleBubbles.shared.open == nil && !ColorWindow.shared.isOpen }) else { return event }
-                    // A held Esc acts once: the repeats are swallowed, or they would close the picker after the first
-                    // one cleared the choice
-                    if event.isARepeat { return nil }
-                    guard MainActor.assumeIsolated({ canClear() }) else { return event }
-                    MainActor.assumeIsolated { clear() }
-                    return nil
-                }
+        content.background(
+            WindowAccessor(onWindowOpen: { window in watch(window) },
+                           onWindowClose: { stopWatching() })
+        )
+    }
+
+    private func watch(_ window: NSWindow?) {
+        stopWatching()
+        guard let window else { return }
+        monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            guard event.keyCode == 53 else { return event }
+            let action = MainActor.assumeIsolated {
+                PickerEscape.action(ownWindow: event.window === window,
+                                    bubbleOpen: CapsuleBubbles.shared.open != nil,
+                                    colourWindowOpen: ColorWindow.shared.isOpen,
+                                    hasChoice: canClear(),
+                                    isRepeat: event.isARepeat)
             }
-            .onDisappear {
-                if let monitor { NSEvent.removeMonitor(monitor) }
-                monitor = nil
+            switch action {
+            case .passOn:        return event
+            case .closePicker:   return event
+            case .swallowRepeat: return nil
+            case .clearChoice:
+                MainActor.assumeIsolated { clear() }
+                return nil
             }
+        }
+    }
+
+    private func stopWatching() {
+        if let monitor { NSEvent.removeMonitor(monitor) }
+        monitor = nil
     }
 }
 

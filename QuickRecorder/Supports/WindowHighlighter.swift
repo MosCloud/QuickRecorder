@@ -389,8 +389,9 @@ class WindowHighlighter {
 }
 
 class EscPanel: NSPanel {
+    /// Only back one layer (#155): closing this cover first would take it away and leave the picker with nothing on
+    /// screen, while `back()` stays on the layer below. Leaving the picker altogether closes every cover itself.
     override func cancelOperation(_ sender: Any?) {
-        self.close()
         WindowHighlighter.shared.back()
     }
     override var canBecomeKey: Bool {
