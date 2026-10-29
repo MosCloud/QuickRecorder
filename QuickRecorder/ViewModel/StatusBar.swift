@@ -48,7 +48,9 @@ final class MenuBarItem: NSObject, NSMenuDelegate, NSPopoverDelegate {
         super.init()
         item.isVisible = false
         item.button?.setAccessibilityLabel("QuickRecorder")
-        panelPopover.behavior = .transient
+        // The panel closes itself, always through the same animation: a transient popover would also close on its own,
+        // without it, when the app happens to be in front (#177)
+        panelPopover.behavior = .applicationDefined
         panelPopover.delegate = self
         // The panel animates itself, the way a menu bar panel does, instead of the popover's spring (#177)
         panelPopover.animates = false
@@ -105,12 +107,12 @@ final class MenuBarItem: NSObject, NSMenuDelegate, NSPopoverDelegate {
     func closePanel() {
         guard panelPopover.isShown, !closing else { return }
         closing = true
-        guard let window = panelPopover.contentViewController?.view.window, let content = window.contentView else {
+        guard let window = panelPopover.contentViewController?.view.window,
+              let content = window.contentView?.superview ?? window.contentView else {
             closing = false
             panelPopover.performClose(nil)
             return
         }
-        anchorTop(content)
         animateOut(content, duration: 0.15)
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.15
@@ -127,14 +129,16 @@ final class MenuBarItem: NSObject, NSMenuDelegate, NSPopoverDelegate {
 
     /// The panel grows downwards from the item and fades in; closing shrinks it back up (#177)
     private func animateIn() {
-        guard let window = panelPopover.contentViewController?.view.window, let content = window.contentView else { return }
+        guard let window = panelPopover.contentViewController?.view.window,
+              // The whole popover (its glass and arrow, not just the content) grows, so the frame view is the one scaled
+              let content = window.contentView?.superview ?? window.contentView else { return }
         window.alphaValue = 0
         content.wantsLayer = true
-        anchorTop(content)
         if let layer = content.layer {
-            layer.transform = CATransform3DMakeScale(0.75, 0.75, 1)
+            let start = entranceTransform(of: content)
+            layer.transform = start
             let grow = CABasicAnimation(keyPath: "transform")
-            grow.fromValue = CATransform3DMakeScale(0.75, 0.75, 1)
+            grow.fromValue = start
             grow.toValue = CATransform3DIdentity
             grow.duration = 0.2
             grow.timingFunction = CAMediaTimingFunction(name: .easeOut)
@@ -148,24 +152,27 @@ final class MenuBarItem: NSObject, NSMenuDelegate, NSPopoverDelegate {
         }
     }
 
-    /// Scale the content around its top edge, so it grows downwards from the item
-    private func anchorTop(_ content: NSView) {
-        guard let layer = content.layer else { return }
-        let frame = content.frame
-        layer.anchorPoint = CGPoint(x: 0.5, y: 1)
-        layer.position = CGPoint(x: frame.midX, y: frame.maxY)
+    /// The transform that scales the panel down with its top edge in place: AppKit owns the anchor point of a
+    /// view-backed layer, so it is not touched here; the scaling point is moved to the top middle instead (#177)
+    private func entranceTransform(of content: NSView) -> CATransform3D {
+        let w = content.bounds.width, h = content.bounds.height
+        return CATransform3DConcat(
+            CATransform3DMakeTranslation(w / 2, h, 0),
+            CATransform3DConcat(CATransform3DMakeScale(0.75, 0.75, 1),
+                                CATransform3DMakeTranslation(-w / 2, -h, 0)))
     }
 
     /// The closing half of the entrance: the bottom edge rises back towards the item (#177)
     private func animateOut(_ content: NSView, duration: CFTimeInterval) {
         guard let layer = content.layer else { return }
+        let end = entranceTransform(of: content)
         let shrink = CABasicAnimation(keyPath: "transform")
         shrink.fromValue = CATransform3DIdentity
-        shrink.toValue = CATransform3DMakeScale(0.75, 0.75, 1)
+        shrink.toValue = end
         shrink.duration = duration
         shrink.timingFunction = CAMediaTimingFunction(name: .easeIn)
         layer.add(shrink, forKey: "shrink")
-        layer.transform = CATransform3DMakeScale(0.75, 0.75, 1)
+        layer.transform = end
     }
 
     @objc private func togglePanel() {
@@ -177,6 +184,9 @@ final class MenuBarItem: NSObject, NSMenuDelegate, NSPopoverDelegate {
         panel.sizingOptions = [.preferredContentSize]
         panelPopover.contentViewController = panel
         panelPopover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+        // A click on the panel used to bring the app forward, which brightened the popover's material for no reason
+        // (#179): a nonactivating window takes the click without activating the app
+
         animateIn()
         activity = ProcessInfo.processInfo.beginActivity(options: .userInitiated, reason: "Menu bar panel")
         // The panel is up: close it on any click outside, and ask for the front so it takes the keys. A transient
