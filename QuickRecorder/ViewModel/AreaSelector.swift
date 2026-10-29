@@ -87,7 +87,6 @@ final class AreaMarksModel: ObservableObject {
 /// Over the frost (#97): its cut edge catching the light, the corners, a bar on the edge under the pointer, and the size
 struct AreaMarks: View {
     @ObservedObject var model: AreaMarksModel
-    @AppStorage("capsuleMaterial") private var material: PanelMaterial = .glass
     @Environment(\.colorScheme) private var scheme
 
     var body: some View {
@@ -125,18 +124,11 @@ struct AreaMarks: View {
 
     private func sizeTag(_ r: CGRect) -> some View {
         SizeTagSpot(area: r, notch: model.notch) {
-            Text(verbatim: "\(Int(r.width)) × \(Int(r.height))")
-                .font(.system(size: 12, weight: .medium).monospacedDigit())
-                .padding(.horizontal, 10).padding(.vertical, 4)
-                .background {
-                    // Not glass: the overlay isn't the key window, and glass there draws a dark rim
-                    if material == .black {
-                        Capsule().fill(.black)
-                    } else {
-                        Capsule().fill(.regularMaterial).environment(\.controlActiveState, .active)
-                    }
-                }
-                .environment(\.colorScheme, material == .black ? .dark : scheme)
+            OverlayCapsule {
+                Text(verbatim: "\(Int(r.width)) × \(Int(r.height))")
+                    .font(.system(size: 12, weight: .medium).monospacedDigit())
+                    .padding(.horizontal, 10).padding(.vertical, 4)
+            }
         }
     }
 }
