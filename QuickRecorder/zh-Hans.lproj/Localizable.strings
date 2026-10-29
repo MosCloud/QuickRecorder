@@ -22,9 +22,9 @@
 "Open Settings" = "打开系统设置";
 "Quit" = "退出程序";
 "Cancel" = "取消";
-"Please select the App(s) to record" = "请选择需要录制的应用程序, 支持多选";
-"Please select the window(s) to record" = "请选择需要录制的窗口, 支持多选";
-"Please select the screen to record" = "请选择需要录制的屏幕, 仅支持单选";
+"Please select the App(s) to record" = "选择需要录制的应用程序, 支持多选";
+"Please select the window(s) to record" = "选择需要录制的窗口, 支持多选";
+"Please select the screen to record" = "选择需要录制的屏幕, 仅支持单选";
 "Refresh" = "刷新列表";
 "Start" = "开始录制";
 "Resolution" = "分辨率";
