@@ -172,7 +172,8 @@ class WindowHighlighter {
                             screen: screen) { [weak self] autoStop in
                 self?.startRecording(window: window, display: display, autoStop: autoStop)
             },
-            title: "Start Recording".local, centerX: frame.midX, bottom: max(frame.minY + 20, visible.minY + 20), within: visible)
+            title: "Start Recording".local, centerX: frame.midX, bottom: max(frame.minY + 20, visible.minY + 20), within: visible,
+            level: PickerShield.above)
         capsule?.onCancel = { [weak self] in self?.back() }
     }
 
@@ -247,7 +248,7 @@ class WindowHighlighter {
                                                                menuBar: max(screen.frame.maxY - screen.visibleFrame.maxY, screen.safeAreaInsets.top)))
             host.safeAreaRegions = []
             cover.contentView = host
-            cover.level = .statusBar
+            cover.level = PickerShield.cover
             cover.sharingType = .none
             cover.backgroundColor = .clear
             cover.isReleasedWhenClosed = false

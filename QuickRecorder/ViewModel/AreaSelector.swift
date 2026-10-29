@@ -691,7 +691,8 @@ class ScreenshotWindow: NSPanel {
         super.init(contentRect: contentRect, styleMask: [.borderless, .nonactivatingPanel], backing: bufferingType, defer: flag)
         self.isOpaque = false
         self.hasShadow = false
-        self.level = .statusBar
+        // Owns every click while it is up, the menu bar included (#163)
+        self.level = PickerShield.cover
         self.backgroundColor = NSColor.clear
         self.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         self.isReleasedWhenClosed = false

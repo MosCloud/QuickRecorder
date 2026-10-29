@@ -291,7 +291,8 @@ extension AppDelegate {
         }
         MainActor.assumeIsolated {
             let panel = FloatingCapsulePanel.show(AreaSelector(screen: scDisplay), title: "Start Recording".local,
-                                                  centerX: screen.frame.midX, bottom: screen.visibleFrame.minY + 60)
+                                                  centerX: screen.frame.midX, bottom: screen.visibleFrame.minY + 60,
+                                                  level: PickerShield.above)
             panel.onCancel = { [weak panel] in panel?.close() }
         }
     }
