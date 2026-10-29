@@ -140,6 +140,8 @@
 "Hotkey" = "快捷键";
 "Blocklist" = "屏蔽列表";
 "Select..." = "选择...";
+"Click a window to select" = "点击一个窗口来选择";
+"Esc to cancel" = "Esc 取消";
 "Folder Not Found" = "找不到这个文件夹";
 "It may have been moved or deleted." = "它可能已被移动或删除。";
 "Choose Another Folder..." = "选择其他文件夹...";

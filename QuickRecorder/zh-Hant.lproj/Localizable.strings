@@ -140,6 +140,8 @@
 "Hotkey" = "快速鍵";
 "Blocklist" = "遮蔽列表";
 "Select..." = "選擇...";
+"Click a window to select" = "點選一個視窗來選擇";
+"Esc to cancel" = "Esc 取消";
 "Folder Not Found" = "找不到這個資料夾";
 "It may have been moved or deleted." = "它可能已被移動或刪除。";
 "Choose Another Folder..." = "選擇其他資料夾...";

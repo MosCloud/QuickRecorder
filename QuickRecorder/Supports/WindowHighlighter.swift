@@ -35,6 +35,8 @@ struct WindowPickCover: View {
     let screen: CGRect
     let displayID: CGDirectDisplayID
     let notch: CGRect?
+    /// From the screen's bottom edge to the bottom of the visible frame: where the capsule will sit
+    let dock: CGFloat
 
     /// The window to frame: the one under the pointer, or the chosen one once a click has happened
     private var subject: PickTarget? { state.chosen ?? state.hovered }
@@ -54,6 +56,24 @@ struct WindowPickCover: View {
 
                 if state.chosen != nil {
                     frost(geo, hole: hole)
+                }
+
+                // Nothing framed yet: say what this screen is waiting for, where its capsule will come up (#141)
+                if state.chosen == nil, state.hovered == nil {
+                    VStack {
+                        Spacer()
+                        HStack(spacing: 8) {
+                            Text("Click a window to select")
+                            Text("Esc to cancel").foregroundStyle(.secondary)
+                        }
+                        .font(.system(size: 12))
+                        .padding(.horizontal, 14).padding(.vertical, 8)
+                        .background(CapsuleMaterial(shape: Capsule()))
+                        .padding(.bottom, dock + 60)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .allowsHitTesting(false)
+                    .transition(.opacity)
                 }
 
                 if let hole, let t = subject {
@@ -203,7 +223,8 @@ class WindowHighlighter {
             let cover = EscPanel(contentRect: screen.frame, styleMask: [.nonactivatingPanel, .fullSizeContentView], backing: .buffered, defer: false)
             guard let displayID = screen.displayID else { continue }
             let host = NSHostingView(rootView: WindowPickCover(state: state, screen: screen.frame,
-                                                               displayID: displayID, notch: screen.notch))
+                                                               displayID: displayID, notch: screen.notch,
+                                                               dock: screen.frame.minY - screen.visibleFrame.minY))
             host.safeAreaRegions = []
             cover.contentView = host
             cover.level = .statusBar
