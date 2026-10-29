@@ -12,7 +12,7 @@
 - **没有自动更新**：删除了 Sparkle、「检查更新」菜单和设置。（#12）
 - **沿用上游的 bundle id 和应用名**（`com.lihaoyun6.QuickRecorder`、QuickRecorder）：会替换上游版本，设置和快捷键也沿用。目前只在维护者本机构建、自用，不对外发布。（#11）
 - **用固定的证书签名**：录屏、麦克风、摄像头权限在重新构建后保留；临时签名（ad-hoc）的构建每次都会丢掉这些权限。（#11）
-- 界面语言：英文、简体中文、繁体中文。删除了意大利语，补齐了繁体中文。（#64）
+- 界面语言：英文、简体中文、繁体中文。删除了意大利语，补齐了繁体中文；补翻漏掉的文字（#120）。（#64）
 - 音频格式只有 AAC 和 ALAC。原来设成 MP3、Opus、FLAC 的，自动改回 AAC。（#35）
 - 许可证仍是 AGPL-3.0。
 
@@ -103,10 +103,11 @@
 
 ### 开发
 
-- 新增单元测试：`QuickRecorderTests` 不启动应用，直接编译 `QuickRecorder/Core/` 里的纯逻辑，目前有 77 个测试。另有手动回归清单 `docs/testing/manual-checklist.md`。（从 #12 开始）
+- 新增单元测试：`QuickRecorderTests` 不启动应用，直接编译 `QuickRecorder/Core/` 里的纯逻辑，目前有 105 个测试。另有手动回归清单 `docs/testing/manual-checklist.md`。（从 #12 开始）
 - 五个选择器共用底栏、开始流程和缩略图组件。（#85）
 - 依赖：KeyboardShortcuts 升级到 3.1.0；删除了 Sparkle 和 MatrixColorSelector。（#12、#36）
 - 编译目录名以 `.noindex` 结尾，Spotlight 不会再搜到编译产物。（#75）
+- 清理：删掉上游留下、已经没人用的设置组件和 37 条孤立文案；`ColorGridPicker.swift` 改名为 `BackgroundColorWindow.swift`；文件头注释与代码对齐。（#120）
 
 ## 致谢
 

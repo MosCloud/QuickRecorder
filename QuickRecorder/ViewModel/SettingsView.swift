@@ -25,8 +25,6 @@ struct SettingsView: View {
             BlocklistSettingsView()
                 .tabItem { Label("Blocklist", systemImage: "hand.raised") }
         }
-        // Safari's settings keep the toolbar's background behind the tabs instead of showing it on hover only
-        .toolbarBackgroundVisibility(.visible, for: .windowToolbar)
         .background(SettingsWindowStyle())
     }
 }
@@ -481,17 +479,5 @@ private extension KeyboardShortcuts.Shortcut {
         if modifiers.contains(.control) { mods.insert(.control) }
         if modifiers.contains(.shift) { mods.insert(.shift) }
         return Hotkey(keyCode: carbonKeyCode, modifiers: mods, isCharacterKey: Self.characterKeys.contains(carbonKeyCode))
-    }
-}
-
-extension AppDelegate {
-    @objc func setLoginItem(_ sender: NSMenuItem) {
-        sender.state = sender.state == .on ? .off : .on
-        do {
-            if sender.state == .on { try SMAppService.mainApp.register() }
-            if sender.state == .off { try SMAppService.mainApp.unregister() }
-        }catch{
-            print("Failed to \(sender.state == .on ? "enable" : "disable") launch at login: \(error.localizedDescription)")
-        }
     }
 }
