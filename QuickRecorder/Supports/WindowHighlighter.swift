@@ -8,32 +8,77 @@
 import SwiftUI
 import ScreenCaptureKit
 
-struct CoverView: View {
-    var body: some View {
-        Color.clear.overlay { Rectangle().stroke(.blue, lineWidth: 5) }
-    }
+/// What the pointer is over while a window is being picked: the window that would be recorded
+struct PickTarget: Equatable {
+    var id: UInt32
+    /// Global, in AppKit's bottom-left coordinates
+    var frame: CGRect
+    var app: String
+    var title: String
 }
 
-struct HighlightMask: View {
-    let app: String
-    let title: String
-    let windowID: Int
-    @State var color: Color = .blue
+/// Published from the mouse monitors, which run on the main queue
+final class PickState: ObservableObject {
+    @Published var target: PickTarget?
+}
+
+/// One screen's cover while a window is being picked (#115): the window under the pointer stays as it is — the area
+/// selector's language, frost outside and a cut-out inside — with a lit edge, the fine corner marks, and its name on
+/// top. A click picks it; Esc leaves by the covers' own `cancelOperation`.
+struct WindowPickCover: View {
+    @ObservedObject var state: PickState
+    /// This screen's frame, AppKit's coordinates
+    let screen: CGRect
+    let notch: CGRect?
+    /// A flat shade, not the area selector's blurred picture: a window is picked, not drawn, and no screen capture is
+    /// needed for it (#115)
+    var veil: Double = 0.35
+    let pick: (UInt32) -> Void
+
+    /// The target as this cover draws it: the screen's top-left corner as the origin
+    private var hole: CGRect? {
+        guard let t = state.target else { return nil }
+        let r = CGRect(x: t.frame.minX - screen.minX, y: screen.maxY - t.frame.maxY,
+                       width: t.frame.width, height: t.frame.height)
+        return r.intersects(CGRect(origin: .zero, size: screen.size)) ? r : nil
+    }
 
     var body: some View {
-        color
-            .opacity(0.2)
-            .cornerRadius(10)
-            .help("\(app) - \(title)")
-            .onPressGesture {
-                if let w = WindowHighlighter.shared.getSCWindowWithID(UInt32(windowID)),
-                   let d = SCContext.getSCDisplayWithMouse() {
-                    WindowHighlighter.shared.chose(window: w, display: d)
-                    return
+        GeometryReader { geo in
+            ZStack(alignment: .topLeading) {
+                Path { p in
+                    p.addRect(CGRect(origin: .zero, size: geo.size))
+                    if let hole { p.addRect(hole) }
                 }
-                color = .red
-                withAnimation(.easeInOut(duration: 0.6)) { color = .blue }
+                .fill(Color.black.opacity(veil), style: FillStyle(eoFill: true))
+
+                if let hole, let t = state.target {
+                    Path(hole.insetBy(dx: 0.5, dy: 0.5)).stroke(Color.black.opacity(0.25), lineWidth: 1)
+                    Path(hole.insetBy(dx: -0.5, dy: -0.5)).stroke(Color.white.opacity(0.8), lineWidth: 1)
+                    ForEach(AreaMarkStyle.corners, id: \.self) { c in
+                        CornerMark(rect: hole, corner: c, length: 18)
+                            .stroke(AreaMarkStyle.color(.dark), style: StrokeStyle(lineWidth: AreaMarkStyle.width, lineCap: .round, lineJoin: .round))
+                            .shadow(color: .black.opacity(0.45), radius: 1.5, y: 0.5)
+                    }
+                    Text(verbatim: "\(t.app) · \(Int(hole.width)) × \(Int(hole.height))")
+                        .font(.system(size: 12, weight: .medium))
+                        .padding(.horizontal, 10).padding(.vertical, 4)
+                        .background(Capsule().fill(.regularMaterial).environment(\.controlActiveState, .active))
+                        .fixedSize()
+                        .position(x: hole.midX, y: tagY(hole))
+                }
             }
+            .contentShape(Rectangle())
+            .onTapGesture { if let t = state.target { pick(t.id) } }
+        }
+        .ignoresSafeArea()
+    }
+
+    /// Just inside the window's top edge, and below the notch when that is where it would be (#110's rule)
+    private func tagY(_ hole: CGRect) -> CGFloat {
+        let top = hole.minY + 22
+        guard let notch, notch.maxY + 22 > top else { return top }
+        return min(notch.maxY + 22, hole.maxY - 16)
     }
 }
 
@@ -42,7 +87,8 @@ class WindowHighlighter {
     var mouseMonitor: Any?
     var mouseMonitorL: Any?
     var targetWindowID: Int?
-    var mask: EscPanel?
+    /// What the covers draw; nil when the pointer is over nothing worth picking
+    let state = PickState()
     var Mode: Int = 1
     /// The capsule shown for the clicked window, at the bottom of it
     var capsule: FloatingCapsulePanel?
@@ -54,7 +100,7 @@ class WindowHighlighter {
         guard capsule == nil else { return }
         stopMouseMonitor()
         let screen = display.nsScreen
-        let frame = mask?.frame ?? screen?.visibleFrame ?? .zero
+        let frame = state.target?.frame ?? screen?.visibleFrame ?? .zero
         let visible = screen?.visibleFrame ?? frame
         capsule = FloatingCapsulePanel.show(
             SelectorCapsule(leading: [CapsuleLeading(symbol: "xmark.circle", label: "Close".local, action: { [weak self] in self?.back() })],
@@ -69,7 +115,7 @@ class WindowHighlighter {
     func cancel() {
         capsule?.close()
         capsule = nil
-        mask?.close()
+        state.target = nil
     }
 
     /// Back one step, whichever way the picker is left: Esc while pointing, or Close on the picked window's capsule
@@ -110,31 +156,26 @@ class WindowHighlighter {
     func registerMouseMonitor(mode: Int = 1) {
         closeAllWindow()
         Mode = mode
-        DispatchQueue.main.async {
-            var message = ""
-            var id = ""
-            switch mode {
-            case 2:
-                id = "qr.how-to-select.note2"
-                message = "Click on a window to select its area\nor press Esc to cancel.".local
-            default:
-                message = "Click the window you want to record\nor press Esc to cancel.".local
-                id = "qr.how-to-select.note"
-            }
-            tips(message, id: id)
-        }
-        
         for screen in NSScreen.screens {
             let cover = EscPanel(contentRect: screen.frame, styleMask: [.nonactivatingPanel, .fullSizeContentView], backing: .buffered, defer: false)
-            cover.contentView = NSHostingView(rootView: CoverView())
+            let host = NSHostingView(rootView: WindowPickCover(
+                state: state, screen: screen.frame, notch: screen.notch,
+                pick: { [weak self] id in MainActor.assumeIsolated { self?.pick(id: id) } }
+            ))
+            host.safeAreaRegions = []
+            cover.contentView = host
             cover.level = .statusBar
             cover.sharingType = .none
             cover.backgroundColor = .clear
-            cover.ignoresMouseEvents = true
             cover.isReleasedWhenClosed = false
             cover.collectionBehavior = [.canJoinAllSpaces, .stationary]
             cover.title = "Screen Cover"
+            cover.alphaValue = 0
             cover.orderFront(self)
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.18
+                cover.animator().alphaValue = 1
+            }
         }
         // Esc goes to the key window, and until the pointer is over a window there is no highlight to take it: the
         // cover under the pointer does, so Esc works as soon as point-select opens (#133)
@@ -143,11 +184,13 @@ class WindowHighlighter {
         NSApp.windows.first { $0.title == "Screen Cover" && $0.frame == target?.frame }?.makeKeyAndOrderFront(nil)
         
         if mouseMonitor == nil {
-            mouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved]) { _ in self.updateMask() }
+            mouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved]) { _ in
+                MainActor.assumeIsolated { self.updateMask() }
+            }
         }
         if mouseMonitorL == nil {
             mouseMonitorL = NSEvent.addLocalMonitorForEvents(matching: [.mouseMoved]) { event in
-                self.updateMask()
+                MainActor.assumeIsolated { self.updateMask() }
                 return event
             }
         }
@@ -167,41 +210,27 @@ class WindowHighlighter {
         }
     }
     
+    @MainActor
     func updateMask() {
-        guard let targetWindow = getWindowUnderMouse() else {
-            mask?.close()
+        guard let targetWindow = getWindowUnderMouse(),
+              let app = targetWindow["kCGWindowOwnerName"] as? String, app != Bundle.main.appName,
+              let windowID = targetWindow["kCGWindowNumber"] as? UInt32,
+              let frame = getCGWindowFrame(window: targetWindow) else {
+            state.target = nil
             targetWindowID = nil
             return
         }
-        
-        if let app = targetWindow["kCGWindowOwnerName"] as? String, app != Bundle.main.appName,
-           let windowID = targetWindow["kCGWindowNumber"] as? Int, targetWindowID != windowID {
-            mask?.close()
-            targetWindowID = windowID
-            createMaskWindow(window: targetWindow)
-        }
+        guard state.target?.id != windowID else { return }
+        targetWindowID = Int(windowID)
+        state.target = PickTarget(id: windowID, frame: CGRectTransform(cgRect: frame), app: app,
+                                  title: targetWindow["kCGWindowName"] as? String ?? "")
     }
-    
-    func createMaskWindow(window: [String: Any]) {
-        guard let windowID = targetWindowID, let frame = getCGWindowFrame(window: window) else { return }
-        let app = window["kCGWindowOwnerName"] as? String ?? ""
-        let title = window["kCGWindowName"] as? String ?? ""
-        
-        mask = EscPanel(contentRect: CGRectTransform(cgRect: frame),
-                        styleMask: [.nonactivatingPanel, .fullSizeContentView], backing: .buffered, defer: false)
-        let contentView = NSHostingView(rootView: HighlightMask(app: app, title: title, windowID: windowID))
-        mask?.contentView = contentView
-        mask?.title = "Mask Window"
-        mask?.hasShadow = false
-        mask?.sharingType = .none
-        mask?.backgroundColor = .clear
-        mask?.titleVisibility = .hidden
-        mask?.isMovableByWindowBackground = false
-        mask?.isReleasedWhenClosed = false
-        mask?.collectionBehavior = [.canJoinAllSpaces, .transient]
-        mask?.setFrame(CGRectTransform(cgRect: frame), display: true)
-        mask?.order(.above, relativeTo: windowID)
-        mask?.makeKey()
+
+    /// The cover was clicked: record the window it is showing, if that window is still the one under the pointer
+    @MainActor
+    func pick(id: UInt32) {
+        guard let window = getSCWindowWithID(id), let display = SCContext.getSCDisplayWithMouse() else { return }
+        chose(window: window, display: display)
     }
     
     func getWindowUnderMouse() -> [String: Any]? {
