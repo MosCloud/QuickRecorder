@@ -68,13 +68,14 @@ struct WindowPickCover: View {
                 // with its material and its spring, so the two read as the same kind of thing (#141)
                 if let hint, state.chosen == nil, state.hovered == nil || state.prompting {
                     VStack {
-                        HStack(spacing: 8) {
-                            Text(hint)
-                            Text("Esc to cancel").foregroundStyle(.secondary)
+                        OverlayCapsule {
+                            HStack(spacing: 8) {
+                                Text(hint)
+                                Text("Esc to cancel").foregroundStyle(.secondary)
+                            }
+                            .font(.system(size: 12))
+                            .padding(.horizontal, 14).padding(.vertical, 8)
                         }
-                        .font(.system(size: 12))
-                        .padding(.horizontal, 14).padding(.vertical, 8)
-                        .background(CapsuleMaterial(shape: Capsule()))
                         Spacer()
                     }
                     .frame(maxWidth: .infinity)
@@ -91,13 +92,14 @@ struct WindowPickCover: View {
                             .stroke(AreaMarkStyle.color(.dark), style: StrokeStyle(lineWidth: AreaMarkStyle.width, lineCap: .round, lineJoin: .round))
                             .shadow(color: .black.opacity(0.45), radius: 1.5, y: 0.5)
                     }
-                    Text(verbatim: "\(t.app) · \(Int(hole.width)) × \(Int(hole.height))")
-                        .font(.system(size: 12, weight: .medium))
-                        .padding(.horizontal, 10).padding(.vertical, 4)
-                        // The capsule's own material, so it follows the setting like every other capsule (#141)
-                        .background(CapsuleMaterial(shape: Capsule()))
-                        .fixedSize()
-                        .position(x: hole.midX, y: tagY(hole))
+                    // Follows the panel material like every other pill, without the rim glass leaves (#151)
+                    OverlayCapsule {
+                        Text(verbatim: "\(t.app) · \(Int(hole.width)) × \(Int(hole.height))")
+                            .font(.system(size: 12, weight: .medium))
+                            .padding(.horizontal, 10).padding(.vertical, 4)
+                    }
+                    .fixedSize()
+                    .position(x: hole.midX, y: tagY(hole))
                 }
             }
             .contentShape(Rectangle())
