@@ -8,32 +8,108 @@
 import SwiftUI
 import ScreenCaptureKit
 
-struct CoverView: View {
-    var body: some View {
-        Color.clear.overlay { Rectangle().stroke(.blue, lineWidth: 5) }
-    }
+/// What the pointer is over while a window is being picked: the window that would be recorded
+struct PickTarget: Equatable {
+    var id: UInt32
+    /// Global, in AppKit's bottom-left coordinates
+    var frame: CGRect
+    var app: String
+    var title: String
 }
 
-struct HighlightMask: View {
-    let app: String
-    let title: String
-    let windowID: Int
-    @State var color: Color = .blue
+/// The pick in progress: what is under the pointer, what has been picked, and each screen's frosted picture (#115)
+final class PickState: ObservableObject {
+    @Published var hovered: PickTarget?
+    /// Set once a click confirms; the covers then frost everything but it
+    @Published var chosen: PickTarget?
+    /// Each screen's frosted picture, taken as the pick opens: the area selector's own frost (#108)
+    @Published var frost: [CGDirectDisplayID: NSImage] = [:]
+}
+
+/// One screen's cover while a window is being picked (#115). Before a window is chosen the screen is left alone and
+/// only the window under the pointer is framed, the way the area selector frames an area; after the click the rest of
+/// the screen takes the area selector's frost, with the chosen window cut out of it. A click picks, Esc goes back.
+struct WindowPickCover: View {
+    @ObservedObject var state: PickState
+    /// This screen's frame, AppKit's coordinates
+    let screen: CGRect
+    let displayID: CGDirectDisplayID
+    let notch: CGRect?
+
+    /// The window to frame: the one under the pointer, or the chosen one once a click has happened
+    private var subject: PickTarget? { state.chosen ?? state.hovered }
+
+    /// It as this cover draws it: the screen's top-left corner as the origin
+    private func local(_ t: PickTarget) -> CGRect {
+        CGRect(x: t.frame.minX - screen.minX, y: screen.maxY - t.frame.maxY,
+               width: t.frame.width, height: t.frame.height)
+    }
 
     var body: some View {
-        color
-            .opacity(0.2)
-            .cornerRadius(10)
-            .help("\(app) - \(title)")
-            .onPressGesture {
-                if let w = WindowHighlighter.shared.getSCWindowWithID(UInt32(windowID)),
-                   let d = SCContext.getSCDisplayWithMouse() {
-                    WindowHighlighter.shared.chose(window: w, display: d)
-                    return
+        GeometryReader { geo in
+            let hole = subject.map(local).flatMap { $0.intersects(CGRect(origin: .zero, size: geo.size)) ? $0 : nil }
+            ZStack(alignment: .topLeading) {
+                // A whisker of black keeps the window clickable: a fully transparent one hands the click behind it (#114)
+                Color.black.opacity(1.0 / 255.0)
+
+                if state.chosen != nil {
+                    frost(geo, hole: hole)
                 }
-                color = .red
-                withAnimation(.easeInOut(duration: 0.6)) { color = .blue }
+
+                if let hole, let t = subject {
+                    Path(hole.insetBy(dx: 0.5, dy: 0.5)).stroke(Color.black.opacity(0.25), lineWidth: 1)
+                    Path(hole.insetBy(dx: -0.5, dy: -0.5)).stroke(Color.white.opacity(0.8), lineWidth: 1)
+                    ForEach(AreaMarkStyle.corners, id: \.self) { c in
+                        CornerMark(rect: hole, corner: c, length: 18)
+                            .stroke(AreaMarkStyle.color(.dark), style: StrokeStyle(lineWidth: AreaMarkStyle.width, lineCap: .round, lineJoin: .round))
+                            .shadow(color: .black.opacity(0.45), radius: 1.5, y: 0.5)
+                    }
+                    Text(verbatim: "\(t.app) · \(Int(hole.width)) × \(Int(hole.height))")
+                        .font(.system(size: 12, weight: .medium))
+                        .padding(.horizontal, 10).padding(.vertical, 4)
+                        .background(Capsule().fill(.regularMaterial).environment(\.controlActiveState, .active))
+                        .fixedSize()
+                        .position(x: hole.midX, y: tagY(hole))
+                }
             }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                MainActor.assumeIsolated { WindowHighlighter.shared.pick() }
+            }
+        }
+        .ignoresSafeArea()
+    }
+
+    /// The screen's frozen picture outside the chosen window: the same blur and tint the area selector uses (#108)
+    @ViewBuilder private func frost(_ geo: GeometryProxy, hole: CGRect?) -> some View {
+        if let picture = state.frost[displayID] {
+            Image(nsImage: picture)
+                .resizable()
+                .frame(width: geo.size.width, height: geo.size.height)
+                .mask {
+                    Path { p in
+                        p.addRect(CGRect(origin: .zero, size: geo.size))
+                        if let hole { p.addRect(hole) }
+                    }
+                    .fill(Color.black, style: FillStyle(eoFill: true))
+                }
+                .transition(.opacity)
+        } else {
+            // Before the picture arrives: the shade is better than nothing
+            Path { p in
+                p.addRect(CGRect(origin: .zero, size: geo.size))
+                if let hole { p.addRect(hole) }
+            }
+            .fill(Color.black.opacity(0.35), style: FillStyle(eoFill: true))
+            .transition(.opacity)
+        }
+    }
+
+    /// Just inside the window's top edge, and below the notch when that is where it would be (#110's rule)
+    private func tagY(_ hole: CGRect) -> CGFloat {
+        let top = hole.minY + 22
+        guard let notch, notch.maxY + 22 > top else { return top }
+        return min(notch.maxY + 22, hole.maxY - 16)
     }
 }
 
@@ -42,19 +118,19 @@ class WindowHighlighter {
     var mouseMonitor: Any?
     var mouseMonitorL: Any?
     var targetWindowID: Int?
-    var mask: EscPanel?
+    /// What the covers draw; nil when the pointer is over nothing worth picking
+    let state = PickState()
     var Mode: Int = 1
     /// The capsule shown for the clicked window, at the bottom of it
     var capsule: FloatingCapsulePanel?
 
-    /// The window was clicked: its capsule floats at its bottom, over the highlight (#79)
+    /// The window was clicked: its capsule floats at its bottom, over the frosted screen (#79)
     @MainActor
     func chose(window: SCWindow, display: SCDisplay) {
-        // The mask's press fires on every move of a drag: one capsule per choice
+        // A press fires on every move of a drag: one capsule per choice
         guard capsule == nil else { return }
-        stopMouseMonitor()
         let screen = display.nsScreen
-        let frame = mask?.frame ?? screen?.visibleFrame ?? .zero
+        let frame = state.chosen?.frame ?? screen?.visibleFrame ?? .zero
         let visible = screen?.visibleFrame ?? frame
         capsule = FloatingCapsulePanel.show(
             SelectorCapsule(leading: [CapsuleLeading(symbol: "xmark.circle", label: "Close".local, action: { [weak self] in self?.back() })],
@@ -69,7 +145,8 @@ class WindowHighlighter {
     func cancel() {
         capsule?.close()
         capsule = nil
-        mask?.close()
+        state.chosen = nil
+        state.hovered = nil
     }
 
     /// Back one step, whichever way the picker is left: Esc while pointing, or Close on the picked window's capsule
@@ -78,6 +155,15 @@ class WindowHighlighter {
     /// own point-and-select comes back as the window selector.
     @MainActor
     func back() {
+        // One level at a time: a picked window's capsule goes first, back to choosing, and only the next Esc leaves
+        // the picker for the screen it came from (#115)
+        if state.chosen != nil {
+            capsule?.close()
+            capsule = nil
+            withAnimation(.easeOut(duration: 0.18)) { state.chosen = nil }
+            startHoverTracking()
+            return
+        }
         let mode = Mode
         cancel()
         stopMouseMonitor()
@@ -110,27 +196,19 @@ class WindowHighlighter {
     func registerMouseMonitor(mode: Int = 1) {
         closeAllWindow()
         Mode = mode
-        DispatchQueue.main.async {
-            var message = ""
-            var id = ""
-            switch mode {
-            case 2:
-                id = "qr.how-to-select.note2"
-                message = "Click on a window to select its area\nor press Esc to cancel.".local
-            default:
-                message = "Click the window you want to record\nor press Esc to cancel.".local
-                id = "qr.how-to-select.note"
-            }
-            tips(message, id: id)
-        }
-        
+        state.hovered = nil
+        state.chosen = nil
+        MainActor.assumeIsolated { captureFrost() }
         for screen in NSScreen.screens {
             let cover = EscPanel(contentRect: screen.frame, styleMask: [.nonactivatingPanel, .fullSizeContentView], backing: .buffered, defer: false)
-            cover.contentView = NSHostingView(rootView: CoverView())
+            guard let displayID = screen.displayID else { continue }
+            let host = NSHostingView(rootView: WindowPickCover(state: state, screen: screen.frame,
+                                                               displayID: displayID, notch: screen.notch))
+            host.safeAreaRegions = []
+            cover.contentView = host
             cover.level = .statusBar
             cover.sharingType = .none
             cover.backgroundColor = .clear
-            cover.ignoresMouseEvents = true
             cover.isReleasedWhenClosed = false
             cover.collectionBehavior = [.canJoinAllSpaces, .stationary]
             cover.title = "Screen Cover"
@@ -142,12 +220,19 @@ class WindowHighlighter {
         let target = NSScreen.screens.first { $0.frame.contains(pointer) } ?? NSScreen.main
         NSApp.windows.first { $0.title == "Screen Cover" && $0.frame == target?.frame }?.makeKeyAndOrderFront(nil)
         
+        startHoverTracking()
+    }
+
+    /// Watches where the pointer is while a window is being chosen
+    func startHoverTracking() {
         if mouseMonitor == nil {
-            mouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved]) { _ in self.updateMask() }
+            mouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved]) { _ in
+                MainActor.assumeIsolated { self.updateMask() }
+            }
         }
         if mouseMonitorL == nil {
             mouseMonitorL = NSEvent.addLocalMonitorForEvents(matching: [.mouseMoved]) { event in
-                self.updateMask()
+                MainActor.assumeIsolated { self.updateMask() }
                 return event
             }
         }
@@ -157,6 +242,11 @@ class WindowHighlighter {
         DispatchQueue.main.async {
             for w in NSApp.windows.filter({ $0.title == "Screen Cover" }) { w.close() }
         }
+        stopHoverTracking()
+    }
+
+    /// Only the pointer tracking stops: the covers stay, showing the frost around the chosen window
+    func stopHoverTracking() {
         if let monitor = mouseMonitor {
             NSEvent.removeMonitor(monitor)
             mouseMonitor = nil
@@ -167,41 +257,46 @@ class WindowHighlighter {
         }
     }
     
+    @MainActor
     func updateMask() {
-        guard let targetWindow = getWindowUnderMouse() else {
-            mask?.close()
+        guard state.chosen == nil else { return }
+        guard let targetWindow = getWindowUnderMouse(),
+              let app = targetWindow["kCGWindowOwnerName"] as? String, app != Bundle.main.appName,
+              let windowID = targetWindow["kCGWindowNumber"] as? UInt32,
+              let frame = getCGWindowFrame(window: targetWindow) else {
+            state.hovered = nil
             targetWindowID = nil
             return
         }
-        
-        if let app = targetWindow["kCGWindowOwnerName"] as? String, app != Bundle.main.appName,
-           let windowID = targetWindow["kCGWindowNumber"] as? Int, targetWindowID != windowID {
-            mask?.close()
-            targetWindowID = windowID
-            createMaskWindow(window: targetWindow)
-        }
+        guard state.hovered?.id != windowID else { return }
+        targetWindowID = Int(windowID)
+        state.hovered = PickTarget(id: windowID, frame: CGRectTransform(cgRect: frame), app: app,
+                                   title: targetWindow["kCGWindowName"] as? String ?? "")
     }
-    
-    func createMaskWindow(window: [String: Any]) {
-        guard let windowID = targetWindowID, let frame = getCGWindowFrame(window: window) else { return }
-        let app = window["kCGWindowOwnerName"] as? String ?? ""
-        let title = window["kCGWindowName"] as? String ?? ""
-        
-        mask = EscPanel(contentRect: CGRectTransform(cgRect: frame),
-                        styleMask: [.nonactivatingPanel, .fullSizeContentView], backing: .buffered, defer: false)
-        let contentView = NSHostingView(rootView: HighlightMask(app: app, title: title, windowID: windowID))
-        mask?.contentView = contentView
-        mask?.title = "Mask Window"
-        mask?.hasShadow = false
-        mask?.sharingType = .none
-        mask?.backgroundColor = .clear
-        mask?.titleVisibility = .hidden
-        mask?.isMovableByWindowBackground = false
-        mask?.isReleasedWhenClosed = false
-        mask?.collectionBehavior = [.canJoinAllSpaces, .transient]
-        mask?.setFrame(CGRectTransform(cgRect: frame), display: true)
-        mask?.order(.above, relativeTo: windowID)
-        mask?.makeKey()
+
+    /// The click: the window under the pointer is taken, everything else frosts over, and its capsule comes up
+    @MainActor
+    func pick() {
+        guard let target = state.hovered else { return }
+        state.chosen = target
+        // The pointer stops choosing, but the covers stay to show the frost
+        stopHoverTracking()
+        guard let window = getSCWindowWithID(target.id), let display = SCContext.getSCDisplayWithMouse() else { return }
+        withAnimation(.easeOut(duration: 0.18)) { chose(window: window, display: display) }
+    }
+
+    /// Each screen's frosted picture, taken while the screens still look normal: the pick frosts them only once a
+    /// window is chosen (#115)
+    @MainActor
+    func captureFrost() {
+        for screen in NSScreen.screens {
+            guard let id = screen.displayID,
+                  let display = SCContext.availableContent?.displays.first(where: { $0.displayID == id }) else { continue }
+            Task { @MainActor in
+                guard let picture = await AreaFrost.picture(of: display) else { return }
+                state.frost[id] = NSImage(cgImage: picture, size: screen.frame.size)
+            }
+        }
     }
     
     func getWindowUnderMouse() -> [String: Any]? {
