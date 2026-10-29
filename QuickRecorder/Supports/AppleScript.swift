@@ -60,14 +60,14 @@ class selectArea: ScriptCommand {
             DispatchQueue.main.async {
                 closeAllWindow()
                 DispatchQueue.main.async {
-                    AppDelegate.shared.showAreaSelector(size: NSSize(width: 600, height: 450))
+                    AppDelegate.shared.showAreaSelector()
                     var currentDisplay = SCContext.getSCDisplayWithMouse()
                     mouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved, .rightMouseDown, .leftMouseDown, .otherMouseDown]) { event in
                         let display = SCContext.getSCDisplayWithMouse()
                         if display != currentDisplay {
                             currentDisplay = display
                             closeAllWindow()
-                            AppDelegate.shared.showAreaSelector(size: NSSize(width: 600, height: 450))
+                            AppDelegate.shared.showAreaSelector()
                         }
                     }
                 }

@@ -251,7 +251,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
         KeyboardShortcuts.onKeyDown(for: .startWithArea) {[self] in
             if SCContext.stream != nil { return }
             closeAllWindow()
-            showAreaSelector(size: NSSize(width: 600, height: 450))
+            showAreaSelector()
         }
         KeyboardShortcuts.onKeyDown(for: .startWithWindow) { [self] in
             if SCContext.stream != nil { return }

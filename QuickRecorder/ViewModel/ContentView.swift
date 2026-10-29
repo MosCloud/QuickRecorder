@@ -229,14 +229,14 @@ extension AppDelegate {
         closeMainWindow()
         SCContext.updateAvailableContent {
             DispatchQueue.main.async {
-                self.showAreaSelector(size: NSSize(width: 600, height: 450))
+                self.showAreaSelector()
                 var currentDisplay = SCContext.getSCDisplayWithMouse()
                 mouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved, .rightMouseDown, .leftMouseDown, .otherMouseDown]) { event in
                     let display = SCContext.getSCDisplayWithMouse()
                     if display != currentDisplay {
                         currentDisplay = display
                         closeAllWindow()
-                        self.showAreaSelector(size: NSSize(width: 600, height: 450))
+                        self.showAreaSelector()
                     }
                 }
             }
@@ -265,32 +265,36 @@ extension AppDelegate {
         createNewWindow(view: view, title: title, closesOnEsc: true)
     }
 
-    func showAreaSelector(size: NSSize, noPanel: Bool = false) {
+    /// 「编辑选区」 resizes the rectangle where it sits: rebuilding the overlay for every digit typed flashed the
+    /// whole screen (#129)
+    @MainActor func resizeAreaSelector(to size: NSSize) {
+        for w in NSApp.windows where w.title == "Area Selector".local {
+            (w.contentView as? ScreenshotOverlayView)?.apply(size: size)
+        }
+    }
+
+    func showAreaSelector() {
         // The selector takes the keys, Esc among them: without this the app stays in the background and Esc goes
         // to whichever app is in front (#131)
         NSApp.activate()
         guard let scDisplay = SCContext.getSCDisplayWithMouse() else { return }
         guard let screen = scDisplay.nsScreen else { return }
-        let screenshotWindow = ScreenshotWindow(contentRect: screen.frame, backing: .buffered, defer: false, size: size, force: noPanel)
+        let screenshotWindow = ScreenshotWindow(contentRect: screen.frame, backing: .buffered, defer: false)
         screenshotWindow.title = "Area Selector".local
-        // Remade at a new size, it keeps the picture it had (#108)
-        (screenshotWindow.contentView as? ScreenshotOverlayView)?.frost(scDisplay, reusing: noPanel)
-        // The frost fades in as the selector opens, not when it's only remade at a new size (#97)
-        if !noPanel { screenshotWindow.alphaValue = 0 }
+        (screenshotWindow.contentView as? ScreenshotOverlayView)?.frost(scDisplay)
+        // The frost fades in as the selector opens (#97)
+        screenshotWindow.alphaValue = 0
         screenshotWindow.makeKeyAndOrderFront(nil)
-        if !noPanel {
-            NSAnimationContext.runAnimationGroup { context in
-                context.duration = 0.2
-                screenshotWindow.animator().alphaValue = 1
-            }
-            MainActor.assumeIsolated {
-                let panel = FloatingCapsulePanel.show(AreaSelector(screen: scDisplay), title: "Start Recording".local,
-                                                      centerX: screen.frame.midX, bottom: screen.visibleFrame.minY + 60)
-                panel.onCancel = { [weak panel] in panel?.close() }
-            }
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.2
+            screenshotWindow.animator().alphaValue = 1
+        }
+        MainActor.assumeIsolated {
+            let panel = FloatingCapsulePanel.show(AreaSelector(screen: scDisplay), title: "Start Recording".local,
+                                                  centerX: screen.frame.midX, bottom: screen.visibleFrame.minY + 60)
+            panel.onCancel = { [weak panel] in panel?.close() }
         }
     }
-    
     func createCountdownPanel(screen: SCDisplay, action: @escaping () -> Void) {
         MainActor.assumeIsolated { MainPanelReturn.shared.startPressed() }
         guard let screen = screen.nsScreen else { return }
