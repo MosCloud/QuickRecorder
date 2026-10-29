@@ -292,8 +292,7 @@ struct OutputSettingsView: View {
             Section("Save") {
                 SettingsRow("Output Folder") {
                     HStack(spacing: 8) {
-                        Text(saveDirectory?.lastPathComponent ?? "")
-                            .lineLimit(1).truncationMode(.tail).foregroundStyle(.secondary)
+                        FolderPath(path: saveDirectory ?? "")
                         Button("Select...") { updateOutputDirectory() }
                     }
                 }
@@ -318,6 +317,33 @@ struct OutputSettingsView: View {
         openPanel.allowedContentTypes = []
         openPanel.allowsOtherFileTypes = false
         if openPanel.runModal() == .OK, let path = openPanel.urls.first?.path { saveDirectory = path }
+    }
+}
+
+/// The output folder's whole path, middle-truncated when it doesn't fit, and a click opens it in Finder (#122)
+private struct FolderPath: View {
+    let path: String
+    @State private var hovering = false
+
+    var body: some View {
+        Button {
+            // A folder that was moved or deleted opens nothing rather than complaining
+            guard !path.isEmpty else { return }
+            NSWorkspace.shared.open(URL(fileURLWithPath: path))
+        } label: {
+            Text(path)
+                .lineLimit(1)
+                .truncationMode(.middle)
+                .underline(hovering)
+                .foregroundStyle(hovering ? Color.primary : Color.secondary)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .pointerStyle(.link)
+        .onHover { hovering = $0 }
+        // The path is cut in the middle at this width, so hovering spells it out in full
+        .help(path)
     }
 }
 
