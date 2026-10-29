@@ -558,6 +558,10 @@ class ScreenshotOverlayView: NSView {
                 if currentLocation.y < maxFrame.origin.y { maxH = initialLocation.y }
                 if currentLocation.x < maxFrame.origin.x { maxW = initialLocation.x }
                 let size = NSSize(width: maxW, height: maxH)
+                // A click is not a new selection: a stray click in the veiled part used to wipe the area down to a
+                // pixel or two, after which every click landed outside it (#131)
+                guard size.width >= AreaRect.smallestUsable.width,
+                      size.height >= AreaRect.smallestUsable.height else { return }
                 self.selectionRect = NSIntersectionRect(maxFrame, NSRect(origin: origin, size: size))
                 areaWidth = Int(selectionRect!.width)
                 areaHeight = Int(selectionRect!.height)
@@ -601,6 +605,9 @@ class ScreenshotWindow: NSPanel {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+
+    /// A borderless panel can't take key unless it says so, and the selector needs the keys: Esc closes it (#131)
+    override var canBecomeKey: Bool { true }
 
     func myKeyDownEvent(event: NSEvent) -> NSEvent? {
         // Esc closes an open bubble of the capsule first (its own monitor takes it); the next one cancels the selection

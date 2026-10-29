@@ -274,6 +274,9 @@ extension AppDelegate {
     }
 
     func showAreaSelector() {
+        // The selector takes the keys, Esc among them: without this the app stays in the background and Esc goes
+        // to whichever app is in front (#131)
+        NSApp.activate()
         guard let scDisplay = SCContext.getSCDisplayWithMouse() else { return }
         guard let screen = scDisplay.nsScreen else { return }
         let screenshotWindow = ScreenshotWindow(contentRect: screen.frame, backing: .buffered, defer: false)
@@ -281,7 +284,7 @@ extension AppDelegate {
         (screenshotWindow.contentView as? ScreenshotOverlayView)?.frost(scDisplay)
         // The frost fades in as the selector opens (#97)
         screenshotWindow.alphaValue = 0
-        screenshotWindow.orderFrontRegardless()
+        screenshotWindow.makeKeyAndOrderFront(nil)
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.2
             screenshotWindow.animator().alphaValue = 1
@@ -292,7 +295,6 @@ extension AppDelegate {
             panel.onCancel = { [weak panel] in panel?.close() }
         }
     }
-    
     func createCountdownPanel(screen: SCDisplay, action: @escaping () -> Void) {
         MainActor.assumeIsolated { MainPanelReturn.shared.startPressed() }
         guard let screen = screen.nsScreen else { return }
