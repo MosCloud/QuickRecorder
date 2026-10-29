@@ -285,8 +285,9 @@ extension AppDelegate {
         let screenshotWindow = ScreenshotWindow(contentRect: screen.frame, backing: .buffered, defer: false)
         screenshotWindow.title = "Area Selector".local
         (screenshotWindow.contentView as? ScreenshotOverlayView)?.frost(scDisplay)
-        // Real clicks on the menu bar are handled before any window sees them: it has to go while the picker is up (#163)
-        PickerPresentation.begin()
+        // Real clicks on the menu bar are handled before any window sees them: this window holds it off the screen
+        // while it is up, and lets go when it closes (#163, #171)
+        PickerPresentation.hold(screenshotWindow)
         // The frost fades in as the selector opens (#97)
         screenshotWindow.alphaValue = 0
         screenshotWindow.makeKeyAndOrderFront(nil)

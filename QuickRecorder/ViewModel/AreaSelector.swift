@@ -253,8 +253,9 @@ struct AreaSelector: View {
     }
 
     private func selectWindowArea() {
+        // The capsule goes now; the area window stays until the covers hold the screen, so the menu bar and the Dock
+        // never come back for a frame in between (#171). `registerMouseMonitor` closes it.
         nsWindow?.close()
-        for w in NSApp.windows.filter({$0.title == "Area Selector".local }) { w.close() }
         appDelegate.stopGlobalMouseMonitor()
         WindowHighlighter.shared.registerMouseMonitor(mode: 2)
     }
@@ -364,8 +365,6 @@ class ScreenshotOverlayView: NSView {
         if newWindow == nil {
             stopCursorTimer()
             NSCursor.arrow.set()
-            // The overlay is going away: bring the menu bar and the Dock back (#163)
-            PickerPresentation.end()
         }
         if newWindow == nil, let rect = selectionRect, rect.width > 0, rect.height > 0,
            let name = window?.screen?.localizedName {
