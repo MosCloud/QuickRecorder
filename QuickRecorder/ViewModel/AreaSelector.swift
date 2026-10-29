@@ -457,10 +457,11 @@ class ScreenshotOverlayView: NSView {
         super.updateTrackingAreas()
         trackingAreas.forEach(removeTrackingArea)
         // Always: the capsule's panel is the key window, not this one
-        addTrackingArea(NSTrackingArea(rect: .zero, options: [.mouseMoved, .cursorUpdate, .activeAlways, .inVisibleRect], owner: self))
+        addTrackingArea(NSTrackingArea(rect: .zero, options: [.mouseMoved, .mouseEnteredAndExited, .cursorUpdate, .activeAlways, .inVisibleRect], owner: self))
     }
 
     override func mouseMoved(with event: NSEvent) { pointerMoved(event) }
+    override func mouseEntered(with event: NSEvent) { pointerMoved(event) }
     override func cursorUpdate(with event: NSEvent) { pointerMoved(event) }
 
     private func pointerMoved(_ event: NSEvent) {
@@ -604,6 +605,7 @@ class ScreenshotOverlayView: NSView {
         }
         ease(false)
         updateCursor(at: convert(event.locationInWindow, from: nil))
+        DispatchQueue.main.async { [weak self] in self?.updateCursor() }
     }
 }
 
@@ -619,6 +621,9 @@ class ScreenshotWindow: NSPanel {
         self.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         self.isReleasedWhenClosed = false
         self.contentView = overlayView
+        // Off by default: the pointer's shape would then only change when the tracking area speaks up, so the corner
+        // cursor set at the end of a drag stayed put (#136)
+        self.acceptsMouseMovedEvents = true
         
         if keyMonitor != nil { return }
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: NSEvent.EventTypeMask.keyDown, handler: myKeyDownEvent)
