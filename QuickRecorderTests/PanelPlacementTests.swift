@@ -10,7 +10,7 @@ import Testing
 struct PanelPlacementTests {
     /// The owner's MacBook Air: 1710×1107, the Dock 82 pt tall, the menu bar 34
     let screen = CGRect(x: 0, y: 0, width: 1710, height: 1107)
-    let visible = CGRect(x: 0, y: 82, width: 1710, height: 1025)
+    let visible = CGRect(x: 0, y: 82, width: 1710, height: 991)
     let panel = CGSize(width: 768, height: 90)
 
     @Test("The panel's middle sits a third of the way up, centred across the screen")
