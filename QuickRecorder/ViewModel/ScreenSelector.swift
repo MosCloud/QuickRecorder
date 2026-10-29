@@ -50,6 +50,8 @@ struct ScreenSelector: View {
         }
         .padding(.top, -5)
         .frame(width: 780, height: 555)
+        // Esc clears the chosen screen first, and only closes the picker when nothing is chosen (#153)
+        .escapeClearsSelection($selected)
     }
 
     private func name(of screen: SCDisplay) -> String {
