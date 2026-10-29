@@ -55,9 +55,12 @@ struct WinSelector: View {
                     .padding(.top, 8)
                 }
             }
-            // Refresh's own settings, as a right-click opens the microphone's and the timer's
+            // Refresh's own settings, as a right-click opens the microphone's and the timer's. Picking a window on the
+            // screen sits right of it, where the area selector keeps 「窗口范围」 (#144)
             SelectorCapsule(leading: [CapsuleLeading(symbol: "arrow.clockwise", label: "Refresh".local, spins: true, action: refresh,
-                                                     bubble: AnyView(listSettings))],
+                                                     bubble: AnyView(listSettings)),
+                                      CapsuleLeading(symbol: "macwindow.and.cursorarrow", label: "Select Window Directly".local,
+                                                     action: { WindowHighlighter.shared.registerMouseMonitor() })],
                             screen: display?.nsScreen ?? NSScreen.main, canStart: selected.count >= 1) {
                 startRecording(autoStop: $0)
             }
@@ -65,17 +68,6 @@ struct WinSelector: View {
         }
         .padding(.top, -5)
         .frame(width: 780, height:555)
-        .toolbar {
-            ToolbarItem(placement: .automatic) {
-                HoverButton(action: {
-                    WindowHighlighter.shared.registerMouseMonitor()
-                }, label: {
-                    Image("window.select")
-                        .resizable().scaledToFit()
-                        .frame(width: 20)
-                }).help("Select Window Directly")
-            }
-        }
     }
     
     func startRecording(autoStop: TimeInterval) {
@@ -205,22 +197,5 @@ class WindowThumbnail {
     init(image: NSImage, window: SCWindow) {
         self.image = image
         self.window = window
-    }
-}
-
-/// A borderless button whose label takes the accent colour under the pointer, for the window selector's toolbar
-private struct HoverButton<Content: View>: View {
-    var color: Color = .primary
-    var secondaryColor: Color = .blue
-    var action: () -> Void
-    @ViewBuilder let label: () -> Content
-    @State private var isHovered = false
-
-    var body: some View {
-        Button(action: action, label: {
-            label().foregroundStyle(isHovered ? secondaryColor : color)
-        })
-        .buttonStyle(.plain)
-        .onHover { isHovered = $0 }
     }
 }
