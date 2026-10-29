@@ -295,7 +295,7 @@ struct OutputSettingsView: View {
                 HStack(spacing: 8) {
                     Text("Output Folder").offset(y: 2)
                     Spacer(minLength: 8)
-                    FolderPath(path: saveDirectory ?? "")
+                    FolderPath(path: saveDirectory ?? "", choose: updateOutputDirectory)
                     Button("Select...") { updateOutputDirectory() }
                 }
                 .padding(.vertical, -2)
@@ -326,13 +326,13 @@ struct OutputSettingsView: View {
 /// The output folder's whole path, middle-truncated when it doesn't fit, and a click opens it in Finder (#122)
 private struct FolderPath: View {
     let path: String
+    /// Opens the folder picker, from the Select button and from the alert
+    let choose: () -> Void
     @State private var hovering = false
 
     var body: some View {
         Button {
-            // A folder that was moved or deleted opens nothing rather than complaining
-            guard !path.isEmpty else { return }
-            NSWorkspace.shared.open(URL(fileURLWithPath: path))
+            open()
         } label: {
             Text(path)
                 .lineLimit(1)
@@ -348,6 +348,21 @@ private struct FolderPath: View {
         .onHover { hovering = $0 }
         // The path is cut in the middle at this width, so hovering spells it out in full
         .help(path)
+    }
+
+    /// Opens the folder, or says that it can't be found: a click that looked like it worked and didn't is worse
+    /// than one that answers (#122)
+    private func open() {
+        guard !path.isEmpty else { return }
+        if NSWorkspace.shared.open(URL(fileURLWithPath: path)) { return }
+        let detail = "\(path)\n" + "It may have been moved or deleted.".local
+        let alert = createAlert(title: "Folder Not Found", message: detail,
+                                button1: "OK", button2: "Choose Another Folder...")
+        // A folder, not the app's icon: the alert is about this folder (#122)
+        alert.icon = NSImage(named: NSImage.folderName)
+        let choice = alert.runModal()
+        // Choosing another folder is one click from here rather than two
+        if choice == .alertSecondButtonReturn { choose() }
     }
 }
 

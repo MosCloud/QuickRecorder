@@ -140,6 +140,9 @@
 "Hotkey" = "快捷键";
 "Blocklist" = "屏蔽列表";
 "Select..." = "选择...";
+"Folder Not Found" = "找不到这个文件夹";
+"It may have been moved or deleted." = "它可能已被移动或删除。";
+"Choose Another Folder..." = "选择其他文件夹...";
 "Open Main Panel" = "打开主面板";
 "Prevent Mac from sleeping while recording" = "录制时防止 Mac 进入睡眠";
 "Click the window you want to record\nor press Esc to cancel." = "请直接点击要录制的窗口\n或者按 Esc 键退出选择";
