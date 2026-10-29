@@ -46,7 +46,8 @@ struct AppSelector: View {
                 }
             }
             SelectorCapsule(leading: [CapsuleLeading(symbol: "arrow.clockwise", label: "Refresh".local, spins: true, action: { viewModel.updateAppList() })],
-                            screen: display?.nsScreen ?? NSScreen.main, canStart: selected.count >= 1) {
+                            screen: display?.nsScreen ?? NSScreen.main, showsBackground: true,
+                            canStart: selected.count >= 1) {
                 startRecording(autoStop: $0)
             }
             Spacer()

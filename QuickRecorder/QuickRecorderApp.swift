@@ -267,6 +267,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
     }
     
     func applicationDidFinishLaunching(_ aNotification: Notification) {
+        // Registered rather than tested for a missing key, so `bool(forKey:)` alone tells the whole story (#111)
+        ud.register(defaults: ["mainPanelOnTop": true])
         SCContext.migrateBackgroundPresets()
         closeAllWindow()
         // Launched hidden, by a script command or as a hidden login item, it keeps the main panel to itself (#88)
@@ -287,7 +289,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
     }
 
     /// The main panel floats above other windows unless the setting says otherwise (#111)
-    var mainPanelOnTop: Bool { ud.object(forKey: "mainPanelOnTop") == nil || ud.bool(forKey: "mainPanelOnTop") }
+    var mainPanelOnTop: Bool { ud.bool(forKey: "mainPanelOnTop") }
 
     /// The main panel, when it's up
     var mainPanelWindow: NSWindow? { NSApp.windows.first { $0.title == "QuickRecorder".local && $0.isVisible } }
@@ -360,7 +362,6 @@ func closeAllWindow(except: String = "") {
         $0.title != "Item-0" && $0.title != ""
         && !$0.title.contains(except) }) { w.close() }
 }
-
 
 func process(path: String, arguments: [String]) -> String? {
     let task = Process()

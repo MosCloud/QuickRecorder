@@ -43,7 +43,7 @@ struct ScreenSelector: View {
             }
             .frame(height: 445)
             SelectorCapsule(leading: [CapsuleLeading(symbol: "arrow.clockwise", label: "Refresh".local, spins: true, action: { viewModel.setupStreams() })],
-                            screen: selected?.nsScreen ?? NSScreen.main, showsBackground: false, canStart: selected != nil) {
+                            screen: selected?.nsScreen ?? NSScreen.main, canStart: selected != nil) {
                 startRecording(autoStop: $0)
             }
             Spacer()
