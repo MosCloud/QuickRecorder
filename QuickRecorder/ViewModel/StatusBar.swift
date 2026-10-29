@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import QuartzCore
 import KeyboardShortcuts
 
 /// Recording started or stopped, or a setting about the controls changed: refresh the menu bar item and the capsule.
@@ -30,6 +31,10 @@ final class MenuBarItem: NSObject, NSMenuDelegate, NSPopoverDelegate {
     private var shownPaused: Bool?
     /// The click in another app that closes the panel: a transient popover doesn't hear it while its app is in the back
     private var outsideClick: Any?
+    /// The close animation is running: another click must not start it again
+    private var closing = false
+    /// The panel keeps the app out of App Nap while it is up, so the animation runs at full rate (#177)
+    private var activity: NSObjectProtocol?
 
     var button: NSStatusBarButton? { item.button }
 
@@ -43,8 +48,12 @@ final class MenuBarItem: NSObject, NSMenuDelegate, NSPopoverDelegate {
         super.init()
         item.isVisible = false
         item.button?.setAccessibilityLabel("QuickRecorder")
-        panelPopover.behavior = .transient
+        // The panel closes itself, always through the same animation: a transient popover would also close on its own,
+        // without it, when the app happens to be in front (#177)
+        panelPopover.behavior = .applicationDefined
         panelPopover.delegate = self
+        // The panel animates itself, the way a menu bar panel does, instead of the popover's spring (#177)
+        panelPopover.animates = false
         menu.delegate = self
         menu.autoenablesItems = false
         headerItem.isEnabled = false
@@ -96,18 +105,85 @@ final class MenuBarItem: NSObject, NSMenuDelegate, NSPopoverDelegate {
     }
 
     func closePanel() {
-        if panelPopover.isShown { panelPopover.performClose(nil) }
+        guard panelPopover.isShown, !closing else { return }
+        closing = true
+        guard let window = panelPopover.contentViewController?.view.window,
+              let content = window.contentView?.superview ?? window.contentView else {
+            closing = false
+            panelPopover.performClose(nil)
+            return
+        }
+        animateOut(content, duration: 0.15)
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.15
+            context.timingFunction = CAMediaTimingFunction(name: .easeIn)
+            window.animator().alphaValue = 0
+        } completionHandler: { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                self.closing = false
+                self.panelPopover.performClose(nil)
+            }
+        }
+    }
+
+    /// The panel is revealed from its top edge downwards and covered back up from the bottom (#177). The mask is a
+    /// layer of our own: the frame view's own transform is managed by AppKit, and its translation was dropped.
+    private func animateIn() {
+        guard let window = panelPopover.contentViewController?.view.window,
+              let content = window.contentView?.superview ?? window.contentView else { return }
+        content.layoutSubtreeIfNeeded()
+        window.alphaValue = 0
+        content.wantsLayer = true
+        guard let layer = content.layer else { return }
+        layer.transform = CATransform3DIdentity
+        let w = content.bounds.width, h = content.bounds.height
+        let mask = CALayer()
+        mask.backgroundColor = NSColor.black.cgColor
+        mask.anchorPoint = CGPoint(x: 0.5, y: 1)
+        mask.position = CGPoint(x: w / 2, y: h)
+        mask.bounds = CGRect(x: 0, y: 0, width: w, height: h)
+        layer.mask = mask
+        let grow = CABasicAnimation(keyPath: "bounds.size.height")
+        grow.fromValue = 0
+        grow.toValue = h
+        grow.duration = 0.2
+        grow.timingFunction = CAMediaTimingFunction(name: .easeOut)
+        mask.add(grow, forKey: "wipe")
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.2
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            window.animator().alphaValue = 1
+        }
+    }
+
+    /// The closing half: the bottom edge rises back towards the item (#177)
+    private func animateOut(_ content: NSView, duration: CFTimeInterval) {
+        guard let layer = content.layer, let mask = layer.mask else { return }
+        let height = mask.bounds.height
+        mask.bounds = CGRect(x: 0, y: 0, width: mask.bounds.width, height: 0)
+        let shrink = CABasicAnimation(keyPath: "bounds.size.height")
+        shrink.fromValue = height
+        shrink.toValue = 0
+        shrink.duration = duration
+        shrink.timingFunction = CAMediaTimingFunction(name: .easeIn)
+        mask.add(shrink, forKey: "wipe")
     }
 
     @objc private func togglePanel() {
         guard let button = item.button else { return }
-        if panelPopover.isShown { panelPopover.performClose(nil); return }
+        if panelPopover.isShown { closePanel(); return }
         // Before the panel closes the other windows, so the main panel doesn't take that as backing out and close it in turn
         MainPanelReturn.shared.menuBarPanelOpened()
         let panel = NSHostingController(rootView: MenuBarPanel { [weak self] in self?.closePanel() }.onAppear { closeAllWindow() })
         panel.sizingOptions = [.preferredContentSize]
         panelPopover.contentViewController = panel
         panelPopover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+        // A click on the panel used to bring the app forward, which brightened the popover's material for no reason
+        // (#179): a nonactivating window takes the click without activating the app
+
+        animateIn()
+        activity = ProcessInfo.processInfo.beginActivity(options: .userInitiated, reason: "Menu bar panel")
         // The panel is up: close it on any click outside, and ask for the front so it takes the keys. A transient
         // popover only dismisses itself while its app is in front, and a status item's click doesn't always put it
         // there; the click monitor works either way (#176). The activation is best effort: macOS usually refuses one
@@ -122,6 +198,10 @@ final class MenuBarItem: NSObject, NSMenuDelegate, NSPopoverDelegate {
         if let outsideClick {
             NSEvent.removeMonitor(outsideClick)
             self.outsideClick = nil
+        }
+        if let activity {
+            ProcessInfo.processInfo.endActivity(activity)
+            self.activity = nil
         }
     }
 
