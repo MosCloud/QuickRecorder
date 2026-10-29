@@ -22,9 +22,9 @@
 "Open Settings" = "開啟系統設定";
 "Quit" = "退出程式";
 "Cancel" = "取消";
-"Please select the App(s) to record" = "請選擇需要錄製的應用程式, 支援多選";
-"Please select the window(s) to record" = "請選擇需要錄製的視窗, 支援多選";
-"Please select the screen to record" = "請選擇需要錄製的螢幕, 僅支援單選";
+"Please select the App(s) to record" = "選擇需要錄製的應用程式, 支援多選";
+"Please select the window(s) to record" = "選擇需要錄製的視窗, 支援多選";
+"Please select the screen to record" = "選擇需要錄製的螢幕, 僅支援單選";
 "Refresh" = "重新整理列表";
 "Start" = "開始錄製";
 "Resolution" = "解析度";
