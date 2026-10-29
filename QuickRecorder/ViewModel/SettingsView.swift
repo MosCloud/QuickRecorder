@@ -290,12 +290,15 @@ struct OutputSettingsView: View {
                            isOn: $withAlpha)
             }
             Section("Save") {
-                SettingsRow("Output Folder") {
-                    HStack(spacing: 8) {
-                        FolderPath(path: saveDirectory ?? "")
-                        Button("Select...") { updateOutputDirectory() }
-                    }
+                // A row of its own: `LabeledContent` moves a path too wide for the row onto a second line, which
+                // turns one setting into two (#122)
+                HStack(spacing: 8) {
+                    Text("Output Folder").offset(y: 2)
+                    Spacer(minLength: 8)
+                    FolderPath(path: saveDirectory ?? "")
+                    Button("Select...") { updateOutputDirectory() }
                 }
+                .padding(.vertical, -2)
             }
         }
         .formStyle(.grouped)
@@ -336,7 +339,8 @@ private struct FolderPath: View {
                 .truncationMode(.middle)
                 .underline(hovering)
                 .foregroundStyle(hovering ? Color.primary : Color.secondary)
-                .frame(maxWidth: .infinity, alignment: .trailing)
+                // The text gives way to the buttons beside it and cuts in the middle; a frame with a width
+                // would either wrap the row or hold the path's space even when it is short (#122)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
