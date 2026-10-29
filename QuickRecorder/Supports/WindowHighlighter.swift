@@ -136,6 +136,11 @@ class WindowHighlighter {
             cover.title = "Screen Cover"
             cover.orderFront(self)
         }
+        // Esc goes to the key window, and until the pointer is over a window there is no highlight to take it: the
+        // cover under the pointer does, so Esc works as soon as point-select opens (#133)
+        let pointer = NSEvent.mouseLocation
+        let target = NSScreen.screens.first { $0.frame.contains(pointer) } ?? NSScreen.main
+        NSApp.windows.first { $0.title == "Screen Cover" && $0.frame == target?.frame }?.makeKeyAndOrderFront(nil)
         
         if mouseMonitor == nil {
             mouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved]) { _ in self.updateMask() }

@@ -362,13 +362,24 @@ class ScreenshotOverlayView: NSView {
         return CGRect(x: x, y: y, width: w, height: h)
     }
 
+    /// The bounds a drag draws inside: set when the view is laid out, not only when it draws, or the first drag after
+    /// the selector opens has no bounds yet and does nothing (#133)
+    override func layout() {
+        super.layout()
+        maxFrame = bounds
+    }
+
     override func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)
-        maxFrame = dirtyRect
+        maxFrame = bounds
     }
 
     // The frost and the marks only show: every click is the overlay's
     override func hitTest(_ point: NSPoint) -> NSView? { super.hitTest(point) == nil ? nil : self }
+
+    /// The capsule takes key when it opens under the overlay, so the overlay's first click would otherwise only
+    /// bring it forward and be swallowed: the click that starts a drag has to land (#133)
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
     /// Frost everywhere but the area, and the marks around it
     private func layoutMarks() {
@@ -551,7 +562,7 @@ class ScreenshotOverlayView: NSView {
             } else {
                 //dragIng = false
                 // 创建新矩形
-                guard let maxFrame = maxFrame else { return }
+                let maxFrame = self.maxFrame ?? bounds
                 let origin = NSPoint(x: max(maxFrame.origin.x, min(initialLocation.x, currentLocation.x)), y: max(maxFrame.origin.y, min(initialLocation.y, currentLocation.y)))
                 var maxH = abs(currentLocation.y - initialLocation.y)
                 var maxW = abs(currentLocation.x - initialLocation.x)
