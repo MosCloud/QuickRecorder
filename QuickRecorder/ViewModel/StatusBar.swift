@@ -105,13 +105,15 @@ final class MenuBarItem: NSObject, NSMenuDelegate, NSPopoverDelegate {
     func closePanel() {
         guard panelPopover.isShown, !closing else { return }
         closing = true
-        guard let window = panelPopover.contentViewController?.view.window else {
+        guard let window = panelPopover.contentViewController?.view.window, let content = window.contentView else {
             closing = false
             panelPopover.performClose(nil)
             return
         }
+        anchorTop(content)
+        animateOut(content, duration: 0.15)
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.14
+            context.duration = 0.15
             context.timingFunction = CAMediaTimingFunction(name: .easeIn)
             window.animator().alphaValue = 0
         } completionHandler: { [weak self] in
@@ -123,29 +125,47 @@ final class MenuBarItem: NSObject, NSMenuDelegate, NSPopoverDelegate {
         }
     }
 
-    /// A short fade with a slight grow from the item, the way a menu bar panel opens (#177)
+    /// The panel grows downwards from the item and fades in; closing shrinks it back up (#177)
     private func animateIn() {
-        guard let content = panelPopover.contentViewController?.view, let window = content.window else { return }
+        guard let window = panelPopover.contentViewController?.view.window, let content = window.contentView else { return }
         window.alphaValue = 0
         content.wantsLayer = true
+        anchorTop(content)
         if let layer = content.layer {
-            let frame = content.frame
-            layer.anchorPoint = CGPoint(x: 0.5, y: 1)
-            layer.position = CGPoint(x: frame.midX, y: frame.maxY)
-            layer.transform = CATransform3DMakeScale(0.95, 0.95, 1)
-            let grow = CABasicAnimation(keyPath: "transform.scale")
-            grow.fromValue = 0.95
-            grow.toValue = 1
-            grow.duration = 0.18
+            layer.transform = CATransform3DMakeScale(0.75, 0.75, 1)
+            let grow = CABasicAnimation(keyPath: "transform")
+            grow.fromValue = CATransform3DMakeScale(0.75, 0.75, 1)
+            grow.toValue = CATransform3DIdentity
+            grow.duration = 0.2
             grow.timingFunction = CAMediaTimingFunction(name: .easeOut)
             layer.add(grow, forKey: "grow")
             layer.transform = CATransform3DIdentity
         }
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.18
+            context.duration = 0.2
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
             window.animator().alphaValue = 1
         }
+    }
+
+    /// Scale the content around its top edge, so it grows downwards from the item
+    private func anchorTop(_ content: NSView) {
+        guard let layer = content.layer else { return }
+        let frame = content.frame
+        layer.anchorPoint = CGPoint(x: 0.5, y: 1)
+        layer.position = CGPoint(x: frame.midX, y: frame.maxY)
+    }
+
+    /// The closing half of the entrance: the bottom edge rises back towards the item (#177)
+    private func animateOut(_ content: NSView, duration: CFTimeInterval) {
+        guard let layer = content.layer else { return }
+        let shrink = CABasicAnimation(keyPath: "transform")
+        shrink.fromValue = CATransform3DIdentity
+        shrink.toValue = CATransform3DMakeScale(0.75, 0.75, 1)
+        shrink.duration = duration
+        shrink.timingFunction = CAMediaTimingFunction(name: .easeIn)
+        layer.add(shrink, forKey: "shrink")
+        layer.transform = CATransform3DMakeScale(0.75, 0.75, 1)
     }
 
     @objc private func togglePanel() {
