@@ -59,7 +59,7 @@ struct WinSelector: View {
             // screen sits right of it, where the area selector keeps 「窗口范围」 (#144)
             SelectorCapsule(leading: [CapsuleLeading(symbol: "arrow.clockwise", label: "Refresh".local, spins: true, action: refresh,
                                                      bubble: AnyView(listSettings)),
-                                      CapsuleLeading(symbol: "macwindow.and.cursorarrow", label: "Select Window Directly".local,
+                                      CapsuleLeading(symbol: "macwindow", label: "Select Window Directly".local,
                                                      action: { WindowHighlighter.shared.registerMouseMonitor() })],
                             screen: display?.nsScreen ?? NSScreen.main, canStart: selected.count >= 1) {
                 startRecording(autoStop: $0)
