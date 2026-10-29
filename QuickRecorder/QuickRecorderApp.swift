@@ -317,11 +317,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, SCStreamDelegate, SCStreamOu
         mainPanel.isReleasedWhenClosed = false
         mainPanel.isMovableByWindowBackground = true
         mainPanel.collectionBehavior = [.canJoinAllSpaces]
-        mainPanel.center()
+        // The lower third, centred across the screen (#166); only the first time, since a panel that is up is moved by
+        // the pointer rather than by this
         if let screen = mainPanel.screen {
-            let wX = (screen.frame.width - mainPanel.frame.width) / 2 + screen.frame.minX
-            let wY = (screen.frame.height - mainPanel.frame.height) / 2 + screen.frame.minY
-            mainPanel.setFrameOrigin(NSPoint(x: wX, y: wY))
+            mainPanel.setFrameOrigin(PanelPlacement.defaultOrigin(screen: screen.frame, panel: mainPanel.frame.size,
+                                                                  visible: screen.visibleFrame))
         }
         mainPanel.makeKeyAndOrderFront(self)
         RecordingControls.shared.closeMenuBarPanel()
