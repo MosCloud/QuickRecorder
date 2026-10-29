@@ -59,6 +59,14 @@ struct AreaRectTests {
         #expect(AreaRect.restored(nil, visible: visible) == AreaRect.initial(visible: visible))
     }
 
+    @Test("A remembered rectangle too small to be a choice is a stray click's leftover, so the screen starts fresh")
+    func restoredIgnoresATinyOne() {
+        let leftover = CGRect(x: 864, y: 525, width: 0.297, height: 0.594)
+        #expect(AreaRect.restored(leftover, visible: visible) == AreaRect.initial(visible: visible))
+        let almost = CGRect(x: 100, y: 200, width: 19, height: 40)
+        #expect(AreaRect.restored(almost, visible: visible) == AreaRect.initial(visible: visible))
+    }
+
     @Test("Changing the size keeps the middle where it was")
     func resizedKeepsTheMiddle() {
         let rect = CGRect(x: 342, y: 282, width: 600, height: 450)
