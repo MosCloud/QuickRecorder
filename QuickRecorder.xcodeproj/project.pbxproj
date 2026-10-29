@@ -15,6 +15,7 @@
 		CC3300000000000000011303 /* AreaRect.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000011301 /* AreaRect.swift */; };
 		CC3300000000000000011307 /* AreaRectTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000011306 /* AreaRectTests.swift */; };
 		CC3300000000000000015502 /* PickerEscape.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000015501 /* PickerEscape.swift */; };
+		CC3300000000000000016402 /* WindowDrag.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000016401 /* WindowDrag.swift */; };
 		CC3300000000000000015503 /* PickerEscape.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000015501 /* PickerEscape.swift */; };
 		CC3300000000000000015507 /* PickerEscapeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000015506 /* PickerEscapeTests.swift */; };
 		1821F2E82CF4B226004A2EC0 /* MenuBarPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1821F2E72CF4B226004A2EC0 /* MenuBarPanel.swift */; };
@@ -126,6 +127,7 @@
 		CC3300000000000000011301 /* AreaRect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AreaRect.swift; sourceTree = "<group>"; };
 		CC3300000000000000011306 /* AreaRectTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AreaRectTests.swift; sourceTree = "<group>"; };
 		CC3300000000000000015501 /* PickerEscape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PickerEscape.swift; sourceTree = "<group>"; };
+		CC3300000000000000016401 /* WindowDrag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowDrag.swift; sourceTree = "<group>"; };
 		CC3300000000000000015506 /* PickerEscapeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PickerEscapeTests.swift; sourceTree = "<group>"; };
 		1821F2E72CF4B226004A2EC0 /* MenuBarPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarPanel.swift; sourceTree = "<group>"; };
 		184CAEC62BDCCC2300D61D57 /* AVContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVContext.swift; sourceTree = "<group>"; };
@@ -245,6 +247,7 @@
 				18A551F02D0749C3008FC5F6 /* Scriptable.sdef */,
 				18A551F12D0749C3008FC5F6 /* SleepPreventer.swift */,
 				18A551F32D0749C3008FC5F6 /* WindowAccessor.swift */,
+				CC3300000000000000016401 /* WindowDrag.swift */,
 				18A551F42D0749C3008FC5F6 /* WindowHighlighter.swift */,
 				CC3300000000000000001001 /* BackgroundColorWindow.swift */,
 				CC3300000000000000011704 /* ColorWindow.swift */,
@@ -553,6 +556,7 @@
 				CC3300000000000000011702 /* ColorWindowPlacement.swift in Sources */,
 				CC3300000000000000011302 /* AreaRect.swift in Sources */,
 				CC3300000000000000015502 /* PickerEscape.swift in Sources */,
+				CC3300000000000000016402 /* WindowDrag.swift in Sources */,
 				CC3300000000000000011705 /* ColorWindow.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
