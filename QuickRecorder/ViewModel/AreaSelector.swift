@@ -338,6 +338,7 @@ class ScreenshotOverlayView: NSView {
     /// Leaving the screen keeps its selection, also when the selection is cancelled: the next visit starts where this
     /// one left off (#113)
     override func viewWillMove(toWindow newWindow: NSWindow?) {
+        if newWindow == nil { NSCursor.arrow.set() }
         if newWindow == nil, let rect = selectionRect, rect.width > 0, rect.height > 0,
            let name = window?.screen?.localizedName {
             let all = ud.object(forKey: "savedArea") as? [String: [String: CGFloat]] ?? [:]
@@ -367,6 +368,7 @@ class ScreenshotOverlayView: NSView {
     override func layout() {
         super.layout()
         maxFrame = bounds
+        updateCursor()
     }
 
     override func draw(_ dirtyRect: NSRect) {
@@ -395,6 +397,7 @@ class ScreenshotOverlayView: NSView {
         cutOut.path = path
         CATransaction.commit()
         marks.rect = CGRect(x: r.minX, y: b.height - r.maxY, width: r.width, height: r.height)
+        updateCursor()
     }
 
     /// Frosts the overlay with `display`'s picture once it's taken
@@ -427,7 +430,8 @@ class ScreenshotOverlayView: NSView {
 
     /// Where each handle takes the pointer: a square at a corner, the rest of the edge between them
     private func zone(_ handle: ResizeHandle, of r: NSRect) -> NSRect {
-        let corner: CGFloat = 28, edge: CGFloat = 14
+        // A small area's corners would otherwise cover all of it, leaving no room to drag it (#136)
+        let corner = min(28, max(r.width, r.height) / 3), edge = min(14, min(r.width, r.height) / 3)
         func square(_ x: CGFloat, _ y: CGFloat) -> NSRect { NSRect(x: x - corner / 2, y: y - corner / 2, width: corner, height: corner) }
         let across = NSRect(x: r.minX + corner / 2, y: 0, width: max(r.width - corner, 0), height: edge)
         let along = NSRect(x: 0, y: r.minY + corner / 2, width: edge, height: max(r.height - corner, 0))
@@ -460,10 +464,17 @@ class ScreenshotOverlayView: NSView {
     override func cursorUpdate(with event: NSEvent) { pointerMoved(event) }
 
     private func pointerMoved(_ event: NSEvent) {
-        let point = convert(event.locationInWindow, from: nil)
-        let handle = handleForPoint(point)
+        updateCursor(at: convert(event.locationInWindow, from: nil))
+    }
+
+    /// The pointer's shape follows what can be done where it is now, so it is also right when the area changes under a
+    /// pointer that hasn't moved: on opening, after the Edit Area bubble, after a drag (#136)
+    private func updateCursor(at point: NSPoint? = nil) {
+        guard let window, window.isVisible else { return }
+        let here = point ?? convert(window.mouseLocationOutsideOfEventStream, from: nil)
+        let handle = handleForPoint(here)
         if marks.handle != handle { marks.handle = handle }
-        cursor(for: handle, at: point).set()
+        cursor(for: handle, at: here).set()
     }
 
     /// Resizing at the edges and corners, a hand inside the area, a crosshair to draw a new one outside it
@@ -592,7 +603,7 @@ class ScreenshotOverlayView: NSView {
             SCContext.screenArea = rect
         }
         ease(false)
-        pointerMoved(event)
+        updateCursor(at: convert(event.locationInWindow, from: nil))
     }
 }
 
