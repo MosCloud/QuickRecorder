@@ -127,24 +127,29 @@ final class MenuBarItem: NSObject, NSMenuDelegate, NSPopoverDelegate {
         }
     }
 
-    /// The panel grows downwards from the item and fades in; closing shrinks it back up (#177)
+    /// The panel is revealed from its top edge downwards and covered back up from the bottom (#177). The mask is a
+    /// layer of our own: the frame view's own transform is managed by AppKit, and its translation was dropped.
     private func animateIn() {
         guard let window = panelPopover.contentViewController?.view.window,
-              // The whole popover (its glass and arrow, not just the content) grows, so the frame view is the one scaled
               let content = window.contentView?.superview ?? window.contentView else { return }
+        content.layoutSubtreeIfNeeded()
         window.alphaValue = 0
         content.wantsLayer = true
-        if let layer = content.layer {
-            let start = entranceTransform(of: content)
-            layer.transform = start
-            let grow = CABasicAnimation(keyPath: "transform")
-            grow.fromValue = start
-            grow.toValue = CATransform3DIdentity
-            grow.duration = 0.2
-            grow.timingFunction = CAMediaTimingFunction(name: .easeOut)
-            layer.add(grow, forKey: "grow")
-            layer.transform = CATransform3DIdentity
-        }
+        guard let layer = content.layer else { return }
+        layer.transform = CATransform3DIdentity
+        let w = content.bounds.width, h = content.bounds.height
+        let mask = CALayer()
+        mask.backgroundColor = NSColor.black.cgColor
+        mask.anchorPoint = CGPoint(x: 0.5, y: 1)
+        mask.position = CGPoint(x: w / 2, y: h)
+        mask.bounds = CGRect(x: 0, y: 0, width: w, height: h)
+        layer.mask = mask
+        let grow = CABasicAnimation(keyPath: "bounds.size.height")
+        grow.fromValue = 0
+        grow.toValue = h
+        grow.duration = 0.2
+        grow.timingFunction = CAMediaTimingFunction(name: .easeOut)
+        mask.add(grow, forKey: "wipe")
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.2
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
@@ -152,27 +157,17 @@ final class MenuBarItem: NSObject, NSMenuDelegate, NSPopoverDelegate {
         }
     }
 
-    /// The transform that scales the panel down with its top edge in place: AppKit owns the anchor point of a
-    /// view-backed layer, so it is not touched here; the scaling point is moved to the top middle instead (#177)
-    private func entranceTransform(of content: NSView) -> CATransform3D {
-        let w = content.bounds.width, h = content.bounds.height
-        return CATransform3DConcat(
-            CATransform3DMakeTranslation(w / 2, h, 0),
-            CATransform3DConcat(CATransform3DMakeScale(0.75, 0.75, 1),
-                                CATransform3DMakeTranslation(-w / 2, -h, 0)))
-    }
-
-    /// The closing half of the entrance: the bottom edge rises back towards the item (#177)
+    /// The closing half: the bottom edge rises back towards the item (#177)
     private func animateOut(_ content: NSView, duration: CFTimeInterval) {
-        guard let layer = content.layer else { return }
-        let end = entranceTransform(of: content)
-        let shrink = CABasicAnimation(keyPath: "transform")
-        shrink.fromValue = CATransform3DIdentity
-        shrink.toValue = end
+        guard let layer = content.layer, let mask = layer.mask else { return }
+        let height = mask.bounds.height
+        mask.bounds = CGRect(x: 0, y: 0, width: mask.bounds.width, height: 0)
+        let shrink = CABasicAnimation(keyPath: "bounds.size.height")
+        shrink.fromValue = height
+        shrink.toValue = 0
         shrink.duration = duration
         shrink.timingFunction = CAMediaTimingFunction(name: .easeIn)
-        layer.add(shrink, forKey: "shrink")
-        layer.transform = end
+        mask.add(shrink, forKey: "wipe")
     }
 
     @objc private func togglePanel() {
