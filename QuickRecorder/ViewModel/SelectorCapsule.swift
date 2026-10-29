@@ -228,8 +228,8 @@ struct SelectorCapsule: View {
     var leading: [CapsuleLeading]
     /// The display being recorded: its refresh rate bounds the frame rates, its scale whether Retina differs
     var screen: NSScreen?
-    /// Screen and area recordings show the screen as it is (#83)
-    var showsBackground = true
+    /// Only an application recording draws the bubble on a background colour (#117); the other four leave it off
+    var showsBackground = false
     /// System audio has no picture (#96): no cursor, no Options, and its own audio is what it records
     var recordsVideo = true
     var canStart = true
@@ -697,7 +697,7 @@ private struct Swatches: View {
     }
 }
 
-/// Reports where the bubble is on screen, in AppKit's bottom-left coordinates, so the colour window can sit beside it
+/// A view sitting behind the bubble, handed to the colour window; that window measures where it is when it opens
 private struct BubbleFrameReporter: NSViewRepresentable {
     func makeNSView(context: Context) -> Reporter { Reporter() }
     func updateNSView(_ view: Reporter, context: Context) {}
@@ -852,4 +852,3 @@ struct SelectableCard<Thumbnail: View>: View {
         .onHover { h in withAnimation(.easeOut(duration: 0.15)) { hovering = h } }
     }
 }
-

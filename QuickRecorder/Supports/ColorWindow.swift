@@ -5,9 +5,9 @@
 //  The custom background colour window (#117). It opens from the Options bubble's Custom swatch, sits beside the
 //  bubble, and stays while it is used — clicking in it or in the system colour panel keeps the bubble open.
 //
-//  It never takes key. A key window here would drop the selector's own key look and draw a dark rim around the
-//  capsule's Liquid Glass, the way the floating capsule avoids it; so the panel cannot become key and uses the blur
-//  material instead of glass.
+//  It takes key while it is used, because Liquid Glass draws its active look only in a key window, but it never
+//  becomes main and it hands key back to the selector's window when it closes. The panel is drawn with whichever of
+//  the three materials `capsuleMaterial` chose, the same ones the capsule and the main panel use.
 //
 
 import AppKit

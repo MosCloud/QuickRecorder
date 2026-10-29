@@ -1,5 +1,5 @@
 //
-//  ColorGridPicker.swift
+//  BackgroundColorWindow.swift
 //  QuickRecorder
 //
 //  What the custom background colour window holds (#117): a preview of an app window on the colour, the colours chosen
@@ -135,7 +135,7 @@ private final class SystemColorPanel: NSObject {
         let panel = NSColorPanel.shared
         panel.showsAlpha = false
         panel.color = NSColor(ColorWindow.shared.model.color)
-        // Clicking a swatch needs no keyboard, so the selector's window keeps key and its Liquid Glass its active look
+        // Only a click that needs typing takes key, so the colour window keeps its key look while the panel is used
         panel.becomesKeyOnlyIfNeeded = true
         panel.setTarget(self)
         panel.setAction(#selector(changed(_:)))
