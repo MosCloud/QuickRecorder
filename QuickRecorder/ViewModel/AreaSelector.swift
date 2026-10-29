@@ -343,6 +343,17 @@ class ScreenshotOverlayView: NSView {
         marks.notch = window?.screen?.notch
     }
 
+    /// Leaving the screen keeps its selection, also when the selection is cancelled: the next visit starts where this
+    /// one left off (#113)
+    override func viewWillMove(toWindow newWindow: NSWindow?) {
+        if newWindow == nil, let rect = selectionRect, rect.width > 0, rect.height > 0,
+           let name = window?.screen?.localizedName {
+            let all = ud.object(forKey: "savedArea") as? [String: [String: CGFloat]] ?? [:]
+            ud.set(AreaRect.saving(all, screen: name, rect: rect), forKey: "savedArea")
+        }
+        super.viewWillMove(toWindow: newWindow)
+    }
+
     /// This screen's visible frame (what the menu bar and the Dock leave) moved into the overlay's coordinates, which
     /// start at the screen's own bottom left (#113)
     private var visibleArea: CGRect {
