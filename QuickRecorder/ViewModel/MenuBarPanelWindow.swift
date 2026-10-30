@@ -91,6 +91,8 @@ final class MenuBarPanelController: NSObject, NSWindowDelegate {
     private var escape: Any?
     private var activity: NSObjectProtocol?
     private var closing = false
+    /// Run once the panel has closed, however it was closed: Esc, a click outside, the status item, a tile (#200)
+    var onClosed: (() -> Void)?
 
     var isShown: Bool { window?.isVisible == true }
 
@@ -186,6 +188,7 @@ final class MenuBarPanelController: NSObject, NSWindowDelegate {
         }
         window = nil
         closing = false
+        onClosed?()
     }
 
     /// The panel is revealed from its top edge downwards, the arrow first, and covered back up from the bottom (#177).

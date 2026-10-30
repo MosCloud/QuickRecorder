@@ -131,8 +131,11 @@ final class MenuBarItem: NSObject, NSMenuDelegate {
     @objc private func togglePanel() {
         guard let button = item.button else { return }
         if panel.isShown { closePanel(); return }
-        // Before the panel closes the other windows, so the main panel doesn't take that as backing out and close it in turn
-        MainPanelReturn.shared.menuBarPanelOpened()
+        // Before the panel closes the other windows, so the main panel doesn't take that as backing out and close it in turn.
+        // Remembering whether it was open is what lets it come back when this panel closes (#200)
+        MainPanelReturn.shared.menuBarPanelOpened(mainPanelOpen: MainPanelReturn.shared.mainPanelIsOpen)
+        // Every way out of the panel lands here, so the hand-back happens once, wherever the close came from
+        panel.onClosed = { MainPanelReturn.shared.menuBarPanelClosed() }
         let content = NSHostingView(rootView: MenuBarPanel { [weak self] in self?.closePanel() }
             .onAppear { closeAllWindow() })
         panel.show(relativeTo: button, content: content)
