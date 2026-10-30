@@ -67,14 +67,7 @@ struct NotchCapsuleView: View {
                     .font(.system(size: 22, weight: .semibold).monospacedDigit())
                     .contentTransition(.numericText(countsDown: true))
                 Text("seconds until recording").font(.callout).foregroundStyle(.secondary)
-                Button { RecordingControls.shared.capsule.cancelCountdown() } label: {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 11, weight: .bold))
-                        .frame(width: 24, height: 24)
-                        .contentShape(Circle())
-                }
-                .buttonStyle(.plain)
-                .help("Cancel")
+                CancelCountdownButton { RecordingControls.shared.capsule.cancelCountdown() }
             }
         } else {
             HStack(spacing: 10) {
@@ -111,6 +104,28 @@ struct NotchCapsuleView: View {
                 .contentShape(Circle())
         }
         .help(help)
+    }
+}
+
+/// The countdown's cancel button: the same symbol, colours and hover highlight the main panel and the selector
+/// capsule close with (#199), so one gesture looks the same wherever it is offered.
+private struct CancelCountdownButton: View {
+    let action: () -> Void
+    @State private var hovering = false
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "xmark.circle")
+                .font(.system(size: 20))
+                .foregroundStyle(hovering ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
+                .frame(width: 28, height: 28)
+                .background(.primary.opacity(hovering ? 0.12 : 0.0001), in: Circle())
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+        .help("Cancel")
+        .accessibilityLabel("Cancel".local)
     }
 }
 
