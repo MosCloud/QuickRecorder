@@ -17,6 +17,8 @@ struct RecordTile: View {
     var hotkey: KeyboardShortcuts.Name?
     var compact = false
     var scale: CGFloat = 1
+    /// The menu bar panel shows no tooltips (#184)
+    var showsHelp = true
     let action: () -> Void
 
     var body: some View {
@@ -24,7 +26,7 @@ struct RecordTile: View {
             SelectorView(title: title.local, symbol: symbol, symbolSize: symbolSize, overlayer: overlayer, compact: compact, scale: scale)
         }
         .buttonStyle(TilePress())
-        .help(hotkey.flatMap { KeyboardShortcuts.getShortcut(for: $0)?.description } ?? "")
+        .helpIfPresent(showsHelp ? hotkey.flatMap { KeyboardShortcuts.getShortcut(for: $0)?.description } : nil)
     }
 }
 
@@ -44,6 +46,8 @@ struct IconButton: View {
     let help: String
     var hoverTint: Color = .primary
     var size: CGFloat = 26
+    /// The menu bar panel shows no tooltips (#184)
+    var showsHelp = true
     let action: () -> Void
     @State private var hovering = false
 
@@ -57,7 +61,15 @@ struct IconButton: View {
         }
         .buttonStyle(.plain)
         .onHover { hovering = $0 }
-        .help(help)
+        .helpIfPresent(showsHelp ? help : nil)
         .accessibilityLabel(help)
+    }
+}
+
+extension View {
+    /// A tooltip only when it has something to say: the menu bar panel shows none (#184)
+    @ViewBuilder
+    func helpIfPresent(_ text: String?) -> some View {
+        if let text, !text.isEmpty { self.help(text) } else { self }
     }
 }
