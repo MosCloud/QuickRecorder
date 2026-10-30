@@ -46,8 +46,6 @@ struct IconButton: View {
     let help: String
     var hoverTint: Color = .primary
     var size: CGFloat = 26
-    /// The menu bar panel shows no tooltips (#184)
-    var showsHelp = true
     let action: () -> Void
     @State private var hovering = false
 
@@ -61,7 +59,7 @@ struct IconButton: View {
         }
         .buttonStyle(.plain)
         .onHover { hovering = $0 }
-        .helpIfPresent(showsHelp ? help : nil)
+        .help(help)
         .accessibilityLabel(help)
     }
 }
