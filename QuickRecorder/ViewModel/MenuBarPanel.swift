@@ -50,6 +50,8 @@ struct MenuBarPanel: View {
     private func tile(_ title: String, _ symbol: String, overlayer: String = "", hotkey: KeyboardShortcuts.Name?,
                       action: @escaping () -> Void) -> some View {
         RecordTile(title: title, symbol: symbol, overlayer: overlayer, hotkey: hotkey, compact: true, showsHelp: false) {
+            // A recording or a picker takes the main panel's place: closing the panel must not bring the old one back
+            MainPanelReturn.shared.menuBarPanelTookOver()
             close()
             // A tile is a user action here too: the one activation a picker asks for, so the menu bar can come off
             // (#170)

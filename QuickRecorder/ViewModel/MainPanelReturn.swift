@@ -33,7 +33,19 @@ final class MainPanelReturn {
 
     func settingsOpened() { state.settingsOpened() }
 
-    func menuBarPanelOpened() { state.menuBarPanelOpened() }
+    /// - Parameter mainPanelOpen: the main panel was on screen when the menu bar panel opened.
+    func menuBarPanelOpened(mainPanelOpen: Bool) { state.menuBarPanelOpened(mainPanelOpen: mainPanelOpen) }
+
+    /// The menu bar panel closed: bring the main panel back if it was open before, unless something took its place.
+    func menuBarPanelClosed() {
+        if state.menuBarPanelClosed() { show() }
+    }
+
+    /// The menu bar panel is about to start a recording or open Settings: the main panel must not come back after it.
+    func menuBarPanelTookOver() { state.menuBarPanelTookOver() }
+
+    /// Whether the main panel is on screen right now, read from the windows rather than from any remembered flag.
+    var mainPanelIsOpen: Bool { AppDelegate.shared.mainPanelWindow != nil }
 
     /// Start was pressed in a picker, or the panel started a recording itself.
     func startPressed() { state.startPressed() }
