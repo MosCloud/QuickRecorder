@@ -24,6 +24,10 @@
 		CC3300000000000000017102 /* PickerHold.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000017101 /* PickerHold.swift */; };
 		CC3300000000000000017103 /* PickerHold.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000017101 /* PickerHold.swift */; };
 		CC3300000000000000017107 /* PickerHoldTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000017106 /* PickerHoldTests.swift */; };
+		CC3300000000000000017302 /* MenuBarPanelPlacement.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000017301 /* MenuBarPanelPlacement.swift */; };
+		CC3300000000000000017303 /* MenuBarPanelPlacement.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000017301 /* MenuBarPanelPlacement.swift */; };
+		CC3300000000000000017307 /* MenuBarPanelPlacementTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000017306 /* MenuBarPanelPlacementTests.swift */; };
+		CC3300000000000000017402 /* MenuBarPanelWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000017401 /* MenuBarPanelWindow.swift */; };
 		CC3300000000000000015507 /* PickerEscapeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000015506 /* PickerEscapeTests.swift */; };
 		1821F2E82CF4B226004A2EC0 /* MenuBarPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1821F2E72CF4B226004A2EC0 /* MenuBarPanel.swift */; };
 		184CAEC72BDCCC2300D61D57 /* AVContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 184CAEC62BDCCC2300D61D57 /* AVContext.swift */; };
@@ -141,6 +145,9 @@
 		CC3300000000000000016606 /* PanelPlacementTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelPlacementTests.swift; sourceTree = "<group>"; };
 		CC3300000000000000017101 /* PickerHold.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PickerHold.swift; sourceTree = "<group>"; };
 		CC3300000000000000017106 /* PickerHoldTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PickerHoldTests.swift; sourceTree = "<group>"; };
+		CC3300000000000000017301 /* MenuBarPanelPlacement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarPanelPlacement.swift; sourceTree = "<group>"; };
+		CC3300000000000000017306 /* MenuBarPanelPlacementTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarPanelPlacementTests.swift; sourceTree = "<group>"; };
+		CC3300000000000000017401 /* MenuBarPanelWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarPanelWindow.swift; sourceTree = "<group>"; };
 		1821F2E72CF4B226004A2EC0 /* MenuBarPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarPanel.swift; sourceTree = "<group>"; };
 		184CAEC62BDCCC2300D61D57 /* AVContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVContext.swift; sourceTree = "<group>"; };
 		184CAEC82BDDEC6800D61D57 /* AppBlockSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBlockSelector.swift; sourceTree = "<group>"; };
@@ -323,6 +330,7 @@
 				18FEBDAF2BD2C0D1003F09BC /* SettingsView.swift */,
 				18D3BDEC2BCE5DC1006CFFC0 /* ContentView.swift */,
 				1821F2E72CF4B226004A2EC0 /* MenuBarPanel.swift */,
+				CC3300000000000000017401 /* MenuBarPanelWindow.swift */,
 				18D3BE002BCEB1BF006CFFC0 /* AppSelector.swift */,
 				18FEBDAB2BD01E82003F09BC /* WinSelector.swift */,
 				18F1A0E12BD3E4C000DB102C /* AreaSelector.swift */,
@@ -375,6 +383,7 @@
 				CC3300000000000000015501 /* PickerEscape.swift */,
 				CC3300000000000000016601 /* PanelPlacement.swift */,
 				CC3300000000000000017101 /* PickerHold.swift */,
+				CC3300000000000000017301 /* MenuBarPanelPlacement.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -403,6 +412,7 @@
 				CC3300000000000000015506 /* PickerEscapeTests.swift */,
 				CC3300000000000000016606 /* PanelPlacementTests.swift */,
 				CC3300000000000000017106 /* PickerHoldTests.swift */,
+				CC3300000000000000017306 /* MenuBarPanelPlacementTests.swift */,
 			);
 			path = QuickRecorderTests;
 			sourceTree = "<group>";
@@ -577,6 +587,8 @@
 				CC3300000000000000016702 /* PickerPresentation.swift in Sources */,
 				CC3300000000000000016602 /* PanelPlacement.swift in Sources */,
 				CC3300000000000000017102 /* PickerHold.swift in Sources */,
+				CC3300000000000000017302 /* MenuBarPanelPlacement.swift in Sources */,
+				CC3300000000000000017402 /* MenuBarPanelWindow.swift in Sources */,
 				CC3300000000000000011705 /* ColorWindow.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -634,7 +646,9 @@
 				CC3300000000000000016603 /* PanelPlacement.swift in Sources */,
 				CC3300000000000000016607 /* PanelPlacementTests.swift in Sources */,
 				CC3300000000000000017103 /* PickerHold.swift in Sources */,
+				CC3300000000000000017303 /* MenuBarPanelPlacement.swift in Sources */,
 				CC3300000000000000017107 /* PickerHoldTests.swift in Sources */,
+				CC3300000000000000017307 /* MenuBarPanelPlacementTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
