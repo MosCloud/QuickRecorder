@@ -174,18 +174,35 @@ struct MenuBarPanelReturnTests {
     func recordingTakesOver() {
         var state = PanelReturn()
         state.menuBarPanelOpened(mainPanelOpen: true)
-        state.menuBarPanelTookOver()
+        state.menuBarPanelTileChosen()
         let returned = state.menuBarPanelClosed()
         #expect(!returned)
     }
 
-    @Test("Settings opened from the panel's gear keeps the old panel away")
-    func settingsTakeOver() {
+    @Test("A picker opened from a panel tile brings the main panel back when it closes (#203)")
+    func pickerFromPanelTile() {
         var state = PanelReturn()
-        state.menuBarPanelOpened(mainPanelOpen: true)
-        state.menuBarPanelTookOver()
-        let returned = state.menuBarPanelClosed()
-        #expect(!returned)
+        state.menuBarPanelOpened(mainPanelOpen: false)
+        state.menuBarPanelTileChosen()
+        // The panel itself closed when the picker opened: nothing to hand back then
+        let panelClosed = state.menuBarPanelClosed()
+        // Backing out of the picker brings the panel, the same as the same tile in the main panel
+        let pickerClosed = state.windowClosed(othersOpen: false, recording: false)
+        #expect(!panelClosed)
+        #expect(pickerClosed)
+    }
+
+    @Test("Starting the recording from that picker still waits for the recording to end (#203)")
+    func pickerFromPanelTileThenRecording() {
+        var state = PanelReturn()
+        state.menuBarPanelOpened(mainPanelOpen: false)
+        state.menuBarPanelTileChosen()
+        state.startPressed()
+        let pickerClosed = state.windowClosed(othersOpen: false, recording: false)
+        state.recordingStarted()
+        let ended = state.recordingEnded(trimmerOpens: false)
+        #expect(!pickerClosed)
+        #expect(ended)
     }
 
     @Test("The next opening starts from what is on screen then, not from the last one")

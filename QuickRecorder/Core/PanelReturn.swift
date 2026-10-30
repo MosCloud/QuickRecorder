@@ -37,10 +37,12 @@ struct PanelReturn {
         return mainPanelWasOpen
     }
 
-    /// Something else took the panel's place while the menu bar panel was up (a recording started from its tiles,
-    /// Settings from its gear): closing it must not bring the old main panel back on top of that.
-    mutating func menuBarPanelTookOver() {
+    /// A tile of the menu bar panel opened a picker or started a countdown. Two things at once: the panel it displaced
+    /// must not come back on top of the picker (#200), and the picker is now the flow, so closing it does bring the
+    /// main panel back, exactly as if the same tile had been pressed there (#203).
+    mutating func menuBarPanelTileChosen() {
         mainPanelWasOpen = false
+        phase = .choosing
     }
 
     /// Start was pressed: a countdown, then a recording, is on its way.

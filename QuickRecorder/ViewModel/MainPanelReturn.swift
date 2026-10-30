@@ -41,8 +41,9 @@ final class MainPanelReturn {
         if state.menuBarPanelClosed() { show() }
     }
 
-    /// The menu bar panel is about to start a recording or open Settings: the main panel must not come back after it.
-    func menuBarPanelTookOver() { state.menuBarPanelTookOver() }
+    /// A menu bar panel tile opened a picker: the panel it displaced steps aside, but closing the picker brings the
+    /// main panel back, just as the same tile in the main panel would (#203).
+    func menuBarPanelTileChosen() { state.menuBarPanelTileChosen() }
 
     /// Whether the main panel is on screen right now, read from the windows rather than from any remembered flag.
     var mainPanelIsOpen: Bool { AppDelegate.shared.mainPanelWindow != nil }
