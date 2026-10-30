@@ -1,6 +1,6 @@
 ## Project context
 
-Personal-use maintenance fork of `lihaoyun6/QuickRecorder`, whose upstream went inactive in 2025-06. Builds run only on the owner's Mac and are never published: keep the upstream bundle id and app name, and ship no update channel. Minimum macOS is 26 (the owner runs 27). Upstream's open PRs and issues are a backlog to mine; cite them in backticks (`lihaoyun6/QuickRecorder#123`) so GitHub posts no cross-reference on upstream.
+Personal-use maintenance fork of `lihaoyun6/QuickRecorder`, whose upstream went inactive in 2025-06. Builds run only on the owner's Mac and are never published: keep the upstream bundle id and app name, and ship no update channel. Minimum macOS is 26 (the owner runs 27): keep the floor at 26, and guard any 27-only API with `#available(macOS 27, *)` and a working 26 fallback. macOS 26 has no test machine yet, so a test plan states whether 26 was tested or left untested. Upstream's open PRs and issues are a backlog to mine; cite them in backticks (`lihaoyun6/QuickRecorder#123`) so GitHub posts no cross-reference on upstream.
 
 ## Workflow
 
