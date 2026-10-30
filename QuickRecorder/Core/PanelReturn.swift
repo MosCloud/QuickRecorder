@@ -6,41 +6,49 @@
 /// When the main panel comes back: a recording, or the setup for one, that started from it has ended (#53),
 /// or Settings opened from it closed (#66). Recordings and Settings started elsewhere (a hotkey, the menu bar panel) leave it alone.
 ///
-/// The menu bar panel has to hand the panel back too (#200): opening it closes every window, the main panel included.
-/// A panel that was merely standing open comes back when that panel closes; one whose flow was abandoned does not.
+/// One question decides all of it: **was the main panel on screen when the user started this flow?** If it was, the
+/// panel comes back when the flow ends, whichever window the flow ran in; if it was not, nothing is brought back.
+/// The menu bar panel fits the same rule (#200, #203): it closes every window when it opens, so the answer is recorded
+/// at that moment, and whichever window ends the flow spends it.
 struct PanelReturn {
     private enum Phase { case idle, choosing, starting }
     private var phase = Phase.idle
-    /// The main panel was on screen when the menu bar panel opened, so closing that panel has to bring it back (#200)
-    private var mainPanelWasOpen = false
+    /// The main panel was on screen when this flow started, so ending the flow has to bring it back
+    private var mainPanelExpected = false
 
-    /// A main panel tile opened a picker or started a countdown.
+    /// A main panel tile opened a picker or started a countdown. The panel is on screen by definition, so it is
+    /// expected back when the flow ends.
     mutating func tileChosen() {
         phase = .choosing
+        mainPanelExpected = true
     }
 
-    /// The panel's Preferences button opened Settings: closing it is backing out, as from a picker.
+    /// The main panel's Preferences button opened Settings: closing it is backing out, as from a picker.
     mutating func settingsOpened() {
         phase = .choosing
+        mainPanelExpected = true
     }
 
-    /// The menu bar panel opened, closing every window: whatever the main panel was setting up is abandoned.
-    /// - Parameter mainPanelOpen: whether the main panel was on screen at that moment, which decides if it comes back.
+    /// The menu bar panel opened, closing every window. Whatever the main panel was setting up is abandoned; what
+    /// stays is the answer to whether it should come back at all.
+    /// - Parameter mainPanelOpen: the main panel was on screen at that moment.
     mutating func menuBarPanelOpened(mainPanelOpen: Bool) {
         phase = .idle
-        mainPanelWasOpen = mainPanelOpen
+        mainPanelExpected = mainPanelOpen
     }
 
-    /// The menu bar panel closed: true when the main panel it displaced has to come back.
+    /// The menu bar panel closed: true when the main panel it displaced has to come back. A panel that was not open
+    /// is never brought up by someone else's window closing (#203).
     mutating func menuBarPanelClosed() -> Bool {
-        defer { mainPanelWasOpen = false }
-        return mainPanelWasOpen
+        guard mainPanelExpected, phase == .idle else { return false }
+        mainPanelExpected = false
+        return true
     }
 
-    /// Something else took the panel's place while the menu bar panel was up (a recording started from its tiles,
-    /// Settings from its gear): closing it must not bring the old main panel back on top of that.
-    mutating func menuBarPanelTookOver() {
-        mainPanelWasOpen = false
+    /// A tile of the menu bar panel opened a picker or started a countdown: the picker is the flow now. Whether the
+    /// main panel comes back when the picker closes was settled when the panel opened, so it is not touched here (#203).
+    mutating func menuBarPanelTileChosen() {
+        phase = .choosing
     }
 
     /// Start was pressed: a countdown, then a recording, is on its way.
@@ -57,13 +65,13 @@ struct PanelReturn {
     mutating func windowClosed(othersOpen: Bool, recording: Bool) -> Bool {
         guard phase == .choosing, !othersOpen, !recording else { return false }
         phase = .idle
-        return true
+        return spend()
     }
 
     mutating func countdownCancelled() -> Bool {
         guard phase == .starting else { return false }
         phase = .idle
-        return true
+        return spend()
     }
 
     /// With the trimmer opening, the panel comes back once the trimmer closes.
@@ -74,6 +82,12 @@ struct PanelReturn {
             return false
         }
         phase = .idle
-        return true
+        return spend()
+    }
+
+    /// Takes the pending answer, so only the window that ends the flow brings the panel back.
+    private mutating func spend() -> Bool {
+        defer { mainPanelExpected = false }
+        return mainPanelExpected
     }
 }
