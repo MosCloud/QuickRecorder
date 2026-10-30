@@ -209,6 +209,8 @@ final class MenuBarPanelController: NSObject, NSWindowDelegate {
         grow.duration = 0.2
         grow.timingFunction = CAMediaTimingFunction(name: .easeOut)
         mask.add(grow, forKey: "wipe")
+        // The window shadow follows the mask as it grows (a window capture mid-reveal put it on the visible strip's
+        // edge), so the end of the reveal needs no invalidateShadow()
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.2
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
