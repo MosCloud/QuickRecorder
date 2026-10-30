@@ -53,13 +53,39 @@ final class MenuBarItem: NSObject, NSMenuDelegate {
             if let button = item.button {
                 button.title = ""
                 button.imagePosition = .imageOnly
-                button.image = NSImage(systemSymbolName: "dot.circle.and.hand.point.up.left.fill", accessibilityDescription: "QuickRecorder")?
-                    .withSymbolConfiguration(.init(pointSize: 14, weight: .medium))
+                button.image = Self.idleIcon()
                 button.target = self
                 button.action = #selector(togglePanel)
             }
         }
         item.isVisible = visible
+    }
+
+    /// The menu bar's idle icon (#186): `record.circle`'s ring with the app icon's square in the middle. Drawn as a
+    /// template image, so the menu bar tints it for a light or a dark bar by itself.
+    private static func idleIcon() -> NSImage {
+        let side = MenuBarIcon.box
+        let image = NSImage(size: NSSize(width: side, height: side), flipped: false) { _ in
+            let centre = side / 2
+            let radius = MenuBarIcon.ringPathRadius
+            let ring = NSBezierPath(ovalIn: NSRect(x: centre - radius, y: centre - radius,
+                                                   width: radius * 2, height: radius * 2))
+            ring.lineWidth = MenuBarIcon.ringLineWidth
+            NSColor.black.setStroke()
+            ring.stroke()
+
+            let half = MenuBarIcon.squareSide / 2
+            let square = NSBezierPath(roundedRect: NSRect(x: centre - half, y: centre - half,
+                                                          width: half * 2, height: half * 2),
+                                      xRadius: MenuBarIcon.squareCornerRadius,
+                                      yRadius: MenuBarIcon.squareCornerRadius)
+            NSColor.black.setFill()
+            square.fill()
+            return true
+        }
+        image.isTemplate = true
+        image.accessibilityDescription = "QuickRecorder"
+        return image
     }
 
     func showRecording(_ visible: Bool, kind: RecordingKind) {

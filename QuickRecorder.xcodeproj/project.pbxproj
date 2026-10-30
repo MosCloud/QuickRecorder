@@ -48,6 +48,9 @@
 		18D3BDEB2BCE5DC1006CFFC0 /* QuickRecorderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18D3BDEA2BCE5DC1006CFFC0 /* QuickRecorderApp.swift */; };
 		18D3BDED2BCE5DC1006CFFC0 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18D3BDEC2BCE5DC1006CFFC0 /* ContentView.swift */; };
 		CC3300000000000000018601 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000018600 /* AppIcon.icon */; };
+		CC3300000000000000019502 /* MenuBarIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000019501 /* MenuBarIcon.swift */; };
+		CC3300000000000000019503 /* MenuBarIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000019501 /* MenuBarIcon.swift */; };
+		CC3300000000000000019507 /* MenuBarIconTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3300000000000000019506 /* MenuBarIconTests.swift */; };
 		18D3BDEF2BCE5DC2006CFFC0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 18D3BDEE2BCE5DC2006CFFC0 /* Assets.xcassets */; };
 		18D3BDF22BCE5DC2006CFFC0 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 18D3BDF12BCE5DC2006CFFC0 /* Preview Assets.xcassets */; };
 		18D3BDFB2BCE5DF5006CFFC0 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 18D3BDFD2BCE5DF5006CFFC0 /* Localizable.strings */; };
@@ -174,6 +177,8 @@
 		18D3BDEC2BCE5DC1006CFFC0 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		18D3BDEE2BCE5DC2006CFFC0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CC3300000000000000018600 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
+		CC3300000000000000019501 /* MenuBarIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarIcon.swift; sourceTree = "<group>"; };
+		CC3300000000000000019506 /* MenuBarIconTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarIconTests.swift; sourceTree = "<group>"; };
 		18D3BDF12BCE5DC2006CFFC0 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		18D3BDF32BCE5DC2006CFFC0 /* QuickRecorder.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = QuickRecorder.entitlements; sourceTree = "<group>"; };
 		18D3BDFC2BCE5DF5006CFFC0 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
@@ -387,6 +392,7 @@
 				CC3300000000000000016601 /* PanelPlacement.swift */,
 				CC3300000000000000017101 /* PickerHold.swift */,
 				CC3300000000000000017301 /* MenuBarPanelPlacement.swift */,
+				CC3300000000000000019501 /* MenuBarIcon.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -416,6 +422,7 @@
 				CC3300000000000000016606 /* PanelPlacementTests.swift */,
 				CC3300000000000000017106 /* PickerHoldTests.swift */,
 				CC3300000000000000017306 /* MenuBarPanelPlacementTests.swift */,
+				CC3300000000000000019506 /* MenuBarIconTests.swift */,
 			);
 			path = QuickRecorderTests;
 			sourceTree = "<group>";
@@ -592,6 +599,7 @@
 				CC3300000000000000016602 /* PanelPlacement.swift in Sources */,
 				CC3300000000000000017102 /* PickerHold.swift in Sources */,
 				CC3300000000000000017302 /* MenuBarPanelPlacement.swift in Sources */,
+				CC3300000000000000019502 /* MenuBarIcon.swift in Sources */,
 				CC3300000000000000017402 /* MenuBarPanelWindow.swift in Sources */,
 				CC3300000000000000011705 /* ColorWindow.swift in Sources */,
 			);
@@ -651,8 +659,10 @@
 				CC3300000000000000016607 /* PanelPlacementTests.swift in Sources */,
 				CC3300000000000000017103 /* PickerHold.swift in Sources */,
 				CC3300000000000000017303 /* MenuBarPanelPlacement.swift in Sources */,
+				CC3300000000000000019503 /* MenuBarIcon.swift in Sources */,
 				CC3300000000000000017107 /* PickerHoldTests.swift in Sources */,
 				CC3300000000000000017307 /* MenuBarPanelPlacementTests.swift in Sources */,
+				CC3300000000000000019507 /* MenuBarIconTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
