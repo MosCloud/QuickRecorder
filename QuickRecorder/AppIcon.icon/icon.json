@@ -1,5 +1,5 @@
 {
-  "fill" : { "solid" : "extended-srgb:0.115,0.115,0.125,1.00000" },
+  "fill" : { "solid" : "extended-srgb:0.027,0.027,0.031,1.00000" },
   "groups" : [ { "layers" : [ { "image-name" : "ring.svg" }, { "image-name" : "square.svg" } ] } ],
   "supported-platforms" : { "squares" : [ "macOS" ] }
 }
