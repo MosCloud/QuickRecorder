@@ -8,20 +8,31 @@ import Testing
 
 @Suite("The menu bar icon")
 struct MenuBarIconTests {
-    @Test("The ring keeps the system symbol's own measurements")
-    func ringMatchesSystemSymbol() {
-        // record.circle at 14 pt: outer 0.849 × 16 = 13.584, stroke 0.0703 × 16 = 1.1248
-        #expect(abs(MenuBarIcon.ringDiameter * MenuBarIcon.box - 13.584) < 0.001)
-        #expect(abs(MenuBarIcon.ringLineWidth - 1.1248) < 0.001)
+    @Test("The proportions are the system symbol's own")
+    func keepsSystemSymbolProportions() {
+        // record.circle at 14 pt, in its 16 pt box: outer 0.849, stroke 0.0703, dot 0.326
+        #expect(abs(MenuBarIcon.ringDiameter - 0.849) < 0.0001)
+        #expect(abs(MenuBarIcon.ringStroke - 0.0703) < 0.0001)
+        #expect(abs(MenuBarIcon.dotDiameter - 0.326) < 0.0001)
         // The stroke is centred on the path, so the path sits half a stroke inside the outer edge
-        #expect(abs(MenuBarIcon.ringPathRadius - (13.584 / 2 - 1.1248 / 2)) < 0.001)
+        #expect(abs(MenuBarIcon.ringPathRadius - (MenuBarIcon.ringDiameter - MenuBarIcon.ringStroke) / 2 * MenuBarIcon.box) < 0.001)
+        #expect(abs(MenuBarIcon.ringLineWidth - MenuBarIcon.ringStroke * MenuBarIcon.box) < 0.001)
+    }
+
+    @Test("The icon is drawn a size up from the symbol, because its thin ring reads small")
+    func drawnLargerThanSymbol() {
+        // The symbol's own box is 16 pt; the icon is 18, and everything scales with it
+        #expect(MenuBarIcon.symbolBox == 16)
+        #expect(MenuBarIcon.box == 18)
+        #expect(abs(MenuBarIcon.ringDiameter * MenuBarIcon.box - 15.282) < 0.001)
+        #expect(abs(MenuBarIcon.ringLineWidth - 1.2654) < 0.001)
     }
 
     @Test("The square is the system dot's size plus a tenth, and keeps the app icon's corner")
     func squareMatchesDot() {
-        // 0.326 × 1.10 × 16 = 5.7376
-        #expect(abs(MenuBarIcon.squareSide - 5.7376) < 0.001)
-        #expect(abs(MenuBarIcon.squareCornerRadius - 5.7376 * 0.22) < 0.001)
+        // 0.326 × 1.10 × 18 = 6.4548
+        #expect(abs(MenuBarIcon.squareSide - 6.4548) < 0.001)
+        #expect(abs(MenuBarIcon.squareCornerRadius - 6.4548 * 0.22) < 0.001)
     }
 
     @Test("The square fits inside the ring with room to spare")

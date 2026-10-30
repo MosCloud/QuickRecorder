@@ -9,12 +9,15 @@ import CoreGraphics
 /// The menu bar item's idle icon (#186): `record.circle`'s ring, drawn to the same measurements, with the centre dot
 /// replaced by a rounded square so it echoes the app icon's square.
 ///
-/// The numbers are the system symbol's own, measured from a 1024 px render of `record.circle` at 14 pt and divided by
-/// the 16 pt box it was drawn in: outer diameter 0.849, stroke 0.0703, centre dot 0.326. Keeping them here rather than
-/// in the drawing code lets the tests hold the icon to the system's proportions.
+/// The proportions are the system symbol's own, measured from a 1024 px render of `record.circle` at 14 pt and divided
+/// by the 16 pt box it was drawn in: outer diameter 0.849, stroke 0.0703, centre dot 0.326. Keeping them here rather
+/// than in the drawing code lets the tests hold the icon to the system's proportions.
 enum MenuBarIcon {
-    /// The symbol's natural box at the menu bar's text size
-    static let box: CGFloat = 16
+    /// The box the icon is drawn in. The symbol's own is 16 pt, but its thin ring carries less ink than the solid glyphs
+    /// around it in the menu bar and so reads smaller, and the owner asked for it a size up (#186).
+    static let box: CGFloat = 18
+    /// What the proportions were measured in, for the tests and for anyone re-measuring the symbol
+    static let symbolBox: CGFloat = 16
     /// Outer diameter of the ring, as a share of `box`
     static let ringDiameter: CGFloat = 0.849
     /// The ring's stroke, as a share of `box`
