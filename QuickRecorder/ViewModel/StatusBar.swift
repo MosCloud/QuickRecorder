@@ -88,7 +88,7 @@ final class MenuBarItem: NSObject, NSMenuDelegate {
         return image
     }
 
-    func showRecording(_ visible: Bool, kind: RecordingKind) {
+    func showRecording(kind: RecordingKind) {
         if mode != .recording(kind) {
             mode = .recording(kind)
             closePanel()
@@ -102,11 +102,18 @@ final class MenuBarItem: NSObject, NSMenuDelegate {
                 button.font = .monospacedDigitSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
             }
         }
-        item.isVisible = visible
+        item.isVisible = true
+    }
+
+    /// The timer stays off the menu bar this recording: leave the item alone. Clearing it first would still draw the
+    /// change for a frame, so nothing is touched (#192).
+    func stayHidden() {
+        item.isVisible = false
     }
 
     func refresh(elapsed: String, paused: Bool) {
-        guard case .recording = mode else { return }
+        // A hidden item has no title to keep up to date, and writing one would show it (#192)
+        guard case .recording = mode, item.isVisible else { return }
         item.button?.title = " " + elapsed
         headerItem.title = (paused ? "Paused" : "Recording").local + " · " + elapsed
         // While the menu is open only the text changes: swapping images or items then disturbs its click handling

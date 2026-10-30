@@ -49,18 +49,27 @@ final class RecordingControls {
 
     func sync() {
         MainPanelReturn.shared.recordingChanged()
-        guard SCContext.streamType != nil else {
+        let recording = SCContext.streamType != nil
+        let surfaces = ControlSurfaces.whileRecording(menuBar: ud.bool(forKey: "controlsMenuBar"),
+                                                      capsule: ud.bool(forKey: "controlsCapsule"),
+                                                      statusItemHidden: statusItemHidden)
+        // With the timer turned off the item is left exactly as it is: touching it draws it for a frame (#192)
+        switch MenuBarItemAction.decide(recording: recording, statusItem: surfaces.statusItem,
+                                        showInMenuBar: ud.bool(forKey: "showMenubar")) {
+        case .showIdle(let visible):
             stopTicking()
             if cameraPopover.isShown { cameraPopover.performClose(nil) }
-            menuBar.showIdle(ud.bool(forKey: "showMenubar"))
+            menuBar.showIdle(visible)
+        case .showRecording:
+            menuBar.showRecording(kind: RecordingKind.current)
+        case .stayHidden:
+            menuBar.stayHidden()
+        }
+        guard recording else {
             capsule.retract()
             return
         }
-        let kind = RecordingKind.current
-        let surfaces = ControlSurfaces.whileRecording(menuBar: ud.bool(forKey: "controlsMenuBar"), capsule: ud.bool(forKey: "controlsCapsule"),
-                                                      statusItemHidden: statusItemHidden)
-        menuBar.showRecording(surfaces.statusItem, kind: kind)
-        if surfaces.capsule { capsule.show(kind: kind) } else { capsule.retract() }
+        if surfaces.capsule { capsule.show(kind: RecordingKind.current) } else { capsule.retract() }
         startTicking()
         refresh()
     }
